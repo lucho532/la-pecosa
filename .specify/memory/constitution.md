@@ -15,23 +15,125 @@ Enmienda 1.0.0 → 1.1.0 (2026-10-06), decidida por el propietario:
 - §8 y §12.2: toda cuenta entra como JUGADOR y el rol asignado lo reemplaza como único rol
 - §8, §12.2 y §20: el DIRECTIVO aprueba cualquier ingreso y puede asignar el rol ENTRENADOR a la
   cuenta que acaba de aprobar
+
+Enmienda 1.1.0 → 1.2.0 (2026-10-06), decidida por el propietario del proyecto:
+- Todo el documento: el rol PROPIETARIO pasa a llamarse PRESIDENTE
+- §4 y §20: el repositorio se divide en backend/ y frontend/; desaparece Valfor.Web
+- §2.2, §8, §12.3 y §12.5: nuevo rol único DESARROLLADOR, que crea usuarios con rol directo y
+  contraseña por defecto de un solo uso
+- §12.2: la ficha de Jugador se elimina al pasar la cuenta a ENTRENADOR o DIRECTIVO
+- §6, §6.3 y §12.4: inicio de sesión completo para todos y Brevo para los correos de la cuenta
+- §12.1: el registro pide correo electrónico
+- §28: dos decisiones pendientes nuevas
+
+Enmienda 1.2.0 → 2.0.0 (2026-10-07), decidida por el propietario del proyecto. Cambio mayor: se
+redefine el principio de un solo club.
+- Título y §1: la plataforma pasa a ser multiclub; Valfor F.C. es el primer club
+- §7: "Un solo club" se reemplaza por "Varios clubes", con aislamiento entre clubes e identidad
+  (escudo y colores) por club
+- §8, §12.3 y §12.5: el DESARROLLADOR tiene un panel de administración de la plataforma; crea
+  clubes, cambia su escudo y colores y crea sus usuarios; no accede a nada más
+- §2.2: nuevo término Club
+- §9, §16.7, §19 y §24: ajustes para varios clubes
+- §20: pruebas de aislamiento entre clubes y del alcance del DESARROLLADOR
+- §28: se cierra "Alcance del DESARROLLADOR" y se abren seis decisiones nuevas
+
+Enmienda 2.0.0 → 2.1.0 (2026-10-07), decidida por el propietario del proyecto:
+- §12.1 y §6.3: el registro pasa a ser por invitación enviada por correo
+- §7.2 y §7.3: cada usuario guarda el club al que pertenece y ve su nombre; el resto de la
+  configuración la editan el DESARROLLADOR y el PRESIDENTE
+- §10: el documento es único por pareja "documento + club"
+- §6.2: cada club recibe su dinero en su propia cuenta de la pasarela
+- §7.4: suspensión y baja de clubes; congelación automática por impago de la plataforma
+- §24: tema claro y oscuro con botón
+- §20: pruebas nuevas
+- §28: se cierran cinco decisiones y se abren seis de detalle
+
+Enmienda 2.1.0 → 3.0.0 (2026-10-07), decidida por el propietario del proyecto. Cambio mayor: se
+elimina la creación de usuarios con contraseña por defecto y el rol pasa a ser por club.
+- §12.5: el DESARROLLADOR ya no crea usuarios ni asigna contraseñas; al crear un club invita
+  obligatoriamente a su PRESIDENTE por correo
+- §12.1: datos de registro (nombre, apellidos, correo del acudiente, documento, fecha de
+  nacimiento)
+- §12.4: inicio de sesión con correo o documento
+- §7.3, §8 y §10: una persona puede pertenecer a varios clubes, con un rol en cada uno, un solo
+  inicio de sesión y un desplegable para elegir club
+- §7.4: estados suspendido, dado de baja y eliminado; el DESARROLLADOR levanta y aplica la
+  suspensión manualmente; eliminar borra toda la información del club
+- §20: pruebas ajustadas
+- §28: se cierran dos decisiones y se abren cinco
+
+Enmienda 3.0.0 → 3.1.0 (2026-10-07), decidida por el propietario del proyecto:
+- §12.1: el registro vuelve a pedir celular y nombre del responsable; se explicitan tipo de
+  documento y contraseña
+- §8 y §12.4: con correo compartido se elige el integrante; con documento se ve solo ese
+  integrante
+- §12.4: una persona puede solicitar la eliminación de su cuenta
+- §8: un PRESIDENTE no puede quitarse el rol ni eliminarse sin otro PRESIDENTE
+- §6.1: una sola aplicación Android para todos los clubes
+- §7.4: se confirma que dar de baja y eliminar son dos pasos
+- §28: se cierran cinco decisiones y se abren tres
+
+Enmienda 3.1.0 → 3.2.0 (2026-10-07), decidida por el propietario del proyecto:
+- §12.1: el correo es único; no se registra una cuenta nueva con un correo ya registrado
+- §12.1.2 (nueva), §8 y §12.4: los hermanos se agregan desde la ficha del jugador ya registrado y
+  comparten los datos de contacto; una cuenta tiene un correo, una contraseña y varios jugadores
+- §12.4: la eliminación de la cuenta se cumple sola y conserva los pagos
+- §8 y §12.5: un club puede tener varios presidentes; al adicional lo elige el DESARROLLADOR u
+  otro PRESIDENTE del club
+- §28: se cierran tres decisiones y se abren tres de detalle
+
+Enmienda 3.2.0 → 3.3.0 (2026-10-07), decidida por el propietario del proyecto:
+- §12.1.2: el hermano agregado desde la ficha pasa por la sala de espera
+- §12.4: de una cuenta eliminada solo se conservan los pagos con nombre completo y documento; se
+  eliminan sus estadísticas deportivas
+- §12.5: un PRESIDENTE elige a otro dándole el rol a alguien ya registrado en el club
+- §28: se cierran las tres decisiones de detalle
+
+Enmienda 3.3.0 → 3.4.0 (2026-10-07), decidida por el propietario del proyecto en las aclaraciones
+de la spec 001:
+- §8: el DESARROLLADOR invita presidentes adicionales, quita el rol a un presidente (eligiendo
+  entre darle otro rol o eliminarlo del club) y revierte la baja de un club; solo se elimina un
+  club dado de baja
+- §12.4: bloqueo de la cuenta tras 5 intentos fallidos, hasta recuperar la contraseña por correo
+
+Enmienda 3.4.0 → 3.5.0 (2026-10-07), decidida por el propietario del proyecto:
+- Título y §1: el proyecto pasa a llamarse La Pecosa; Valfor F.C. es solo su primer cliente
+- §1: formas del nombre sin espacios (LaPecosa, la-pecosa, lapecosa)
+- §4: los proyectos del backend pasan de Valfor.* a LaPecosa.*
 -->
 
-# Constitución del Proyecto — Plataforma del Club Valfor F.C.
+# Constitución del Proyecto — La Pecosa, plataforma multiclub de escuelas de fútbol
 
 ## 1. Propósito
 
-Este proyecto es la plataforma web y móvil de Valfor F.C., escuela de fútbol infantil de Manizales
-(Caldas, Colombia) con sede en la Cancha de Minitas. El club atiende jugadores desde los 6 años;
-su categoría mayor es la 2012.
+Este proyecto se llama **La Pecosa**. Es una plataforma web y móvil para escuelas y clubes de
+fútbol. Valfor F.C. no es el nombre del proyecto: es uno de sus clientes, el primero.
 
-La plataforma tiene dos partes:
+El nombre visible para las personas es "La Pecosa". En todo lugar donde un espacio o una
+mayúscula pueda dar problemas se usa una de estas dos formas, y ninguna otra:
 
-- Sitio público, sin inicio de sesión, para visitantes.
-- Zona privada, con roles, para propietarios, entrenadores y jugadores. La cuenta del jugador es
+- `LaPecosa`: proyectos, espacios de nombres y clases del backend (por ejemplo `LaPecosa.Api`).
+- `la-pecosa`: carpeta del proyecto, repositorio, paquetes del frontend, imágenes de Docker y
+  direcciones web. Donde no se admita el guion (identificador de la aplicación Android, nombre de
+  la base de datos) se usa `lapecosa`.
+
+Es multiclub: una
+misma instalación atiende a varios clubes, cada uno con sus propios datos, su escudo y sus colores
+(ver §7).
+
+El primer club es Valfor F.C., escuela de fútbol infantil de Manizales (Caldas, Colombia) con sede
+en la Cancha de Minitas. Atiende jugadores desde los 6 años; su categoría mayor es la 2012.
+
+La plataforma tiene tres partes:
+
+- Panel de administración de la plataforma, exclusivo del DESARROLLADOR, desde donde se crean los
+  clubes, se configura su escudo y sus colores y se crean sus usuarios.
+- Sitio público de cada club, sin inicio de sesión, para visitantes.
+- Zona privada, con roles, para el presidente, directivos, entrenadores y jugadores. La cuenta del jugador es
   la que usa su familia.
 
-La plataforma debe permitir:
+La plataforma debe permitir, para cada club:
 
 - Mostrar al público la información del club: historia, sede, categorías, cuerpo técnico y
   contacto.
@@ -113,7 +215,9 @@ Se utilizará siempre el mismo término para cada concepto:
 | --- | --- |
 | Jugador | niño o niña inscrito en el club; su cuenta la usa su padre, madre o responsable |
 | Entrenador | profesor a cargo de una o varias categorías |
-| Propietario | presidente y dueño del club |
+| Presidente | presidente y dueño del club |
+| Club | escuela o equipo que usa la plataforma; todos sus datos le pertenecen solo a él |
+| Desarrollador | dueño de la plataforma; crea los clubes y sus usuarios desde su panel |
 | Directivo | miembro de la directiva del club |
 | Categoria | grupo de jugadores definido por año de nacimiento |
 | Mensualidad | cobro mensual por la formación de un jugador |
@@ -172,44 +276,51 @@ La documentación no debe ser decorativa. Debe ayudar a comprender la arquitectu
 
 La aplicación utilizará una arquitectura por capas con separación clara de responsabilidades.
 
+El repositorio tiene dos carpetas principales y separadas: `backend/` para la API y `frontend/`
+para la aplicación React. Ninguna contiene código de la otra.
+
 Estructura principal:
 
 ```text
-src/
-├── Valfor.Api/
-│   └── Controladores/
+backend/
+├── src/
+│   ├── LaPecosa.Api/
+│   │   └── Controladores/
+│   │
+│   ├── LaPecosa.Aplicacion/
+│   │   ├── DTOs/
+│   │   ├── Interfaces/
+│   │   ├── Servicios/
+│   │   ├── Implementaciones/
+│   │   ├── Mappers/
+│   │   ├── Validadores/
+│   │   └── Utilidades/
+│   │
+│   ├── LaPecosa.Dominio/
+│   │   ├── Entidades/
+│   │   ├── Enumeraciones/
+│   │   └── Reglas/
+│   │
+│   └── LaPecosa.Infraestructura/
+│       ├── Datos/
+│       ├── Repositorios/
+│       ├── Pagos/
+│       └── Correo/
 │
-├── Valfor.Aplicacion/
-│   ├── DTOs/
-│   ├── Interfaces/
-│   ├── Servicios/
-│   ├── Implementaciones/
-│   ├── Mappers/
-│   ├── Validadores/
-│   └── Utilidades/
-│
-├── Valfor.Dominio/
-│   ├── Entidades/
-│   ├── Enumeraciones/
-│   └── Reglas/
-│
-├── Valfor.Infraestructura/
-│   ├── Datos/
-│   ├── Repositorios/
-│   └── Pagos/
-│
-└── Valfor.Web/
-    ├── publico/
-    └── privado/
-pruebas/
-├── Unitarias/
-└── Integracion/
+└── pruebas/
+    ├── Unitarias/
+    └── Integracion/
+
+frontend/
+├── publico/
+└── privado/
 ```
 
-`Valfor.Infraestructura/Pagos` contiene la integración con la pasarela de pago, detrás de una
-interfaz definida en Aplicacion.
+`LaPecosa.Infraestructura/Pagos` contiene la integración con la pasarela de pago y
+`LaPecosa.Infraestructura/Correo` la integración con el servicio de correo. Ambas quedan detrás de
+interfaces definidas en Aplicacion.
 
-`Valfor.Web` contiene el frontend: el sitio público y la zona privada.
+`frontend/` contiene la aplicación React: el sitio público y la zona privada.
 
 El nombre definitivo de los proyectos podrá ajustarse durante el plan técnico, pero la separación
 conceptual debe mantenerse.
@@ -272,6 +383,7 @@ La primera implementación utilizará:
 - React para el frontend.
 - Capacitor para empaquetar la aplicación Android.
 - Wompi como pasarela de pago.
+- Brevo para el envío de correos.
 
 ### 6.1. Una sola base de código para web, escritorio y móvil
 
@@ -281,7 +393,9 @@ Se distribuye de tres formas:
 
 - Web: desde el navegador, en cualquier dispositivo.
 - Escritorio: la misma web, instalable en el ordenador como aplicación (PWA).
-- Android: la misma aplicación empaquetada con Capacitor y publicada en Google Play.
+- Android: la misma aplicación empaquetada con Capacitor y publicada en Google Play. Es una sola
+  aplicación para todos los clubes; el escudo y los colores de cada club aparecen al iniciar
+  sesión.
 
 No se mantendrá una segunda base de código nativa para móvil.
 
@@ -294,25 +408,94 @@ Se utilizará Wompi, con sus medios de pago para Colombia (PSE, Nequi, tarjetas)
 La integración queda detrás de una interfaz de Aplicacion (ver §4), de modo que cambiar de
 pasarela no afecte las reglas de negocio.
 
+Cada club recibe su dinero en su propia cuenta de la pasarela. Las llaves de la pasarela de cada
+club son secretos de ese club: se guardan protegidas, nunca se devuelven por la API y nunca llegan
+al frontend.
+
+El pago de cada club por el uso de la plataforma se cobra con la misma pasarela (ver §7.4).
+
 El desarrollo y las pruebas se hacen contra el entorno de pruebas de la pasarela. Las llaves de
 producción solamente se configuran en el despliegue.
+
+### 6.3. Correo
+
+Se utilizará Brevo para enviar los correos de la plataforma: las invitaciones para registrarse en
+un club (ver §12.1) y los de la cuenta, como el de recuperación de contraseña (ver §12.4).
+
+La integración queda detrás de una interfaz de Aplicacion (ver §4). La llave de Brevo es un
+secreto de configuración: no se incluye en el repositorio ni en el frontend.
 
 No introducir nuevas tecnologías, frameworks o patrones arquitectónicos importantes sin justificar
 su necesidad y documentar el cambio.
 
 La simplicidad y mantenibilidad tienen prioridad sobre la cantidad de tecnologías utilizadas.
 
-## 7. Un solo club
+## 7. Varios clubes
 
-La plataforma atiende a un único club: Valfor F.C.
+La plataforma es multiclub: atiende a varios clubes desde una misma instalación. Valfor F.C. es el
+primero.
 
-No se implementará multiempresa ni multiclub en esta versión.
+### 7.1. Aislamiento entre clubes
 
-Los datos propios del club (nombre, escudo, colores, sede, dirección, datos de contacto, valor de
-la mensualidad) son configuración almacenada en base de datos o en archivos de configuración. No
-deben quedar escritos de forma fija en el código.
+Todo dato de un club (usuarios, jugadores, categorías, cargos, pagos, partidos, torneos,
+comunicados, configuración) pertenece a exactamente un club.
 
-El aislamiento de datos no es entre empresas, sino entre personas y categorías:
+Un usuario de un club nunca accede a datos de otro club: ni los ve, ni los cuenta, ni puede
+consultarlos por su identificador.
+
+Ninguna consulta ni operación puede ejecutarse sin estar limitada a un club. La única excepción es
+el panel de administración del DESARROLLADOR (ver §8).
+
+### 7.2. Identidad y configuración de cada club
+
+Los datos propios de cada club (nombre, escudo, colores, sede, dirección, datos de contacto, valor
+de la mensualidad) son configuración de ese club almacenada en base de datos. No deben quedar
+escritos de forma fija en el código, y el código no debe asumir que el club es Valfor F.C.
+
+El escudo y los colores de un club los configura el DESARROLLADOR desde su panel de
+administración. La interfaz de cada club se muestra con su propia identidad.
+
+El resto de la configuración del club (nombre, sede, dirección, datos de contacto) la pueden
+editar tanto el DESARROLLADOR como el PRESIDENTE de ese club.
+
+Todo usuario ve en pantalla el nombre de su club.
+
+### 7.3. Pertenencia a un club
+
+Cada integrante guarda el identificador del club al que pertenece. Ese identificador se fija al
+registrarse mediante la invitación (ver §12.1) y determina qué club ve.
+
+Una misma persona puede ser integrante de varios clubes. Inicia sesión una sola vez y, dentro de
+su panel, un desplegable le permite elegir de cuál club quiere ver los datos. En cada momento ve
+únicamente los datos del club elegido, y solo puede elegir entre los clubes a los que pertenece.
+
+### 7.4. Suspensión, baja, eliminación y pago por el uso de la plataforma
+
+Cada club paga por el uso de la plataforma, mediante la misma pasarela de pago (ver §6.2).
+
+**Suspendido (congelado).** Si un club no ha hecho ese pago, queda suspendido automáticamente
+hasta ponerse al día. En cuanto el pago se confirma, el club vuelve a la normalidad de inmediato.
+El DESARROLLADOR también puede, desde su panel, suspender un club manualmente, levantar una
+suspensión y volver a aplicarla.
+
+Mientras un club está suspendido:
+
+- Solamente entra su PRESIDENTE.
+- Cualquier otro integrante que intente entrar a ese club ve un aviso de incidencia temporal que
+  le pide comunicarse con el presidente.
+- No pasa nada más: todos los datos del club permanecen intactos.
+
+**Dado de baja.** Lo aplica el DESARROLLADOR desde su panel. Nadie del club puede entrar, ni
+siquiera su PRESIDENTE.
+
+**Eliminado.** Eliminar un club borra todo rastro e información de ese club, sin posibilidad de
+recuperarla. Es la única excepción a la conservación de históricos y a la inmutabilidad de los
+pagos (ver §13, §14 y §16.3), solo puede hacerla el DESARROLLADOR y exige una confirmación
+expresa.
+
+### 7.5. Aislamiento dentro de un club
+
+Dentro de un club, el aislamiento es entre personas y categorías:
 
 - Un entrenador solamente accede a las categorías que tiene asignadas.
 - Una cuenta de jugador solamente accede a la información de su propio jugador. Cada familia ve
@@ -332,24 +515,52 @@ El hecho de que un usuario conozca el identificador de otro jugador no le conced
 Un visitante no es un rol: es cualquier persona sin sesión iniciada. Solamente accede al sitio
 público (ver §9).
 
-Existen cuatro roles con cuenta:
+Existen cinco roles con cuenta:
 
 ```text
-PROPIETARIO
+DESARROLLADOR
+PRESIDENTE
 DIRECTIVO
 ENTRENADOR
 JUGADOR
 ```
 
-JUGADOR es el rol por defecto de toda cuenta que se registra. Una cuenta nueva no tiene acceso a
-nada hasta que su ingreso es aprobado (ver §12).
+JUGADOR es el rol por defecto de toda cuenta que se registra por sí misma. Esa cuenta no tiene
+acceso a nada hasta que su ingreso es aprobado (ver §12). Quien se registra con una invitación del
+DESARROLLADOR entra directamente con el rol de esa invitación (ver §12.5).
 
-Una cuenta tiene un único rol. Toda cuenta entra como JUGADOR; cuando se le asigna el rol que le
+Dentro de un club, un integrante tiene un único rol. Una persona que pertenece a varios clubes
+tiene un rol en cada uno, y pueden ser distintos. Toda cuenta entra como JUGADOR; cuando se le asigna el rol que le
 corresponde (ENTRENADOR o DIRECTIVO), ese rol reemplaza al anterior y pasa a ser su único rol. Un
 entrenador que además tiene un hijo en el club usa dos cuentas:
 la suya, con su documento, como ENTRENADOR, y la del niño, con el documento del niño, como JUGADOR.
 
-### Propietario
+### Desarrollador
+
+Es el dueño de la plataforma, que la ofrece a varios clubes. Es un rol único: existe una sola
+cuenta DESARROLLADOR, y es la única que no pertenece a ningún club.
+
+Tiene su propio panel de administración de la plataforma. Desde allí puede:
+
+- Crear clubes. Al crear un club debe asignarle obligatoriamente un PRESIDENTE, al que se le envía
+  una invitación por correo (ver §12.5).
+- Modificar el escudo y los colores de cada club.
+- Suspender un club, levantar su suspensión, darlo de baja, revertir la baja y eliminarlo (ver
+  §7.4). Solo se puede eliminar un club que ya está dado de baja.
+- Invitar a un presidente adicional a un club que ya existe.
+- Quitarle el rol a un PRESIDENTE, siempre que el club conserve al menos otro ya registrado. Al
+  hacerlo elige entre asignarle otro rol en ese club o eliminarlo del club por completo.
+
+No puede nada más: no consulta ni gestiona fichas de jugadores, datos médicos, finanzas, pagos ni
+información deportiva de ningún club.
+
+El rol DESARROLLADOR no se asigna ni se retira desde la aplicación, y ningún otro rol accede al
+panel de administración ni puede crear clubes. El DESARROLLADOR no crea usuarios ni asigna
+contraseñas: solo envía invitaciones.
+
+Los cuatro roles restantes pertenecen siempre a un club y su alcance nunca sale de él.
+
+### Presidente
 
 Es el presidente del club, que a su vez es su dueño. Administra el club completo.
 
@@ -366,17 +577,21 @@ Puede:
 - Buscar usuarios registrados por su documento de identidad y asignarles o retirarles los roles
   ENTRENADOR o DIRECTIVO.
 
-La asignación de roles es del PROPIETARIO, con una única excepción: un DIRECTIVO puede asignar el
+La asignación de roles es del PRESIDENTE, con una única excepción: un DIRECTIVO puede asignar el
 rol ENTRENADOR a una cuenta cuyo ingreso acaba de aprobar (ver §12.2). Fuera de esa excepción,
 ningún otro rol puede asignar, cambiar ni retirar roles, ni siquiera el suyo propio.
 
-El rol PROPIETARIO no se asigna desde la aplicación.
+El rol PRESIDENTE solamente lo otorgan el DESARROLLADOR, desde su panel de administración, u otro
+PRESIDENTE del mismo club (ver §12.5). Un club puede tener varios presidentes.
 
-El club debe conservar siempre al menos un PROPIETARIO activo; no se permite revocar el último.
+Cada club debe conservar siempre al menos un PRESIDENTE activo; no se permite revocar el último.
+
+Un PRESIDENTE no puede quitarse su propio rol ni eliminar su propia cuenta mientras no exista otro
+PRESIDENTE en ese club.
 
 ### Directivo
 
-Es un miembro de la directiva del club. El rol lo asigna el PROPIETARIO.
+Es un miembro de la directiva del club. El rol lo asigna el PRESIDENTE.
 
 Puede:
 
@@ -391,7 +606,7 @@ valor de la mensualidad, asignar el rol DIRECTIVO, retirar roles ni buscar usuar
 
 ### Entrenador
 
-El rol lo asigna el PROPIETARIO.
+El rol lo asigna el PRESIDENTE.
 
 Está asignado a una o varias categorías mediante:
 
@@ -422,8 +637,13 @@ pagos, ni gestionar jugadores de categorías que no tenga asignadas.
 Es la cuenta de un jugador inscrito. El jugador es menor de edad, por lo que la cuenta la usa su
 padre, madre o responsable. No existe un rol separado para la familia.
 
-Cada jugador tiene su propia cuenta. Los hermanos no comparten cuenta: cada uno tiene la suya, con
-su propio acceso.
+Cada jugador tiene su propio registro de integrante, con su propio documento. Los hermanos no se
+mezclan: cada uno tiene el suyo.
+
+Una misma cuenta puede tener varios jugadores: los padres agregan a un hermano desde la ficha del
+jugador ya registrado (ver §12.1.2). Quien entra con el correo elige con cuál de sus jugadores
+continuar; quien entra con el documento de un jugador ve solo a ese jugador (ver §12.4). En cada
+momento se ve la información de un único jugador.
 
 Puede, únicamente sobre su propio jugador:
 
@@ -440,7 +660,8 @@ Ve todos los entrenamientos de su categoría, pero solamente los partidos a los 
 
 ## 9. Sitio público
 
-El sitio público no requiere inicio de sesión.
+Cada club tiene su propio sitio público, con su escudo y sus colores. No requiere inicio de sesión
+y solamente muestra información de ese club.
 
 Solamente expone información que el club ha decidido publicar:
 
@@ -463,8 +684,7 @@ de pagos.
 
 ## 10. Identidad mediante documento
 
-El número de documento de identidad identifica de forma única a una persona dentro de la
-plataforma.
+El número de documento de identidad identifica de forma única a una persona dentro de un club.
 
 Se almacena junto con su tipo:
 
@@ -477,8 +697,9 @@ CEDULA_EXTRANJERIA
 
 El documento:
 
-- Es único globalmente.
-- No puede duplicarse.
+- Es único por pareja "documento + club": no puede repetirse dentro de un mismo club.
+- Puede existir en dos clubes distintos: es la misma persona, integrante de ambos, con un único
+  inicio de sesión (ver §7.3 y §12.4).
 - No debe utilizarse como sustituto de las claves primarias internas.
 
 Un jugador puede pasar de registro civil a tarjeta de identidad. Ese cambio actualiza el tipo y el
@@ -511,7 +732,7 @@ Un jugador pertenece a una única categoría actual:
 Jugador.CategoriaId
 ```
 
-Cambiar la categoría de un jugador es una operación del PROPIETARIO.
+Cambiar la categoría de un jugador es una operación del PRESIDENTE.
 
 Al cambiar de categoría:
 
@@ -528,13 +749,47 @@ La entidad Usuario representa la cuenta de acceso.
 
 ### 12.1. Registro
 
-Cualquier persona puede registrarse en la aplicación.
+El registro es por invitación. La persona recibe por correo (Brevo) un enlace de invitación de un
+club; ese enlace la lleva a registrarse en ese club y la cuenta queda ligada a él (ver §7.3).
+
+No existe un registro abierto sin invitación, y nadie elige su club al registrarse: lo determina
+el enlace.
 
 - La cuenta de un jugador se registra con el documento del jugador (el niño), no con el de su
   familia.
 - Un entrenador o un directivo se registra con su propio documento.
 
-Toda cuenta nueva recibe el rol JUGADOR y queda en espera.
+Los datos para registrarse son:
+
+- Nombre completo del integrante del club.
+- Apellidos del integrante del club.
+- Correo electrónico. Para un jugador es el de su acudiente (padre, madre o responsable).
+- Tipo y número de documento del integrante del club (ver §10).
+- Fecha de nacimiento del integrante del club.
+- Celular de contacto.
+- Nombre del padre, madre o responsable, cuando el integrante es un jugador.
+- Contraseña.
+
+El correo es necesario para recibir la invitación y para recuperar la contraseña (ver §12.4).
+
+El correo es único: no se puede registrar una cuenta nueva con un correo que ya está registrado.
+Quien lo intenta recibe un mensaje que le explica que ya hay alguien registrado con ese correo.
+
+#### 12.1.2. Hermanos: agregar un jugador desde la ficha
+
+Un segundo jugador de la misma familia no se registra con una cuenta nueva. Sus padres entran con
+la cuenta que ya tienen y, desde la ficha del hermano, agregan un nuevo jugador.
+
+El jugador agregado:
+
+- Comparte todos los datos de contacto de la cuenta: correo, celular y responsable.
+- Tiene sus propios datos de jugador, que los padres completan: nombre, apellidos, tipo y número
+  de documento, fecha de nacimiento y el resto de su ficha.
+- Es un jugador independiente, con su propia ficha, categoría, cargos y pagos.
+- Pasa por la sala de espera como cualquier ingreso nuevo: no tiene categoría ni genera
+  mensualidad hasta que el club lo aprueba (ver §12.1.1).
+
+Toda cuenta que se registra por sí misma recibe el rol JUGADOR y queda en espera.
 
 #### 12.1.1. Sala de espera
 
@@ -548,7 +803,7 @@ Mientras está en espera:
 - No se le asigna categoría.
 - No se le genera mensualidad.
 
-El ingreso lo aprueba el PROPIETARIO o un DIRECTIVO.
+El ingreso lo aprueba el PRESIDENTE o un DIRECTIVO.
 
 Al aprobarse el ingreso de un jugador, se le asigna la categoría que corresponde a su año de
 nacimiento y empieza a generarse su mensualidad.
@@ -562,7 +817,7 @@ APROBADO
 
 ### 12.2. Asignación de roles
 
-El PROPIETARIO busca a un usuario ya registrado por su documento de identidad y decide:
+El PRESIDENTE busca a un usuario ya registrado por su documento de identidad y decide:
 
 - Asignarle el rol ENTRENADOR.
 - Asignarle el rol DIRECTIVO.
@@ -570,13 +825,17 @@ El PROPIETARIO busca a un usuario ya registrado por su documento de identidad y 
 
 El rol asignado reemplaza al rol JUGADOR con el que entró la cuenta y pasa a ser su único rol.
 
+Cuando una cuenta nueva pasa de JUGADOR a ENTRENADOR o DIRECTIVO, la ficha de Jugador que se creó
+con su registro desaparece: se elimina. Es una eliminación física justificada (ver §14), porque
+esa ficha nunca correspondió a un jugador real.
+
 Un DIRECTIVO, después de aprobar un ingreso, puede asignar a esa cuenta el rol ENTRENADOR. No
 puede asignar el rol DIRECTIVO ni retirar roles.
 
 Un rol solamente puede asignarse a un usuario que ya se registró. No se asignan roles a documentos
 que aún no tienen cuenta.
 
-La búsqueda de usuarios por documento es exclusiva del PROPIETARIO.
+La búsqueda de usuarios por documento es exclusiva del PRESIDENTE.
 
 ### 12.3. Alcance de cada rol
 
@@ -592,14 +851,74 @@ Usuario no contiene CategoriaId.
 
 El alcance de cada rol se resuelve exclusivamente así:
 
-- PROPIETARIO: alcance global.
-- DIRECTIVO: consulta global, con los límites definidos en §8.
+- DESARROLLADOR: panel de administración de la plataforma; crea clubes e invita a su PRESIDENTE
+  (ver §12.5).
+- PRESIDENTE: todo su club.
+- DIRECTIVO: consulta de todo su club, con los límites definidos en §8.
 - ENTRENADOR: mediante AsignacionEntrenadorCategoria. No se crea un UsuarioRol ENTRENADOR por cada
   categoría.
 - JUGADOR: mediante Jugador.UsuarioId. La relación es uno a uno: una cuenta corresponde a un único
-  jugador. Los hermanos tienen cuentas separadas.
+  jugador. Los hermanos tienen registros separados, aunque su acudiente entre con un mismo correo
+  (ver §12.4).
 
 La ficha de Jugador se crea a partir del registro de la cuenta.
+
+### 12.4. Inicio de sesión y contraseñas
+
+Todos los usuarios, sin importar su rol, tienen un inicio de sesión completo:
+
+- Registro.
+- Inicio de sesión.
+- Olvidé mi contraseña, con recuperación por correo.
+- Cambio de contraseña.
+
+El inicio de sesión se hace con el correo o con el documento del integrante, más su contraseña.
+
+Una persona tiene un único inicio de sesión aunque pertenezca a varios clubes; el club que ve lo
+elige después, en el desplegable de su panel (ver §7.3).
+
+Una cuenta tiene un único correo y una única contraseña, y puede tener varios jugadores (ver
+§12.1.2):
+
+- Quien entra con el correo elige, después de entrar, con cuál de sus jugadores continuar.
+- Quien entra con el documento de un jugador ve solamente a ese jugador. La contraseña es la de la
+  cuenta.
+
+Una persona puede solicitar desde la aplicación la eliminación de su cuenta. La solicitud se cumple
+sola, sin aprobación de nadie. Al eliminarse la cuenta:
+
+- Sus pagos se conservan, para que el club mantenga el control de lo recaudado (ver §16.3). Junto
+  a ellos solo se guardan el nombre completo y el documento.
+- Se borran todos los demás datos personales.
+- Se eliminan todas sus estadísticas deportivas.
+
+Además, si se elimina el único club al que pertenece una persona, su cuenta se elimina con él (ver
+§7.4).
+
+Los correos de la cuenta se envían mediante Brevo (ver §6.3).
+
+Tras 5 intentos fallidos seguidos de inicio de sesión, la cuenta queda bloqueada hasta que la
+persona recupere su contraseña por correo.
+
+Las contraseñas nunca se almacenan ni se envían en texto plano. Nadie asigna la contraseña de otra
+persona: cada quien crea la suya al registrarse.
+
+### 12.5. Invitación del PRESIDENTE por el DESARROLLADOR
+
+Al crear un club, el DESARROLLADOR debe asignarle obligatoriamente un PRESIDENTE. No se puede
+crear un club sin él.
+
+Para ello indica el correo de esa persona y la plataforma le envía una invitación para registrarse
+como PRESIDENTE del club creado.
+
+Quien se registra con esa invitación:
+
+- Completa el registro con sus propios datos y crea su propia contraseña (ver §12.1).
+- Queda como PRESIDENTE de ese club, sin pasar por la sala de espera.
+
+Un club puede tener más de un PRESIDENTE. A un presidente adicional lo elige el DESARROLLADOR,
+desde su panel de administración, u otro PRESIDENTE de ese mismo club. Un PRESIDENTE lo hace
+dándole el rol a alguien que ya está registrado en el club.
 
 ## 13. Histórico operativo y financiero
 
@@ -740,9 +1059,9 @@ ni en el frontend.
 
 ### 16.5. Transferencia y efectivo
 
-Un pago por transferencia queda en revisión hasta que un PROPIETARIO lo confirma.
+Un pago por transferencia queda en revisión hasta que un PRESIDENTE lo confirma.
 
-Un pago en efectivo lo registra un PROPIETARIO o el ENTRENADOR de la categoría del jugador.
+Un pago en efectivo lo registra un PRESIDENTE o el ENTRENADOR de la categoría del jugador.
 
 Todo pago confirmado genera un recibo consultable desde la cuenta del jugador.
 
@@ -755,7 +1074,8 @@ de tipo ARBITRAJE para cada uno.
 
 La mensualidad se paga durante los primeros cinco días de cada mes.
 
-El valor vigente es de $65.000 COP por jugador. Es un dato de configuración que el PROPIETARIO
+El valor vigente en Valfor F.C. es de $65.000 COP por jugador. Es un dato de configuración de
+cada club que su PRESIDENTE
 puede actualizar; no debe quedar escrito de forma fija en el código.
 
 Un cambio de valor aplica a los cargos que se generen después del cambio. Los cargos ya generados
@@ -788,12 +1108,12 @@ Esto aplica a:
 Corregir un partido corrige automáticamente las estadísticas derivadas.
 
 El sistema no debe modificar automáticamente una convocatoria, un resultado o una programación
-registrados manualmente por un entrenador o propietario sin una regla explícita que lo autorice.
+registrados manualmente por un entrenador o por el presidente sin una regla explícita que lo autorice.
 
 ### 17.1. Tablas de posiciones
 
 Las tablas de posiciones de los torneos son la excepción: en esta primera versión se digitan
-manualmente, por torneo y categoría, por un PROPIETARIO o por el ENTRENADOR de la categoría.
+manualmente, por torneo y categoría, por un PRESIDENTE o por el ENTRENADOR de la categoría.
 
 Cada tabla registra quién la actualizó por última vez y cuándo.
 
@@ -815,7 +1135,7 @@ Un partido próximo y su convocatoria solamente son visibles para:
 
 - Los jugadores convocados a ese partido.
 - Los entrenadores de las categorías involucradas.
-- Los propietarios.
+- El presidente.
 
 Para una cuenta no convocada, ese partido no existe: no aparece en su calendario, ni en listados,
 ni en contadores, ni en mensajes, ni puede consultarse por su identificador.
@@ -860,7 +1180,7 @@ Antes de crear:
 
 debe existir una necesidad funcional o técnica clara.
 
-El sistema es para un club con decenas de jugadores, no para miles. La arquitectura debe ser
+El sistema es para varios clubes pequeños, cada uno con decenas de jugadores, no con miles. La arquitectura debe ser
 suficientemente sólida para crecer, pero no innecesariamente compleja.
 
 ## 20. Pruebas
@@ -870,8 +1190,8 @@ Las reglas de negocio importantes deben tener pruebas automatizadas.
 Se utilizarán:
 
 ```text
-pruebas/Unitarias
-pruebas/Integracion
+backend/pruebas/Unitarias
+backend/pruebas/Integracion
 ```
 
 Las pruebas deben validar principalmente:
@@ -880,13 +1200,33 @@ Las pruebas deben validar principalmente:
 - Aplicación de pagos, abonos parciales y anulaciones.
 - Idempotencia de las notificaciones de la pasarela.
 - Autorización por rol.
-- Que solamente el PROPIETARIO puede buscar usuarios por documento, asignar el rol DIRECTIVO y
+- Que solamente el PRESIDENTE puede buscar usuarios por documento, asignar el rol DIRECTIVO y
   retirar roles.
 - Que un DIRECTIVO solamente puede asignar el rol ENTRENADOR, y solo a una cuenta cuyo ingreso
   aprobó.
-- Que una cuenta nunca tiene más de un rol.
+- Que un integrante nunca tiene más de un rol dentro de un mismo club.
+- Que una persona de varios clubes solo puede elegir entre sus clubes y solo ve los datos del
+  club elegido.
+- Que no se puede crear un club sin asignarle un PRESIDENTE, y que quien se registra con esa
+  invitación queda como PRESIDENTE de ese club.
+- Que en un club suspendido solo entra su PRESIDENTE y los demás ven el aviso; que en un club dado
+  de baja no entra nadie.
+- Que eliminar un club borra toda su información y no afecta a ningún otro club.
+- Que no es posible registrarse sin una invitación válida y que la cuenta queda en el club de la
+  invitación.
+- Que el mismo documento no puede repetirse en un club y sí puede existir en dos clubes.
+- Que un club suspendido por impago vuelve a la normalidad al confirmarse su pago, y que un club
+  suspendido conserva todos sus datos.
+- Que las llaves de la pasarela de un club nunca se devuelven por la API.
+- Aislamiento entre clubes: que un usuario de un club no puede ver, contar ni consultar por
+  identificador ningún dato de otro club.
+- Que solamente el DESARROLLADOR accede al panel de administración, crea clubes y cambia su
+  escudo y colores, y que solo existe una cuenta DESARROLLADOR.
+- Que el DESARROLLADOR no accede a fichas, datos médicos, finanzas ni pagos de ningún club.
+- Que la ficha de Jugador se elimina cuando la cuenta pasa a ENTRENADOR o DIRECTIVO.
+- Recuperación de contraseña.
 - Que una cuenta en espera no accede a ninguna información del club ni genera mensualidad.
-- Que solamente el PROPIETARIO o un DIRECTIVO pueden aprobar un ingreso.
+- Que solamente el PRESIDENTE o un DIRECTIVO pueden aprobar un ingreso.
 - Aislamiento entre categorías y entre cuentas de jugador.
 - Que una cuenta no convocada no puede ver ni consultar un partido próximo, y que sí ve todos los
   entrenamientos de su categoría.
@@ -938,10 +1278,16 @@ El diseño aprobado en el lienzo del proyecto es la referencia visual:
 
 <https://claude.ai/artifact/PiDB5BQXRYCeN6nnB4TikR>
 
-La interfaz usa la identidad del club: escudo de Valfor F.C. y colores naranja, vinotinto, dorado
-y negro.
+Ese lienzo define la estructura y el comportamiento de las pantallas para todos los clubes. El
+escudo y los colores no son fijos: cada club se muestra con los suyos (ver §7.2). Los de Valfor
+F.C. son su escudo y los colores naranja, vinotinto, dorado y negro.
+
+El panel de administración de la plataforma no está en el lienzo; su diseño está pendiente.
 
 Toda pantalla debe funcionar en teléfono y en escritorio.
+
+Toda la interfaz ofrece tema claro y tema oscuro, con un botón visible para cambiar entre ellos.
+Los colores de cada club deben verse bien en los dos temas. El lienzo solo muestra el tema claro.
 
 En el diseño, las pantallas móviles rotuladas para "acudientes" corresponden a la cuenta del
 jugador.
@@ -1031,14 +1377,23 @@ Cuando sea necesario, se deben agregar pruebas para evitar que el defecto reapar
 Estas decisiones no están tomadas. Según §25, no deben resolverse por cuenta propia durante la
 implementación.
 
-- **Registro en la pasarela.** A nombre de quién se abre la cuenta de Wompi y en qué cuenta
-  bancaria se recibe el dinero.
+- **Quién invita dentro del club.** Qué roles del club pueden enviar invitaciones de registro, si
+  la invitación caduca y si sirve una sola vez. La del PRESIDENTE la envía el DESARROLLADOR.
+- **Invitación y sala de espera.** Si quien se registra con una invitación del club sigue pasando
+  por la sala de espera o entra ya aprobado.
+- **Dirección del sitio público.** Cómo llega un visitante al sitio público de un club concreto.
+- **Pago por el uso de la plataforma.** Valor, periodicidad, fecha de corte y quién lo paga dentro
+  del club.
+- **Sitio público de un club suspendido.** Si el sitio público de un club suspendido o dado de
+  baja sigue visible.
 - **Matrícula, descuentos y becas.** Si existe un cobro de inscripción y si hay descuentos (por
   ejemplo, por hermanos) o becas.
 - **Fuente automática de posiciones.** Todavía no se conoce ningún enlace o servicio de las ligas
   del que se puedan leer las tablas. Mientras no exista, se mantienen manuales (ver §17.1).
 - **Recordatorios de pago.** Quedan fuera de esta versión (ver §16.8). Si más adelante se quieren,
   habrá que decidir el canal.
+- **Ficha con historial.** Qué pasa si una cuenta que ya tiene cargos, pagos o partidos como
+  jugador pasa a ENTRENADOR o DIRECTIVO.
 - **Registros que no se aprueban.** Qué pasa con una cuenta en espera que el club no quiere
   aceptar: si se puede rechazar, si se borra y si esa persona puede volver a registrarse.
 
@@ -1061,4 +1416,4 @@ Escalabilidad
 La solución más sencilla que cumpla correctamente las reglas de negocio será preferible a una
 solución más compleja.
 
-**Versión**: 1.1.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-06
+**Versión**: 3.5.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-07
