@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Boton } from '../compartido/componentes/Boton';
+import { BotonTema } from '../compartido/componentes/BotonTema';
 import { useSesion } from '../compartido/sesion/useSesion';
 
 /**
@@ -34,6 +35,7 @@ export function DisposicionPlataforma() {
           <span>{sesion?.correo}</span>
           <span>Desarrollador</span>
         </div>
+        <BotonTema enLateral />
         <Boton variante="lateral" onClick={cerrarSesion}>
           Cerrar sesión
         </Boton>

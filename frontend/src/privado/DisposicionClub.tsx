@@ -6,6 +6,7 @@ import type { ClubDto } from '../compartido/api/tipos';
 import { useCarga } from '../compartido/api/useCarga';
 import { Aviso } from '../compartido/componentes/Aviso';
 import { Boton } from '../compartido/componentes/Boton';
+import { BotonTema } from '../compartido/componentes/BotonTema';
 import { nombreDeRol } from '../compartido/formato';
 import { guardarUltimoClub } from '../compartido/sesion/ultimoClub';
 import { useSesion } from '../compartido/sesion/useSesion';
@@ -66,6 +67,7 @@ export function DisposicionClub() {
             <span>{nombreDeRol(rol)}</span>
           </div>
         )}
+        <BotonTema enLateral />
         <Boton variante="lateral" onClick={cerrarSesion}>
           Cerrar sesión
         </Boton>

@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>La Pecosa</title>
+    <script>
+      // Aplica el tema antes de pintar, para que la página no parpadee. Usa la misma clave y la
+      // misma regla que src/compartido/tema/tema.ts: la elección guardada o, si no hay, el dispositivo.
+      (function () {
+        var tema = null;
+        try {
+          tema = localStorage.getItem('lapecosa.tema');
+        } catch (error) {}
+        if (tema !== 'claro' && tema !== 'oscuro') {
+          var oscuro = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          tema = oscuro ? 'oscuro' : 'claro';
+        }
+        document.documentElement.setAttribute('data-tema', tema);
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
