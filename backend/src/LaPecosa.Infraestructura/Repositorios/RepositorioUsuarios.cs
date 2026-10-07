@@ -33,6 +33,25 @@ public class RepositorioUsuarios : IRepositorioUsuarios
         _contexto.Usuarios.FirstOrDefaultAsync(usuario => usuario.EsDesarrollador, cancelacion);
 
     /// <inheritdoc />
+    public Task RegistrarFalloDeSesionAsync(Guid usuarioId, CancellationToken cancelacion = default) =>
+        _contexto.Usuarios
+            .Where(usuario => usuario.Id == usuarioId && !usuario.Bloqueada)
+            .ExecuteUpdateAsync(
+                cambios => cambios
+                    .SetProperty(usuario => usuario.IntentosFallidos, usuario => usuario.IntentosFallidos + 1)
+                    .SetProperty(
+                        usuario => usuario.Bloqueada,
+                        usuario => usuario.IntentosFallidos + 1 >= Usuario.IntentosParaBloquear),
+                cancelacion);
+
+    /// <inheritdoc />
+    public Task ReiniciarFallosDeSesionAsync(Guid usuarioId, CancellationToken cancelacion = default) =>
+        _contexto.Usuarios
+            .Where(usuario => usuario.Id == usuarioId && !usuario.Bloqueada && usuario.IntentosFallidos > 0)
+            .ExecuteUpdateAsync(
+                cambios => cambios.SetProperty(usuario => usuario.IntentosFallidos, 0), cancelacion);
+
+    /// <inheritdoc />
     public void Agregar(Usuario usuario) => _contexto.Usuarios.Add(usuario);
 
     /// <inheritdoc />

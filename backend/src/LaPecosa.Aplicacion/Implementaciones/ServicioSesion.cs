@@ -10,7 +10,8 @@ namespace LaPecosa.Aplicacion.Implementaciones;
 /// <summary>
 /// Representa el servicio de la sesión.
 /// Su responsabilidad es comprobar las credenciales sin revelar si una cuenta existe (RF-005),
-/// emitir y renovar tokens y listar los clubes de la cuenta.
+/// contar los fallos seguidos hasta bloquear la cuenta al quinto, emitir y renovar tokens y listar
+/// los clubes de la cuenta.
 /// No accede al contexto de Entity Framework ni conoce HTTP, y no normaliza la contraseña.
 /// </summary>
 public class ServicioSesion : IServicioSesion
@@ -54,7 +55,20 @@ public class ServicioSesion : IServicioSesion
 
         if (usuario is null || !usuario.PuedeIniciarSesion || !coincide)
         {
+            // Solo cuenta el fallo de una cuenta que podía entrar; una bloqueada no admite ni la
+            // contraseña correcta, y la respuesta es siempre la misma (RF-005).
+            if (usuario is { PuedeIniciarSesion: true })
+            {
+                await _usuarios.RegistrarFalloDeSesionAsync(usuario.Id, cancelacion);
+            }
+
             throw new ExcepcionDeAplicacion("credenciales_invalidas", 401, MensajeCredenciales);
+        }
+
+        // Un acierto antes del quinto fallo reinicia el contador.
+        if (usuario.IntentosFallidos > 0)
+        {
+            await _usuarios.ReiniciarFallosDeSesionAsync(usuario.Id, cancelacion);
         }
 
         return MapperSesion.AToken(_emisor.Emitir(usuario.Id, usuario.SelloSeguridad));

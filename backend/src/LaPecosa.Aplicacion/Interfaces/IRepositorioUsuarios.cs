@@ -19,6 +19,15 @@ public interface IRepositorioUsuarios
     /// <summary>Devuelve la cuenta DESARROLLADOR, si existe.</summary>
     Task<Usuario?> ObtenerDesarrolladorAsync(CancellationToken cancelacion = default);
 
+    /// <summary>
+    /// Suma un fallo de inicio de sesión de forma atómica en la base de datos y bloquea la cuenta
+    /// al llegar al quinto (RF-005). Dos fallos simultáneos cuentan como dos.
+    /// </summary>
+    Task RegistrarFalloDeSesionAsync(Guid usuarioId, CancellationToken cancelacion = default);
+
+    /// <summary>Pone a cero los fallos de una cuenta que no está bloqueada.</summary>
+    Task ReiniciarFallosDeSesionAsync(Guid usuarioId, CancellationToken cancelacion = default);
+
     /// <summary>Añade una cuenta nueva; se guarda con la unidad de trabajo.</summary>
     void Agregar(Usuario usuario);
 
