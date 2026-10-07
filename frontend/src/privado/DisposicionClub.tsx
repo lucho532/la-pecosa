@@ -8,12 +8,14 @@ import { Boton } from '../compartido/componentes/Boton';
 import { nombreDeRol } from '../compartido/formato';
 import { guardarUltimoClub } from '../compartido/sesion/ultimoClub';
 import { useSesion } from '../compartido/sesion/useSesion';
+import { Escudo, IdentidadClub } from '../compartido/tema/IdentidadClub';
 import type { ContextoDelClub } from './contextoClub';
 import { DesplegableClubes } from './DesplegableClubes';
 
 /**
- * Armazón de la aplicación del club elegido: menú lateral, cabecera con el nombre del club siempre
- * visible (constitución §7.2) y cierre de sesión. Pide el club a la API en cada entrada: es la API
+ * Armazón de la aplicación del club elegido: menú lateral, cabecera con el escudo, los colores y el
+ * nombre del club siempre visibles (constitución §7.2) y cierre de sesión. Al cambiar de club en el
+ * desplegable cambia la identidad. Pide el club a la API en cada entrada: es la API
  * la que decide si la persona pertenece a él y si el club está disponible.
  */
 export function DisposicionClub() {
@@ -30,6 +32,7 @@ export function DisposicionClub() {
   const deSesion = sesion?.clubes.find((candidato) => candidato.clubId === clubId);
   const nombre = club?.nombre ?? deSesion?.nombre ?? '';
   const rol = club?.miRol ?? deSesion?.rol;
+  const identidad = club?.identidad ?? deSesion?.identidad;
 
   function cerrarSesion() {
     cerrar();
@@ -39,12 +42,10 @@ export function DisposicionClub() {
   const contexto: ContextoDelClub | null = club ? { club, fijarClub: fijar } : null;
 
   return (
-    <div className="disposicion">
+    <IdentidadClub identidad={identidad} className="disposicion">
       <aside className="lateral">
         <div className="lateral-marca">
-          <span className="distintivo" aria-hidden="true">
-            {nombre.charAt(0)}
-          </span>
+          <Escudo identidad={identidad} nombre={nombre} />
           <span>{nombre}</span>
         </div>
         <DesplegableClubes clubId={clubId} />
@@ -70,6 +71,6 @@ export function DisposicionClub() {
         {!contexto && cargando && <p className="texto-suave">Cargando…</p>}
         {contexto && <Outlet context={contexto} />}
       </main>
-    </div>
+    </IdentidadClub>
   );
 }

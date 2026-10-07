@@ -43,6 +43,12 @@ public interface IRepositorioClubesPlataforma
     /// <summary>Elimina del club a un integrante; se guarda con la unidad de trabajo.</summary>
     void EliminarIntegrante(UsuarioRol integrante);
 
+    /// <summary>
+    /// Guarda el escudo de un club, reemplazando el que hubiera; se guarda con la unidad de trabajo.
+    /// </summary>
+    Task GuardarEscudoAsync(
+        Guid clubId, byte[] contenido, string tipoContenido, CancellationToken cancelacion = default);
+
     /// <summary>Añade un club nuevo; se guarda con la unidad de trabajo.</summary>
     void Agregar(Club club);
 }

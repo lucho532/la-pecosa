@@ -43,6 +43,7 @@ export function Invitacion() {
     <DisposicionCuenta
       titulo={invitacion.nombreClub}
       subtitulo={`Invitación para ser ${nombreDeRol(invitacion.rol).toLowerCase()} del club`}
+      identidad={invitacion.identidad}
     >
       {invitacion.tieneCuenta ? (
         <AceptarInvitacion token={token} invitacion={invitacion} />

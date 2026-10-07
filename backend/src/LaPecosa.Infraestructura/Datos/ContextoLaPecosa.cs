@@ -35,6 +35,9 @@ public class ContextoLaPecosa : DbContext
     /// <summary>Integrantes de los clubes.</summary>
     public DbSet<UsuarioRol> UsuariosRol => Set<UsuarioRol>();
 
+    /// <summary>Escudos de los clubes.</summary>
+    public DbSet<EscudoClub> EscudosClub => Set<EscudoClub>();
+
     /// <summary>Invitaciones para registrarse en un club.</summary>
     public DbSet<Invitacion> Invitaciones => Set<Invitacion>();
 

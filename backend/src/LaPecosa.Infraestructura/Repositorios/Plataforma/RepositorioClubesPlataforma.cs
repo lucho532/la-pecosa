@@ -9,7 +9,7 @@ namespace LaPecosa.Infraestructura.Repositorios.Plataforma;
 /// <summary>
 /// Representa el acceso a los clubes desde el panel del DESARROLLADOR (constitución §7.1, primera
 /// excepción).
-/// Su responsabilidad es leer y guardar clubes y sus presidentes. Se salta el filtro de
+/// Su responsabilidad es leer y guardar clubes, sus presidentes y su escudo. Se salta el filtro de
 /// aislamiento porque el panel trabaja sobre todos los clubes, y por eso solo consulta
 /// integrantes con rol PRESIDENTE.
 /// No expone ningún otro dato de un club (§8) ni contiene reglas de negocio.
@@ -81,6 +81,24 @@ public class RepositorioClubesPlataforma : IRepositorioClubesPlataforma
 
     /// <inheritdoc />
     public void EliminarIntegrante(UsuarioRol integrante) => _contexto.UsuariosRol.Remove(integrante);
+
+    /// <inheritdoc />
+    public async Task GuardarEscudoAsync(
+        Guid clubId, byte[] contenido, string tipoContenido, CancellationToken cancelacion = default)
+    {
+        var escudo = await _contexto.EscudosClub
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(actual => actual.ClubId == clubId, cancelacion);
+
+        if (escudo is null)
+        {
+            _contexto.EscudosClub.Add(new EscudoClub { ClubId = clubId, Contenido = contenido, TipoContenido = tipoContenido });
+            return;
+        }
+
+        escudo.Contenido = contenido;
+        escudo.TipoContenido = tipoContenido;
+    }
 
     /// <inheritdoc />
     public void Agregar(Club club) => _contexto.Clubes.Add(club);

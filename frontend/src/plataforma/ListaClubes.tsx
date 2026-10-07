@@ -8,12 +8,18 @@ import { Boton } from '../compartido/componentes/Boton';
 import { EtiquetaEstado, EtiquetaEstadoClub } from '../compartido/componentes/EtiquetaEstado';
 import { Tabla, type Columna } from '../compartido/componentes/Tabla';
 import { Tarjeta } from '../compartido/componentes/Tarjeta';
+import { Escudo, IdentidadClub } from '../compartido/tema/IdentidadClub';
 import { FormularioCrearClub } from './FormularioCrearClub';
 
 const COLUMNAS: Columna<ClubResumenDto>[] = [
   {
     titulo: 'Club',
-    celda: (club) => <Link to={`/plataforma/clubes/${club.clubId}`}>{club.nombre}</Link>,
+    celda: (club) => (
+      <IdentidadClub identidad={club.identidad} className="fila">
+        <Escudo identidad={club.identidad} nombre={club.nombre} />
+        <Link to={`/plataforma/clubes/${club.clubId}`}>{club.nombre}</Link>
+      </IdentidadClub>
+    ),
   },
   { titulo: 'Estado', celda: (club) => <EtiquetaEstadoClub estado={club.estado} /> },
   {

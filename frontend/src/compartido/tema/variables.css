@@ -93,4 +93,10 @@
   --neutro-principal-texto: #1a1716;
   --neutro-acento: #b9aea6;
   --neutro-acento-texto: #1a1716;
+
+  /* Se repiten para que un bloque con su propio data-tema recalcule la identidad neutra. */
+  --color-club-principal: var(--neutro-principal);
+  --color-club-principal-texto: var(--neutro-principal-texto);
+  --color-club-acento: var(--neutro-acento);
+  --color-club-acento-texto: var(--neutro-acento-texto);
 }
