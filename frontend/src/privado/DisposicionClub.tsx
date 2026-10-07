@@ -9,6 +9,7 @@ import { nombreDeRol } from '../compartido/formato';
 import { guardarUltimoClub } from '../compartido/sesion/ultimoClub';
 import { useSesion } from '../compartido/sesion/useSesion';
 import type { ContextoDelClub } from './contextoClub';
+import { DesplegableClubes } from './DesplegableClubes';
 
 /**
  * Armazón de la aplicación del club elegido: menú lateral, cabecera con el nombre del club siempre
@@ -46,6 +47,7 @@ export function DisposicionClub() {
           </span>
           <span>{nombre}</span>
         </div>
+        <DesplegableClubes clubId={clubId} />
         <nav className="lateral-menu" aria-label={`Menú de ${nombre}`}>
           <NavLink to={`/club/${clubId}`} end>
             Inicio

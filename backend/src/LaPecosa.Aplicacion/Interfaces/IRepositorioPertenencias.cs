@@ -20,6 +20,9 @@ public interface IRepositorioPertenencias
     /// <summary>Cuenta dueña de un número de documento ya normalizado; nulo si nadie lo tiene.</summary>
     Task<Usuario?> ObtenerCuentaPorDocumentoAsync(string numeroDocumento, CancellationToken cancelacion = default);
 
+    /// <summary>Indica si ese número de documento ya normalizado existe en el club.</summary>
+    Task<bool> ExisteDocumentoEnClubAsync(Guid clubId, string numeroDocumento, CancellationToken cancelacion = default);
+
     /// <summary>Indica si la cuenta tiene algún integrante en algún club.</summary>
     Task<bool> TieneAlgunaAsync(Guid usuarioId, CancellationToken cancelacion = default);
 

@@ -51,6 +51,13 @@ public class RepositorioPertenencias : IRepositorioPertenencias
             .FirstOrDefaultAsync(cancelacion);
 
     /// <inheritdoc />
+    public Task<bool> ExisteDocumentoEnClubAsync(
+        Guid clubId, string numeroDocumento, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol
+            .IgnoreQueryFilters()
+            .AnyAsync(integrante => integrante.ClubId == clubId && integrante.NumeroDocumento == numeroDocumento, cancelacion);
+
+    /// <inheritdoc />
     public Task<bool> TieneAlgunaAsync(Guid usuarioId, CancellationToken cancelacion = default) =>
         _contexto.UsuariosRol
             .IgnoreQueryFilters()

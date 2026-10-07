@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProveedorSesion } from './compartido/sesion/ProveedorSesion';
 import { RutaProtegida } from './compartido/sesion/RutaProtegida';
 import { Entrar } from './cuenta/Entrar';
+import { Invitacion } from './cuenta/Invitacion';
 import { Recuperar } from './cuenta/Recuperar';
 import { Restablecer } from './cuenta/Restablecer';
 import { Inicio } from './Inicio';
@@ -21,6 +22,7 @@ export function App() {
           <Route path="/entrar" element={<Entrar />} />
           <Route path="/recuperar" element={<Recuperar />} />
           <Route path="/restablecer" element={<Restablecer />} />
+          <Route path="/invitacion" element={<Invitacion />} />
 
           <Route element={<RutaProtegida quien="desarrollador" />}>
             <Route path="/plataforma" element={<DisposicionPlataforma />}>
