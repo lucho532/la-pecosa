@@ -1,17 +1,31 @@
+using LaPecosa.Api.Configuracion;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
+builder.Services
+    .AgregarApi()
+    .AgregarSeguridad(builder.Configuration)
+    .AgregarInfraestructura(builder.Configuration)
+    .AgregarCasosDeUso();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+await app.PrepararBaseDatosAsync();
 
-app.UseHttpsRedirection();
-
+app.UseExceptionHandler();
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseCors(ConfiguracionSeguridad.PoliticaCors);
+app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
+
+/// <summary>
+/// Representa el punto de entrada de la API.
+/// Su responsabilidad es componer la configuración y arrancar el servidor.
+/// No contiene reglas de negocio; se declara para que las pruebas de integración puedan arrancarla.
+/// </summary>
+public partial class Program;

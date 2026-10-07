@@ -1,0 +1,58 @@
+using LaPecosa.Aplicacion.Interfaces;
+using LaPecosa.Aplicacion.Utilidades;
+using LaPecosa.Infraestructura.Correo;
+using LaPecosa.Infraestructura.Datos;
+using LaPecosa.Infraestructura.Repositorios;
+using LaPecosa.Infraestructura.Repositorios.Plataforma;
+using LaPecosa.Infraestructura.Seguridad;
+using Microsoft.EntityFrameworkCore;
+
+namespace LaPecosa.Api.Configuracion;
+
+/// <summary>
+/// Representa el registro de las dependencias de Infraestructura.
+/// Su responsabilidad es conectar cada interfaz de Aplicacion con su implementación: base de datos,
+/// repositorios, seguridad y correo.
+/// No registra los casos de uso (ver <see cref="RegistroDeCasosDeUso"/>) ni contiene lógica.
+/// </summary>
+public static class RegistroDeServicios
+{
+    /// <summary>Registra la base de datos, los repositorios, la seguridad y el correo.</summary>
+    public static IServiceCollection AgregarInfraestructura(
+        this IServiceCollection servicios, IConfiguration configuracion)
+    {
+        servicios.AddDbContext<ContextoLaPecosa>(opciones =>
+            opciones.UseNpgsql(configuracion.GetConnectionString("LaPecosa")));
+
+        servicios.AddScoped<IContextoClub, ContextoClub>();
+        servicios.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
+        servicios.AddScoped<CuentaInicial>();
+        servicios.AddSingleton<IReloj, RelojSistema>();
+        servicios.AddSingleton<IHashContrasena, HashContrasena>();
+        servicios.AddSingleton<IEmisorTokenSesion, EmisorTokenSesion>();
+
+        servicios.AddScoped<IRepositorioUsuarios, RepositorioUsuarios>();
+        servicios.AddScoped<IRepositorioSolicitudesRecuperacion, RepositorioSolicitudesRecuperacion>();
+        servicios.AddScoped<IRepositorioPertenencias, RepositorioPertenencias>();
+
+        servicios.Configure<OpcionesCorreo>(opciones =>
+        {
+            opciones.Llave = configuracion["Brevo:Llave"] ?? string.Empty;
+            opciones.Remitente = configuracion["Brevo:Remitente"] ?? string.Empty;
+            opciones.UrlBaseFrontend = (configuracion["Frontend:UrlBase"] ?? string.Empty).TrimEnd('/');
+        });
+
+        // Sin llave de Brevo los correos se escriben en el registro (research §9).
+        if (string.IsNullOrWhiteSpace(configuracion["Brevo:Llave"]))
+        {
+            servicios.AddScoped<IServicioCorreo, ServicioCorreoRegistro>();
+        }
+        else
+        {
+            servicios.AddHttpClient<IServicioCorreo, ServicioCorreoBrevo>(
+                cliente => cliente.Timeout = TimeSpan.FromSeconds(15));
+        }
+
+        return servicios;
+    }
+}
