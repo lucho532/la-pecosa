@@ -40,7 +40,6 @@ public class ControladorFotoPerfil : ControladorBase
 
     /// <summary>Carga o reemplaza la foto de perfil: PNG, JPEG o WebP de hasta 1 MB.</summary>
     [HttpPut]
-    [Consumes("multipart/form-data")]
     [RequestSizeLimit(ArchivoCargado.LimiteDePeticion)]
     [RequestFormLimits(MultipartBodyLengthLimit = ArchivoCargado.LimiteDePeticion)]
     [ProducesResponseType<SesionDto>(StatusCodes.Status200OK)]

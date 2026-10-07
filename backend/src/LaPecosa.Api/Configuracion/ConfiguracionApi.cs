@@ -29,6 +29,10 @@ public static class ConfiguracionApi
             .ConfigureApiBehaviorOptions(opciones =>
             {
                 opciones.InvalidModelStateResponseFactory = ManejadorErrores.DatosInvalidos;
+
+                // Sin esto, una carga de archivo con otro tipo de contenido se rechaza con 415 al
+                // elegir el endpoint, antes de comprobar quién la envía. Primero va la autorización.
+                opciones.SuppressConsumesConstraintForFormFileParameters = true;
             });
 
         servicios.AddExceptionHandler<ManejadorErrores>();

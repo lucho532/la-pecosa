@@ -39,7 +39,6 @@ public class ControladorIdentidadClub : ControladorBase
 
     /// <summary>Carga o reemplaza el escudo del club: PNG, JPEG o WebP de hasta 1 MB.</summary>
     [HttpPut("escudo")]
-    [Consumes("multipart/form-data")]
     [RequestSizeLimit(ArchivoCargado.LimiteDePeticion)]
     [RequestFormLimits(MultipartBodyLengthLimit = ArchivoCargado.LimiteDePeticion)]
     public async Task<ClubDetalleDto> GuardarEscudo(Guid clubId, IFormFile? archivo, CancellationToken cancelacion) =>
