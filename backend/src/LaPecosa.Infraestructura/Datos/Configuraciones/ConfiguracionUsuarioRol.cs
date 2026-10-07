@@ -1,0 +1,47 @@
+using LaPecosa.Aplicacion.Utilidades;
+using LaPecosa.Dominio.Entidades;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace LaPecosa.Infraestructura.Datos.Configuraciones;
+
+/// <summary>
+/// Representa la configuración de persistencia de <see cref="UsuarioRol"/>.
+/// Su responsabilidad es fijar la tabla, las longitudes, el documento único por club (RF-017) y el
+/// borrado en cascada desde el club.
+/// No contiene reglas de negocio.
+/// </summary>
+public class ConfiguracionUsuarioRol : IEntityTypeConfiguration<UsuarioRol>
+{
+    /// <inheritdoc />
+    public void Configure(EntityTypeBuilder<UsuarioRol> builder)
+    {
+        builder.ToTable("UsuariosRol");
+        builder.HasKey(integrante => integrante.Id);
+        builder.Property(integrante => integrante.Id).ValueGeneratedNever();
+
+        builder.Property(integrante => integrante.Rol).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(integrante => integrante.EstadoIngreso).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(integrante => integrante.Nombres).HasMaxLength(80).IsRequired();
+        builder.Property(integrante => integrante.Apellidos).HasMaxLength(80).IsRequired();
+        builder.Property(integrante => integrante.TipoDocumento).HasConversion<string>().HasMaxLength(30).IsRequired();
+        builder.Property(integrante => integrante.NumeroDocumento).HasMaxLength(20).IsRequired();
+
+        builder.HasOne(integrante => integrante.Club)
+            .WithMany()
+            .HasForeignKey(integrante => integrante.ClubId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(integrante => integrante.Usuario)
+            .WithMany()
+            .HasForeignKey(integrante => integrante.UsuarioId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(integrante => new { integrante.ClubId, integrante.NumeroDocumento })
+            .IsUnique()
+            .HasDatabaseName(IndicesUnicos.DocumentoEnClub);
+
+        builder.HasIndex(integrante => new { integrante.ClubId, integrante.UsuarioId });
+        builder.HasIndex(integrante => integrante.NumeroDocumento);
+    }
+}

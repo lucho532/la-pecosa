@@ -1,0 +1,61 @@
+using LaPecosa.Aplicacion.Interfaces;
+using LaPecosa.Dominio.Entidades;
+using LaPecosa.Infraestructura.Datos;
+using Microsoft.EntityFrameworkCore;
+
+namespace LaPecosa.Infraestructura.Repositorios.Plataforma;
+
+/// <summary>
+/// Representa el único acceso entre clubes de una cuenta (constitución §7.1, segunda excepción).
+/// Su responsabilidad es responder a qué clubes pertenece una cuenta y de qué cuenta es un
+/// documento. Por eso se salta el filtro de aislamiento, y cada consulta va acotada por cuenta o
+/// por documento.
+/// No lista los integrantes de un club ni entrega datos de un club a quien no pertenece a él.
+/// </summary>
+public class RepositorioPertenencias : IRepositorioPertenencias
+{
+    private readonly ContextoLaPecosa _contexto;
+
+    /// <summary>Crea el repositorio sobre el contexto de la petición.</summary>
+    public RepositorioPertenencias(ContextoLaPecosa contexto)
+    {
+        _contexto = contexto;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<UsuarioRol>> ListarDeUsuarioAsync(
+        Guid usuarioId, CancellationToken cancelacion = default) =>
+        await _contexto.UsuariosRol
+            .IgnoreQueryFilters()
+            .Include(integrante => integrante.Club)
+            .Where(integrante => integrante.UsuarioId == usuarioId)
+            .OrderBy(integrante => integrante.Club!.Nombre)
+            .ToListAsync(cancelacion);
+
+    /// <inheritdoc />
+    public Task<UsuarioRol?> ObtenerAsync(Guid usuarioId, Guid clubId, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol
+            .IgnoreQueryFilters()
+            .Include(integrante => integrante.Club)
+            .Where(integrante => integrante.UsuarioId == usuarioId && integrante.ClubId == clubId)
+            .OrderBy(integrante => integrante.CreadoEn)
+            .FirstOrDefaultAsync(cancelacion);
+
+    /// <inheritdoc />
+    public Task<Usuario?> ObtenerCuentaPorDocumentoAsync(
+        string numeroDocumento, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol
+            .IgnoreQueryFilters()
+            .Where(integrante => integrante.NumeroDocumento == numeroDocumento)
+            .Select(integrante => integrante.Usuario)
+            .FirstOrDefaultAsync(cancelacion);
+
+    /// <inheritdoc />
+    public Task<bool> TieneAlgunaAsync(Guid usuarioId, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol
+            .IgnoreQueryFilters()
+            .AnyAsync(integrante => integrante.UsuarioId == usuarioId, cancelacion);
+
+    /// <inheritdoc />
+    public void Agregar(UsuarioRol integrante) => _contexto.UsuariosRol.Add(integrante);
+}
