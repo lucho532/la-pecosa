@@ -4,6 +4,7 @@ import { RutaProtegida } from './compartido/sesion/RutaProtegida';
 import { ProveedorTema } from './compartido/tema/ProveedorTema';
 import { Entrar } from './cuenta/Entrar';
 import { Invitacion } from './cuenta/Invitacion';
+import { MiPerfil } from './cuenta/MiPerfil';
 import { Recuperar } from './cuenta/Recuperar';
 import { Restablecer } from './cuenta/Restablecer';
 import { Inicio } from './Inicio';
@@ -26,6 +27,10 @@ export function App() {
             <Route path="/recuperar" element={<Recuperar />} />
             <Route path="/restablecer" element={<Restablecer />} />
             <Route path="/invitacion" element={<Invitacion />} />
+
+            <Route element={<RutaProtegida quien="cualquiera" />}>
+              <Route path="/perfil" element={<MiPerfil />} />
+            </Route>
 
             <Route element={<RutaProtegida quien="desarrollador" />}>
               <Route path="/plataforma" element={<DisposicionPlataforma />}>

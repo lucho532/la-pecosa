@@ -32,6 +32,9 @@ public class ContextoLaPecosa : DbContext
     /// <summary>Cuentas.</summary>
     public DbSet<Usuario> Usuarios => Set<Usuario>();
 
+    /// <summary>Fotos de perfil de las cuentas.</summary>
+    public DbSet<FotoPerfil> FotosPerfil => Set<FotoPerfil>();
+
     /// <summary>Integrantes de los clubes.</summary>
     public DbSet<UsuarioRol> UsuariosRol => Set<UsuarioRol>();
 

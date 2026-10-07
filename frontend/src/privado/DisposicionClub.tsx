@@ -5,6 +5,7 @@ import { ErrorApi } from '../compartido/api/errores';
 import type { ClubDto } from '../compartido/api/tipos';
 import { useCarga } from '../compartido/api/useCarga';
 import { Aviso } from '../compartido/componentes/Aviso';
+import { Avatar, inicialesDe } from '../compartido/componentes/Avatar';
 import { Boton } from '../compartido/componentes/Boton';
 import { BotonTema } from '../compartido/componentes/BotonTema';
 import { nombreDeRol } from '../compartido/formato';
@@ -67,6 +68,7 @@ export function DisposicionClub() {
             <span>{nombreDeRol(rol)}</span>
           </div>
         )}
+        <Avatar iniciales={deSesion ? inicialesDe(deSesion.nombres, deSesion.apellidos) : ''} />
         <BotonTema enLateral />
         <Boton variante="lateral" onClick={cerrarSesion}>
           Cerrar sesión

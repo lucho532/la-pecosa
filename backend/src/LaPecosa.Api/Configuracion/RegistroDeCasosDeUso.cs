@@ -15,6 +15,7 @@ public static class RegistroDeCasosDeUso
     {
         servicios.AddScoped<IServicioSesion, ServicioSesion>();
         servicios.AddScoped<IServicioRecuperacion, ServicioRecuperacion>();
+        servicios.AddScoped<IServicioFotoPerfil, ServicioFotoPerfil>();
 
         servicios.AddScoped<IServicioConsultaClubes, ServicioConsultaClubes>();
         servicios.AddScoped<IServicioCreacionClub, ServicioCreacionClub>();
