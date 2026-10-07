@@ -15,7 +15,7 @@ export function InicioClub() {
       </div>
       <Tarjeta titulo="Tu club">
         <p>
-          Entraste como <strong>{nombreDeRol(club.miRol)}</strong> de {club.nombre}.
+          Tu rol en este club: <strong>{nombreDeRol(club.miRol)}</strong>
         </p>
         {club.sede && <p className="texto-suave">Sede: {club.sede}</p>}
         {club.direccion && <p className="texto-suave">Dirección: {club.direccion}</p>}

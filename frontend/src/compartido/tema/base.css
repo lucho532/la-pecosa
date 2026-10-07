@@ -104,6 +104,11 @@ img {
   gap: 4px;
 }
 
+/* Con la identidad neutra el distintivo tiene el color del menú: el aro lo separa del fondo. */
+.lateral .distintivo {
+  box-shadow: 0 0 0 2px var(--lateral-texto-suave);
+}
+
 .lateral-menu a {
   display: flex;
   align-items: center;

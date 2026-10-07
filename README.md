@@ -89,10 +89,12 @@ El recorrido manual completo, paso a paso y con el resultado esperado de cada un
 
 ## Desarrollo sin Docker para la API y el frontend
 
-Con la base de datos de Docker en marcha (`docker compose up bd`) y su puerto publicado, la API se
-puede ejecutar con `dotnet run --project backend/src/LaPecosa.Api` pasando la misma configuración
-de `.env` como variables de entorno, y el frontend con `npm --prefix frontend run dev`. La
-dirección de la API que usa el frontend se fija con la variable `VITE_URL_API`.
+`docker-compose.yml` no publica el puerto de la base de datos. Para ejecutar la API fuera de
+Docker hace falta un PostgreSQL 17 accesible (por ejemplo, añadiendo `ports: ["5432:5432"]` al
+servicio `bd` en un archivo `docker-compose.override.yml` propio) y pasar a
+`dotnet run --project backend/src/LaPecosa.Api` la misma configuración de `.env` como variables de
+entorno, con `Host=localhost` en la cadena de conexión. El frontend se ejecuta con
+`npm --prefix frontend run dev`; la dirección de la API que usa se fija con `VITE_URL_API`.
 
 Para crear una migración tras cambiar el modelo:
 
