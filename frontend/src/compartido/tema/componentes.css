@@ -1,0 +1,220 @@
+/* Estilos de los componentes comunes de compartido/componentes. */
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.boton-principal {
+  background: var(--color-club-principal);
+  color: var(--color-club-principal-texto);
+}
+
+.boton-secundario {
+  background: var(--superficie);
+  border-color: var(--borde-fuerte);
+  color: var(--texto);
+}
+
+.boton-peligro {
+  background: var(--peligro);
+  color: var(--peligro-texto);
+}
+
+.boton-texto {
+  min-height: 44px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--enlace);
+  text-decoration: underline;
+}
+
+.boton-lateral {
+  background: transparent;
+  border-color: var(--lateral-texto-suave);
+  color: var(--lateral-texto);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.campo label {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 8px;
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+}
+
+.campo input[type='color'] {
+  padding: 4px;
+}
+
+.campo input:read-only {
+  background: var(--superficie-suave);
+}
+
+.campo input[aria-invalid='true'],
+.campo select[aria-invalid='true'] {
+  border: 2px solid var(--peligro);
+}
+
+.campo-error {
+  color: var(--peligro);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.aviso {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.tono-info {
+  background: var(--info-fondo);
+  color: var(--info-texto);
+}
+
+.tono-exito {
+  background: var(--exito-fondo);
+  color: var(--exito-texto);
+}
+
+.tono-aviso {
+  background: var(--aviso-fondo);
+  color: var(--aviso-texto);
+}
+
+.tono-error {
+  background: var(--error-fondo);
+  color: var(--error-texto);
+}
+
+.tono-neutro {
+  background: var(--neutro-fondo);
+  color: var(--neutro-texto);
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: clamp(16px, 3vw, 22px);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+
+.tarjeta-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Las tablas anchas se desplazan dentro de su caja, nunca la página. */
+.tabla-caja {
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th {
+  padding: 10px 8px;
+  color: var(--texto-suave);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.tabla td {
+  padding: 14px 8px;
+  border-top: 1px solid var(--borde);
+  vertical-align: middle;
+}
+
+.dialogo {
+  width: min(480px, calc(100vw - 32px));
+  padding: 22px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--texto);
+}
+
+.dialogo::backdrop {
+  background: var(--velo);
+}
+
+.dialogo form,
+.dialogo-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dialogo-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.distintivo {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-club-principal);
+  color: var(--color-club-principal-texto);
+  font-weight: 800;
+  object-fit: cover;
+}

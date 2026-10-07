@@ -1,0 +1,203 @@
+/* Base y disposición general. Diseño adaptable, sin desplazamiento horizontal a 360 px (RF-035). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: Barlow, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(32px, 7vw, 48px);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+a {
+  color: var(--enlace);
+  font-weight: 700;
+}
+
+img {
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.texto-suave {
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Disposición con menú lateral: en pantallas estrechas el menú pasa arriba. */
+.disposicion {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+}
+
+.lateral {
+  flex: 1 1 240px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 16px;
+  background: var(--lateral-fondo);
+  color: var(--lateral-texto);
+}
+
+.lateral-marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px;
+  font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.lateral-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lateral-menu a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 8px;
+  color: var(--lateral-texto);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lateral-menu a[aria-current='page'] {
+  background: var(--lateral-activo-fondo);
+  color: var(--lateral-activo-texto);
+}
+
+.lateral-pie {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--lateral-suave);
+}
+
+.lateral-pie span:last-child {
+  color: var(--lateral-texto-suave);
+  font-size: 14px;
+}
+
+.principal {
+  flex: 999 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: clamp(16px, 4vw, 32px);
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 14px;
+}
+
+/* Pantallas sin sesión: una columna centrada. */
+.centrado {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: clamp(16px, 5vw, 48px) 16px;
+}
+
+.centrado > * {
+  width: 100%;
+  max-width: 460px;
+}
+
+@media (max-width: 560px) {
+  .lateral {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .lateral-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .lateral-pie {
+    display: none;
+  }
+}

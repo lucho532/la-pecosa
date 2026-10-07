@@ -37,6 +37,7 @@ public class ClienteDePrueba
     public async Task<HttpResponseMessage> IniciarSesionAsync(string identificador, string contrasena = Sembrador.Contrasena)
     {
         var respuesta = await PostAsync("/api/sesion", new { identificador, contrasena });
+        await respuesta.Content.LoadIntoBufferAsync();
         if (respuesta.IsSuccessStatusCode)
         {
             var cuerpo = await LeerAsync<JsonElement>(respuesta);
@@ -95,8 +96,9 @@ public class ClienteDePrueba
         return Http.PutAsync(ruta, formulario);
     }
 
+    /// <summary>Lee el cuerpo JSON; se puede llamar varias veces sobre la misma respuesta.</summary>
     public static async Task<T> LeerAsync<T>(HttpResponseMessage respuesta) =>
-        (await respuesta.Content.ReadFromJsonAsync<T>(Json))!;
+        JsonSerializer.Deserialize<T>(await respuesta.Content.ReadAsStringAsync(), Json)!;
 
     /// <summary>Lee el <c>codigo</c> de una respuesta <c>application/problem+json</c>.</summary>
     public static async Task<string?> CodigoAsync(HttpResponseMessage respuesta)
@@ -107,4 +109,8 @@ public class ClienteDePrueba
         Assert.Equal((int)respuesta.StatusCode, problema.GetProperty("status").GetInt32());
         return problema.GetProperty("codigo").GetString();
     }
+
+    /// <summary>Lee el <c>title</c> de una respuesta <c>application/problem+json</c>.</summary>
+    public static async Task<string> TituloAsync(HttpResponseMessage respuesta) =>
+        (await LeerAsync<JsonElement>(respuesta)).GetProperty("title").GetString()!;
 }

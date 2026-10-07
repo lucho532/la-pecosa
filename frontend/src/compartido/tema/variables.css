@@ -1,0 +1,96 @@
+/*
+  Variables de color de la plataforma. Todo componente usa estas variables, nunca un color fijo,
+  para que los dos temas funcionen (RF-032 a RF-034).
+
+  Los colores del club (--color-club-*) nacen con la identidad neutra de la plataforma y los
+  sobrescribe IdentidadClub.tsx cuando el club tiene los suyos. Se usan solo como relleno; el texto
+  sobre ellos sale de contraste.ts.
+*/
+
+:root,
+[data-tema='claro'] {
+  color-scheme: light;
+
+  --fondo: #f6f3ef;
+  --superficie: #ffffff;
+  --superficie-suave: #ece6df;
+  --texto: #231f1e;
+  --texto-suave: #5e5650;
+  --borde: #e4ddd6;
+  --borde-fuerte: #a69c94;
+  --enlace: #8f2a0b;
+  --foco: #1d4e89;
+  --velo: rgb(35 31 30 / 55%);
+
+  --lateral-fondo: #231f1e;
+  --lateral-texto: #ffffff;
+  --lateral-texto-suave: #d8cfcb;
+  --lateral-suave: #3a302d;
+  --lateral-activo-fondo: #ffffff;
+  --lateral-activo-texto: #231f1e;
+
+  --exito-fondo: #dff1e7;
+  --exito-texto: #0a5435;
+  --info-fondo: #e1ecf8;
+  --info-texto: #1d4e89;
+  --aviso-fondo: #fff4d1;
+  --aviso-texto: #6b4e00;
+  --error-fondo: #fbe4df;
+  --error-texto: #8f1d14;
+  --neutro-fondo: #ece6df;
+  --neutro-texto: #3a302d;
+
+  --peligro: #a11d1d;
+  --peligro-texto: #ffffff;
+
+  --neutro-principal: #231f1e;
+  --neutro-principal-texto: #ffffff;
+  --neutro-acento: #5e5650;
+  --neutro-acento-texto: #ffffff;
+
+  --color-club-principal: var(--neutro-principal);
+  --color-club-principal-texto: var(--neutro-principal-texto);
+  --color-club-acento: var(--neutro-acento);
+  --color-club-acento-texto: var(--neutro-acento-texto);
+}
+
+[data-tema='oscuro'] {
+  color-scheme: dark;
+
+  --fondo: #1a1716;
+  --superficie: #262120;
+  --superficie-suave: #332c2a;
+  --texto: #f3eee9;
+  --texto-suave: #b9aea6;
+  --borde: #3d3532;
+  --borde-fuerte: #7a6f68;
+  --enlace: #ffb596;
+  --foco: #9cc4f2;
+  --velo: rgb(0 0 0 / 65%);
+
+  --lateral-fondo: #110f0e;
+  --lateral-texto: #f3eee9;
+  --lateral-texto-suave: #b9aea6;
+  --lateral-suave: #262120;
+  --lateral-activo-fondo: #f3eee9;
+  --lateral-activo-texto: #1a1716;
+
+  --exito-fondo: #12392a;
+  --exito-texto: #a8e3c4;
+  --info-fondo: #16304f;
+  --info-texto: #b5d3f5;
+  --aviso-fondo: #4a3a08;
+  --aviso-texto: #ffe08a;
+  --error-fondo: #4d1a15;
+  --error-texto: #ffc2ba;
+  --neutro-fondo: #332c2a;
+  --neutro-texto: #e2d9d3;
+
+  --peligro: #ff8a80;
+  --peligro-texto: #1a1716;
+
+  --neutro-principal: #f3eee9;
+  --neutro-principal-texto: #1a1716;
+  --neutro-acento: #b9aea6;
+  --neutro-acento-texto: #1a1716;
+}

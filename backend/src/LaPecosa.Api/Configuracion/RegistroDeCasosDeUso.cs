@@ -1,3 +1,6 @@
+using LaPecosa.Aplicacion.Implementaciones;
+using LaPecosa.Aplicacion.Servicios;
+
 namespace LaPecosa.Api.Configuracion;
 
 /// <summary>
@@ -10,6 +13,8 @@ public static class RegistroDeCasosDeUso
     /// <summary>Registra los servicios de los casos de uso.</summary>
     public static IServiceCollection AgregarCasosDeUso(this IServiceCollection servicios)
     {
+        servicios.AddScoped<IServicioSesion, ServicioSesion>();
+
         return servicios;
     }
 }
