@@ -5,6 +5,7 @@ import { useCarga } from '../compartido/api/useCarga';
 import { Aviso } from '../compartido/componentes/Aviso';
 import { EtiquetaEstadoClub } from '../compartido/componentes/EtiquetaEstado';
 import { SeccionInvitaciones } from './SeccionInvitaciones';
+import { SeccionPresidentes } from './SeccionPresidentes';
 
 /** Lo que recibe cada sección del detalle de un club. */
 export interface PropsSeccion {
@@ -47,6 +48,7 @@ export function DetalleClub() {
       {club.presidentes.length === 0 && (
         <Aviso tono="aviso">El presidente de este club todavía no se ha registrado.</Aviso>
       )}
+      <SeccionPresidentes {...seccion} />
       <SeccionInvitaciones {...seccion} />
     </>
   );

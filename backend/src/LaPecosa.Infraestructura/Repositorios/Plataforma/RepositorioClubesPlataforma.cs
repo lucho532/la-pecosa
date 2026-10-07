@@ -64,5 +64,24 @@ public class RepositorioClubesPlataforma : IRepositorioClubesPlataforma
             cancelacion);
 
     /// <inheritdoc />
+    public Task<Club?> ObtenerBloqueandoAsync(Guid clubId, CancellationToken cancelacion = default) =>
+        _contexto.Clubes
+            .FromSqlInterpolated($"SELECT * FROM \"Clubes\" WHERE \"Id\" = {clubId} FOR UPDATE")
+            .FirstOrDefaultAsync(cancelacion);
+
+    /// <inheritdoc />
+    public Task<UsuarioRol?> ObtenerPresidenteAsync(
+        Guid clubId, Guid usuarioRolId, CancellationToken cancelacion = default) =>
+        Presidentes.FirstOrDefaultAsync(
+            integrante => integrante.ClubId == clubId && integrante.Id == usuarioRolId, cancelacion);
+
+    /// <inheritdoc />
+    public Task<int> ContarPresidentesAsync(Guid clubId, CancellationToken cancelacion = default) =>
+        Presidentes.CountAsync(integrante => integrante.ClubId == clubId, cancelacion);
+
+    /// <inheritdoc />
+    public void EliminarIntegrante(UsuarioRol integrante) => _contexto.UsuariosRol.Remove(integrante);
+
+    /// <inheritdoc />
     public void Agregar(Club club) => _contexto.Clubes.Add(club);
 }

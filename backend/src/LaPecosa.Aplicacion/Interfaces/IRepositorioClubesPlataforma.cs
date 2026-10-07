@@ -28,6 +28,21 @@ public interface IRepositorioClubesPlataforma
     /// <summary>Indica si la cuenta con ese correo normalizado ya es presidente del club.</summary>
     Task<bool> EsPresidenteAsync(Guid clubId, string correoNormalizado, CancellationToken cancelacion = default);
 
+    /// <summary>
+    /// Busca un club bloqueando su fila hasta el final de la transacción, para que las reglas que
+    /// cuentan sus presidentes no se crucen con otro cambio simultáneo.
+    /// </summary>
+    Task<Club?> ObtenerBloqueandoAsync(Guid clubId, CancellationToken cancelacion = default);
+
+    /// <summary>Busca a un presidente registrado de un club por el identificador de su integrante.</summary>
+    Task<UsuarioRol?> ObtenerPresidenteAsync(Guid clubId, Guid usuarioRolId, CancellationToken cancelacion = default);
+
+    /// <summary>Número de presidentes registrados de un club; las invitaciones no cuentan.</summary>
+    Task<int> ContarPresidentesAsync(Guid clubId, CancellationToken cancelacion = default);
+
+    /// <summary>Elimina del club a un integrante; se guarda con la unidad de trabajo.</summary>
+    void EliminarIntegrante(UsuarioRol integrante);
+
     /// <summary>Añade un club nuevo; se guarda con la unidad de trabajo.</summary>
     void Agregar(Club club);
 }
