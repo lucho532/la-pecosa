@@ -1,0 +1,900 @@
+openapi: 3.1.0
+info:
+  title: La Pecosa - API de la funcionalidad 001 (base multiclub)
+  version: 0.1.0
+  description: |
+    Contrato de la API para la base multiclub y el panel de administración de la plataforma.
+
+    Convenciones:
+    - Todos los errores usan `application/problem+json` con un campo `codigo` estable.
+    - Salvo los marcados con `security: []`, todos los endpoints exigen sesión.
+    - `/api/plataforma/**` solo admite a la cuenta DESARROLLADOR. A cualquier otra cuenta le
+      responde 403 y a quien no tiene sesión, 401.
+    - `/api/clubes/{clubId}/**` exige un integrante del usuario en ese club. Sin él responde 404,
+      también al DESARROLLADOR. Club suspendido y rol distinto de PRESIDENTE: 403
+      `club_suspendido`. Club dado de baja: 403 `club_dado_de_baja`.
+    - Ningún DTO contiene contraseñas, hashes ni tokens de invitación o recuperación.
+
+servers:
+  - url: http://localhost:8080
+
+security:
+  - sesion: []
+
+tags:
+  - name: Sesion
+  - name: Cuenta
+  - name: Invitaciones
+  - name: Club
+  - name: Publico
+  - name: Plataforma
+
+paths:
+  /api/sesion:
+    post:
+      tags: [Sesion]
+      summary: Inicia sesión con correo o documento y contraseña
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IniciarSesionDto' }
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenSesionDto' }
+        '401':
+          description: |
+            `credenciales_invalidas`. Misma respuesta si la cuenta no existe, si la contraseña es
+            incorrecta o si la cuenta está bloqueada. El mensaje explica cómo recuperar la
+            contraseña.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '429': { $ref: '#/components/responses/DemasiadasPeticiones' }
+    get:
+      tags: [Sesion]
+      summary: Devuelve la cuenta actual y los clubes a los que pertenece
+      responses:
+        '200':
+          description: Sesión actual
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SesionDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+
+  /api/sesion/renovacion:
+    post:
+      tags: [Sesion]
+      summary: Cambia un token válido por uno nuevo
+      responses:
+        '200':
+          description: Token nuevo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenSesionDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+
+  /api/cuenta/recuperacion:
+    post:
+      tags: [Cuenta]
+      summary: Pide el correo de recuperación de contraseña
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PedirRecuperacionDto' }
+      responses:
+        '202':
+          description: Siempre la misma respuesta, exista o no el correo
+        '429': { $ref: '#/components/responses/DemasiadasPeticiones' }
+
+  /api/cuenta/recuperacion/confirmacion:
+    post:
+      tags: [Cuenta]
+      summary: Crea una contraseña nueva con el enlace recibido y desbloquea la cuenta
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RestablecerContrasenaDto' }
+      responses:
+        '204':
+          description: Contraseña cambiada; los tokens anteriores dejan de servir
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '410':
+          description: '`enlace_no_valido`. El enlace ya se usó, caducó o no existe'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/cuenta/foto:
+    get:
+      tags: [Cuenta]
+      summary: Devuelve la foto de perfil de la cuenta con sesión
+      description: Solo la del dueño de la sesión; no existe forma de pedir la de otra cuenta.
+      responses:
+        '200':
+          description: Imagen
+          content:
+            image/png: {}
+            image/jpeg: {}
+            image/webp: {}
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    put:
+      tags: [Cuenta]
+      summary: Carga o reemplaza la foto de perfil de la cuenta con sesión
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [archivo]
+              properties:
+                archivo:
+                  type: string
+                  format: binary
+                  description: PNG, JPEG o WebP de hasta 1 MB
+      responses:
+        '200':
+          description: Foto guardada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SesionDto' }
+        '400':
+          description: '`foto_no_es_imagen` o `foto_demasiado_grande`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+    delete:
+      tags: [Cuenta]
+      summary: Quita la foto de perfil de la cuenta con sesión
+      responses:
+        '204':
+          description: Foto quitada, o no había ninguna
+        '401': { $ref: '#/components/responses/SinSesion' }
+
+  /api/invitaciones/consulta:
+    post:
+      tags: [Invitaciones]
+      summary: Devuelve los datos fijos de una invitación para mostrar el registro
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TokenDto' }
+      responses:
+        '200':
+          description: Invitación vigente
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitacionVigenteDto' }
+        '410': { $ref: '#/components/responses/InvitacionNoValida' }
+
+  /api/invitaciones/registro:
+    post:
+      tags: [Invitaciones]
+      summary: Registra una cuenta nueva con una invitación e inicia su sesión
+      description: El correo es siempre el de la invitación; no se acepta otro.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegistrarConInvitacionDto' }
+      responses:
+        '201':
+          description: Cuenta e integrante creados
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenSesionDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '409':
+          description: |
+            `correo_ya_registrado` (el correo de la invitación ya tiene cuenta: debe iniciar
+            sesión y aceptarla), `documento_repetido_en_club` o `documento_en_otra_cuenta`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '410': { $ref: '#/components/responses/InvitacionNoValida' }
+
+  /api/invitaciones/aceptacion:
+    post:
+      tags: [Invitaciones]
+      summary: Añade a quien ya tiene cuenta al club de la invitación
+      description: La sesión debe ser la de la cuenta cuyo correo recibió la invitación.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TokenDto' }
+      responses:
+        '201':
+          description: Pertenencia al club creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDeSesionDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403':
+          description: '`invitacion_de_otro_correo`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409':
+          description: '`documento_repetido_en_club`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '410': { $ref: '#/components/responses/InvitacionNoValida' }
+
+  /api/clubes/{clubId}:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Club]
+      summary: Datos e identidad del club elegido
+      responses:
+        '200':
+          description: Club
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/ClubNoDisponible' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/configuracion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    put:
+      tags: [Club]
+      summary: El PRESIDENTE edita nombre, sede, dirección y contacto de su club
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActualizarConfiguracionClubDto' }
+      responses:
+        '200':
+          description: Configuración guardada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403':
+          description: '`rol_no_autorizado`, o club no disponible'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/NombreRepetido' }
+
+  /api/publico/clubes/{clubId}/escudo:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Publico]
+      summary: Imagen del escudo del club
+      security: []
+      parameters:
+        - name: v
+          in: query
+          description: Versión del escudo, solo para caché
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Imagen
+          content:
+            image/png: {}
+            image/jpeg: {}
+            image/webp: {}
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/plataforma/clubes:
+    get:
+      tags: [Plataforma]
+      summary: Lista de todos los clubes con su estado
+      responses:
+        '200':
+          description: Clubes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ClubResumenDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+    post:
+      tags: [Plataforma]
+      summary: Crea un club e invita a su presidente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CrearClubDto' }
+      responses:
+        '201':
+          description: |
+            Club creado. Si el correo no pudo enviarse, el club se crea igualmente y la
+            invitación llega con `estadoEnvio: FALLIDO`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDetalleDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '409': { $ref: '#/components/responses/NombreRepetido' }
+
+  /api/plataforma/clubes/{clubId}:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Plataforma]
+      summary: Detalle de un club, con sus presidentes y sus invitaciones sin usar
+      responses:
+        '200':
+          description: Club
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDetalleDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/plataforma/clubes/{clubId}/configuracion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    put:
+      tags: [Plataforma]
+      summary: El DESARROLLADOR edita nombre, sede, dirección y contacto de un club
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActualizarConfiguracionClubDto' }
+      responses:
+        '200':
+          description: Configuración guardada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDetalleDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/NombreRepetido' }
+
+  /api/plataforma/clubes/{clubId}/colores:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    put:
+      tags: [Plataforma]
+      summary: Define los colores del club
+      description: El aviso de contraste lo da el panel antes de llamar a este endpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActualizarColoresDto' }
+      responses:
+        '200':
+          description: Colores guardados
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDetalleDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/plataforma/clubes/{clubId}/escudo:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    put:
+      tags: [Plataforma]
+      summary: Carga o reemplaza el escudo del club
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [archivo]
+              properties:
+                archivo:
+                  type: string
+                  format: binary
+                  description: PNG, JPEG o WebP de hasta 1 MB
+      responses:
+        '200':
+          description: Escudo guardado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDetalleDto' }
+        '400':
+          description: '`escudo_no_es_imagen` o `escudo_demasiado_grande`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/plataforma/clubes/{clubId}/estado:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    put:
+      tags: [Plataforma]
+      summary: Suspende, levanta la suspensión, da de baja o revierte la baja
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CambiarEstadoClubDto' }
+      responses:
+        '200':
+          description: Estado cambiado; queda registrado quién y cuándo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDetalleDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`transicion_no_permitida`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/plataforma/clubes/{clubId}/eliminacion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    post:
+      tags: [Plataforma]
+      summary: Elimina de forma irreversible un club dado de baja
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EliminarClubDto' }
+      responses:
+        '204':
+          description: Club eliminado con toda su información
+        '400':
+          description: '`confirmacion_no_coincide`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`club_no_dado_de_baja`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/plataforma/clubes/{clubId}/invitaciones:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    post:
+      tags: [Plataforma]
+      summary: Invita a un presidente a un club que ya existe
+      description: Si ese correo ya tenía una invitación vigente para el club, queda anulada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InvitarPresidenteDto' }
+      responses:
+        '201':
+          description: Invitación creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitacionDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`ya_es_presidente`. Ese correo ya es presidente del club'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/plataforma/clubes/{clubId}/invitaciones/{invitacionId}/reenvio:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - name: invitacionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Plataforma]
+      summary: Reenvía una invitación sin usar, con el mismo correo o con uno corregido
+      description: Anula la invitación indicada y crea otra.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReenviarInvitacionDto' }
+      responses:
+        '201':
+          description: Invitación nueva
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitacionDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`invitacion_ya_usada`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/plataforma/clubes/{clubId}/presidentes/{usuarioRolId}/retiro:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - name: usuarioRolId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Plataforma]
+      summary: Quita el rol a un presidente, asignándole otro rol o eliminándolo del club
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RetirarPresidenteDto' }
+      responses:
+        '200':
+          description: Presidente retirado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDetalleDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/SoloDesarrollador' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`ultimo_presidente`. Primero debe registrarse otro presidente'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+components:
+  securitySchemes:
+    sesion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    clubId:
+      name: clubId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    SinSesion:
+      description: '`sin_sesion`. No hay sesión o el token ya no sirve'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    SoloDesarrollador:
+      description: '`solo_desarrollador`. No devuelve ningún dato'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    ClubNoDisponible:
+      description: '`club_suspendido` o `club_dado_de_baja`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    NoEncontrado:
+      description: '`no_encontrado`. También cuando el club existe pero el usuario no pertenece a él'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    DatosInvalidos:
+      description: '`datos_invalidos`, con el detalle por campo en `errores`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    NombreRepetido:
+      description: '`nombre_de_club_repetido`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    InvitacionNoValida:
+      description: '`invitacion_no_valida`. Ya se usó, venció, fue reemplazada o no existe'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    DemasiadasPeticiones:
+      description: '`demasiadas_peticiones`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+
+  schemas:
+    Problema:
+      type: object
+      required: [title, status, codigo]
+      properties:
+        title: { type: string, description: Mensaje en español para mostrar a la persona }
+        status: { type: integer }
+        codigo: { type: string, description: Código estable para el frontend }
+        errores:
+          type: object
+          description: Mensajes por campo, solo en `datos_invalidos`
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    Rol:
+      type: string
+      enum: [DESARROLLADOR, PRESIDENTE, DIRECTIVO, ENTRENADOR, JUGADOR]
+    EstadoClub:
+      type: string
+      enum: [ACTIVO, SUSPENDIDO, DADO_DE_BAJA]
+    EstadoEnvio:
+      type: string
+      enum: [PENDIENTE, ENVIADO, FALLIDO]
+    TipoDocumento:
+      type: string
+      enum: [REGISTRO_CIVIL, TARJETA_IDENTIDAD, CEDULA_CIUDADANIA, CEDULA_EXTRANJERIA]
+    Color:
+      type: string
+      pattern: '^#[0-9A-Fa-f]{6}$'
+
+    TokenDto:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    IniciarSesionDto:
+      type: object
+      required: [identificador, contrasena]
+      properties:
+        identificador: { type: string, description: Correo o número de documento }
+        contrasena: { type: string }
+
+    TokenSesionDto:
+      type: object
+      required: [token, venceEn]
+      properties:
+        token: { type: string }
+        venceEn: { type: string, format: date-time }
+
+    SesionDto:
+      type: object
+      required: [usuarioId, correo, esDesarrollador, versionFoto, clubes]
+      properties:
+        usuarioId: { type: string, format: uuid }
+        correo: { type: string, format: email }
+        esDesarrollador: { type: boolean }
+        versionFoto:
+          type: integer
+          description: 0 si no hay foto de perfil; cambia cada vez que se reemplaza
+        clubes:
+          type: array
+          description: Vacío para el DESARROLLADOR
+          items: { $ref: '#/components/schemas/ClubDeSesionDto' }
+
+    ClubDeSesionDto:
+      type: object
+      description: Un club del desplegable, con lo necesario para pintar su identidad
+      required: [clubId, nombre, rol, estado, identidad, nombres, apellidos]
+      properties:
+        clubId: { type: string, format: uuid }
+        nombre: { type: string }
+        rol: { $ref: '#/components/schemas/Rol' }
+        estado: { $ref: '#/components/schemas/EstadoClub' }
+        identidad: { $ref: '#/components/schemas/IdentidadClubDto' }
+        nombres: { type: string, description: Nombres del integrante en ese club }
+        apellidos: { type: string }
+
+    IdentidadClubDto:
+      type: object
+      description: Todos los campos nulos significan identidad neutra de la plataforma
+      properties:
+        colorPrincipal: { oneOf: [{ $ref: '#/components/schemas/Color' }, { type: 'null' }] }
+        colorAcento: { oneOf: [{ $ref: '#/components/schemas/Color' }, { type: 'null' }] }
+        urlEscudo: { type: [string, 'null'], description: Dirección del escudo con su versión }
+
+    PedirRecuperacionDto:
+      type: object
+      required: [correo]
+      properties:
+        correo: { type: string, format: email }
+
+    RestablecerContrasenaDto:
+      type: object
+      required: [token, contrasenaNueva]
+      properties:
+        token: { type: string }
+        contrasenaNueva: { type: string, minLength: 8, maxLength: 128 }
+
+    InvitacionVigenteDto:
+      type: object
+      required: [nombreClub, rol, correo, tieneCuenta, identidad]
+      properties:
+        nombreClub: { type: string }
+        rol: { $ref: '#/components/schemas/Rol' }
+        correo: { type: string, format: email, description: Fijo; no se puede cambiar }
+        tieneCuenta:
+          type: boolean
+          description: Si es verdadero, la persona debe iniciar sesión y aceptar la invitación
+        identidad: { $ref: '#/components/schemas/IdentidadClubDto' }
+
+    RegistrarConInvitacionDto:
+      type: object
+      required:
+        - token
+        - nombres
+        - apellidos
+        - tipoDocumento
+        - numeroDocumento
+        - fechaNacimiento
+        - celular
+        - contrasena
+      properties:
+        token: { type: string }
+        nombres: { type: string, maxLength: 80 }
+        apellidos: { type: string, maxLength: 80 }
+        tipoDocumento: { $ref: '#/components/schemas/TipoDocumento' }
+        numeroDocumento: { type: string, maxLength: 20 }
+        fechaNacimiento: { type: string, format: date }
+        celular: { type: string, maxLength: 20 }
+        contrasena: { type: string, minLength: 8, maxLength: 128 }
+
+    ClubDto:
+      type: object
+      description: Lo que ve un integrante de su club
+      required: [clubId, nombre, estado, identidad, miRol]
+      properties:
+        clubId: { type: string, format: uuid }
+        nombre: { type: string }
+        sede: { type: [string, 'null'] }
+        direccion: { type: [string, 'null'] }
+        correoContacto: { type: [string, 'null'] }
+        telefonoContacto: { type: [string, 'null'] }
+        estado: { $ref: '#/components/schemas/EstadoClub' }
+        identidad: { $ref: '#/components/schemas/IdentidadClubDto' }
+        miRol: { $ref: '#/components/schemas/Rol' }
+
+    ActualizarConfiguracionClubDto:
+      type: object
+      required: [nombre]
+      properties:
+        nombre: { type: string, maxLength: 120 }
+        sede: { type: [string, 'null'], maxLength: 120 }
+        direccion: { type: [string, 'null'], maxLength: 200 }
+        correoContacto: { type: [string, 'null'], format: email }
+        telefonoContacto: { type: [string, 'null'], maxLength: 20 }
+
+    ClubResumenDto:
+      type: object
+      required: [clubId, nombre, estado, presidenteRegistrado, identidad]
+      properties:
+        clubId: { type: string, format: uuid }
+        nombre: { type: string }
+        estado: { $ref: '#/components/schemas/EstadoClub' }
+        presidenteRegistrado: { type: boolean }
+        identidad: { $ref: '#/components/schemas/IdentidadClubDto' }
+
+    ClubDetalleDto:
+      type: object
+      description: |
+        Lo que ve el DESARROLLADOR de un club. No incluye fichas, datos médicos, finanzas ni
+        información deportiva.
+      required: [clubId, nombre, estado, identidad, presidentes, invitaciones]
+      properties:
+        clubId: { type: string, format: uuid }
+        nombre: { type: string }
+        sede: { type: [string, 'null'] }
+        direccion: { type: [string, 'null'] }
+        correoContacto: { type: [string, 'null'] }
+        telefonoContacto: { type: [string, 'null'] }
+        estado: { $ref: '#/components/schemas/EstadoClub' }
+        estadoCambiadoEn: { type: [string, 'null'], format: date-time }
+        identidad: { $ref: '#/components/schemas/IdentidadClubDto' }
+        presidentes:
+          type: array
+          items: { $ref: '#/components/schemas/PresidenteDto' }
+        invitaciones:
+          type: array
+          description: Invitaciones sin usar ni anular
+          items: { $ref: '#/components/schemas/InvitacionDto' }
+
+    PresidenteDto:
+      type: object
+      required: [usuarioRolId, nombres, apellidos, correo]
+      properties:
+        usuarioRolId: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        correo: { type: string, format: email }
+
+    InvitacionDto:
+      type: object
+      description: Nunca incluye el token
+      required: [invitacionId, correo, rol, estadoEnvio, creadaEn, venceEn, vencida]
+      properties:
+        invitacionId: { type: string, format: uuid }
+        correo: { type: string, format: email }
+        rol: { $ref: '#/components/schemas/Rol' }
+        estadoEnvio: { $ref: '#/components/schemas/EstadoEnvio' }
+        creadaEn: { type: string, format: date-time }
+        venceEn: { type: string, format: date-time }
+        vencida: { type: boolean }
+
+    CrearClubDto:
+      type: object
+      required: [nombre, correoPresidente]
+      properties:
+        nombre: { type: string, maxLength: 120 }
+        correoPresidente: { type: string, format: email }
+
+    ActualizarColoresDto:
+      type: object
+      required: [colorPrincipal, colorAcento]
+      properties:
+        colorPrincipal: { $ref: '#/components/schemas/Color' }
+        colorAcento: { $ref: '#/components/schemas/Color' }
+
+    CambiarEstadoClubDto:
+      type: object
+      required: [estado]
+      properties:
+        estado: { $ref: '#/components/schemas/EstadoClub' }
+
+    EliminarClubDto:
+      type: object
+      required: [nombreDeConfirmacion]
+      properties:
+        nombreDeConfirmacion:
+          type: string
+          description: Debe coincidir con el nombre del club
+
+    InvitarPresidenteDto:
+      type: object
+      required: [correo]
+      properties:
+        correo: { type: string, format: email }
+
+    ReenviarInvitacionDto:
+      type: object
+      properties:
+        correo:
+          type: string
+          format: email
+          description: Solo si se corrige el correo; si falta, se reenvía al mismo
+
+    RetirarPresidenteDto:
+      type: object
+      required: [accion]
+      properties:
+        accion:
+          type: string
+          enum: [ASIGNAR_ROL, ELIMINAR_DEL_CLUB]
+        rolNuevo:
+          type: string
+          enum: [DIRECTIVO, ENTRENADOR]
+          description: Obligatorio cuando la acción es ASIGNAR_ROL

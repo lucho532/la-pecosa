@@ -38,6 +38,13 @@ su club y, si pertenece a varios, elige cuál ver. Toda la interfaz tiene tema c
   → R: El DESARROLLADOR elige en ese momento entre asignarle otro rol en ese club o eliminarla del
   club por completo.
 
+### Sesión 2026-10-07 (plan)
+
+- P: ¿Puede un mismo documento estar en dos cuentas distintas? → R: No. Una persona es única y
+  tiene un único inicio de sesión.
+- P: ¿Qué archivos se admiten como escudo? → R: PNG, JPEG o WebP de hasta 1 MB. Lo mismo vale
+  para la foto de perfil que puede agregar cada usuario registrado.
+
 ## Escenarios de usuario y pruebas *(obligatorio)*
 
 ### Historia de usuario 1 - El desarrollador crea un club e invita a su presidente (Prioridad: P1)
@@ -272,7 +279,34 @@ la interfaz cambia, se cierra y se vuelve a abrir, y se comprueba que el tema se
 
 ---
 
+### Historia de usuario 7 - Foto de perfil (Prioridad: P3)
+
+Cualquier persona con cuenta entra a "Mi perfil" y agrega una foto de perfil. La ve en la cabecera
+de la aplicación, en todos sus clubes. Puede cambiarla o quitarla cuando quiera.
+
+**Por qué esta prioridad**: es una comodidad pedida expresamente y no condiciona ninguna otra
+historia.
+
+**Prueba independiente**: se carga una foto, se comprueba que aparece en la cabecera, se cambia
+de club y se comprueba que sigue siendo la misma; después se quita.
+
+**Escenarios de aceptación**:
+
+1. **Dado** una persona con sesión iniciada, **cuando** carga una foto PNG, JPEG o WebP de hasta
+   1 MB, **entonces** la foto queda guardada y se muestra en la cabecera y en "Mi perfil".
+2. **Dado** una persona con sesión iniciada, **cuando** intenta cargar un archivo que no es una
+   imagen admitida o que pesa más de 1 MB, **entonces** el sistema lo rechaza, explica el motivo y
+   conserva la foto anterior.
+3. **Dado** una persona con foto de perfil, **cuando** la quita, **entonces** la aplicación vuelve
+   a mostrar sus iniciales.
+4. **Dado** cualquier persona, con o sin sesión, **cuando** intenta obtener la foto de perfil de
+   otra cuenta, **entonces** no la obtiene.
+
+---
+
 ### Casos límite
+
+- Alguien carga como foto de perfil un archivo que no es una imagen o que pesa demasiado.
 
 - El correo de la invitación está mal escrito y la invitación nunca llega: el DESARROLLADOR lo
   corrige desde su panel y se envía una invitación nueva.
@@ -326,7 +360,7 @@ la interfaz cambia, se cierra y se vuelve a abrir, y se comprueba que el tema se
   el correo de su PRESIDENTE. El sistema NO DEBE crear un club sin ese correo. El nombre del club
   DEBE ser único en la plataforma.
 - **RF-008**: El DESARROLLADOR DEBE poder cargar el escudo y definir los colores de cada club.
-  Nadie más puede hacerlo.
+  Nadie más puede hacerlo. El escudo DEBE ser una imagen PNG, JPEG o WebP de hasta 1 MB.
 - **RF-009**: El sistema DEBE avisar al DESARROLLADOR, antes de guardar, cuando los colores
   elegidos para un club no permitan leer bien el texto en alguno de los dos temas.
 - **RF-010**: El DESARROLLADOR y el PRESIDENTE de un club DEBEN poder editar el nombre, la sede,
@@ -353,6 +387,9 @@ la interfaz cambia, se cierra y se vuelve a abrir, y se comprueba que el tema se
 - **RF-016**: Quien se registra con la invitación de presidente DEBE quedar como PRESIDENTE de ese
   club, aprobado y sin pasar por la sala de espera.
 - **RF-017**: El sistema DEBE rechazar un documento que ya exista en el mismo club.
+- **RF-017a**: Una persona es única en la plataforma y tiene un único inicio de sesión: el sistema
+  DEBE rechazar el registro de un documento que ya pertenece a otra cuenta y pedirle que entre con
+  esa cuenta.
 - **RF-018**: Si la persona invitada ya tiene cuenta, el sistema NO DEBE crearle una segunda: al
   abrir la invitación inicia sesión con su cuenta y queda añadida al nuevo club con su rol,
   conservando su único inicio de sesión.
@@ -408,6 +445,15 @@ la interfaz cambia, se cierra y se vuelve a abrir, y se comprueba que el tema se
 - **RF-034**: En ambos temas, el texto DEBE leerse bien y los estados DEBEN distinguirse por texto
   además de por color.
 
+**Foto de perfil**
+
+- **RF-036**: Toda persona con cuenta DEBE poder cargar, cambiar y quitar su foto de perfil. La
+  foto es opcional y no se pide al registrarse.
+- **RF-037**: La foto de perfil DEBE ser una imagen PNG, JPEG o WebP de hasta 1 MB. El sistema
+  DEBE rechazar cualquier otro archivo, explicar el motivo y conservar la foto anterior.
+- **RF-038**: La foto de perfil pertenece a la cuenta y es la misma en todos los clubes de la
+  persona. Nadie DEBE poder obtener la foto de perfil de otra cuenta.
+
 **Generales**
 
 - **RF-035**: Todas las pantallas de esta funcionalidad DEBEN funcionar en teléfono y en
@@ -422,7 +468,8 @@ la interfaz cambia, se cierra y se vuelve a abrir, y se comprueba que el tema se
   documento, fecha de nacimiento y contraseña. Es una sola aunque pertenezca a varios clubes. La
   cuenta DESARROLLADOR es la única que no pertenece a ningún club.
 - **Integrante**: pertenencia de una persona a un club, con su único rol en ese club. El documento
-  no se repite dentro de un club.
+  no se repite dentro de un club. En el código es la entidad `UsuarioRol` de la constitución §12.3.
+- **Foto de perfil**: imagen opcional de una persona con cuenta.
 - **Rol**: DESARROLLADOR, PRESIDENTE, DIRECTIVO, ENTRENADOR o JUGADOR.
 - **Invitación**: enlace enviado por correo que permite registrarse en un club concreto con un rol
   concreto. Sirve una sola vez y caduca.
