@@ -1,0 +1,33 @@
+using LaPecosa.Dominio.Entidades;
+
+namespace LaPecosa.Aplicacion.Interfaces;
+
+/// <summary>
+/// Representa el acceso a los clubes desde el panel de administración de la plataforma
+/// (constitución §7.1, primera excepción).
+/// Su responsabilidad es exponer solo lo que §8 permite al DESARROLLADOR: los clubes y sus
+/// presidentes.
+/// No expone fichas, datos médicos, finanzas, pagos ni información deportiva de ningún club, ni
+/// integrantes que no sean presidentes.
+/// </summary>
+public interface IRepositorioClubesPlataforma
+{
+    /// <summary>Todos los clubes, cada uno con la indicación de si ya tiene un presidente registrado.</summary>
+    Task<IReadOnlyList<ClubConPresidente>> ListarAsync(CancellationToken cancelacion = default);
+
+    /// <summary>Busca un club por su identificador.</summary>
+    Task<Club?> ObtenerAsync(Guid clubId, CancellationToken cancelacion = default);
+
+    /// <summary>Indica si otro club ya usa ese nombre normalizado.</summary>
+    Task<bool> ExisteNombreAsync(
+        string nombreNormalizado, Guid? exceptoClubId = null, CancellationToken cancelacion = default);
+
+    /// <summary>Presidentes registrados de un club, cada uno con su cuenta.</summary>
+    Task<IReadOnlyList<UsuarioRol>> ListarPresidentesAsync(Guid clubId, CancellationToken cancelacion = default);
+
+    /// <summary>Indica si la cuenta con ese correo normalizado ya es presidente del club.</summary>
+    Task<bool> EsPresidenteAsync(Guid clubId, string correoNormalizado, CancellationToken cancelacion = default);
+
+    /// <summary>Añade un club nuevo; se guarda con la unidad de trabajo.</summary>
+    void Agregar(Club club);
+}

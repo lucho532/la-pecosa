@@ -94,6 +94,32 @@ public class Sembrador
         });
     }
 
+    /// <summary>Crea una invitación de presidente y devuelve también su token en claro.</summary>
+    public async Task<(Invitacion Invitacion, string Token)> CrearInvitacionAsync(
+        Club club, string? correo = null, DateTime? venceEn = null, DateTime? usadaEn = null, DateTime? anuladaEn = null)
+    {
+        var (token, hash) = GeneradorTokens.Nuevo();
+        var invitacion = new Invitacion
+        {
+            ClubId = club.Id,
+            Rol = Rol.PRESIDENTE,
+            Correo = NormalizadorTexto.Correo(correo ?? CorreoUnico()),
+            TokenHash = hash,
+            EstadoEnvio = EstadoEnvio.ENVIADO,
+            CreadaEn = DateTime.UtcNow,
+            VenceEn = venceEn ?? DateTime.UtcNow.AddDays(Invitacion.DiasDeVigencia),
+            UsadaEn = usadaEn,
+            AnuladaEn = anuladaEn,
+        };
+
+        return await _fabrica.ConContextoAsync(async contexto =>
+        {
+            contexto.Invitaciones.Add(invitacion);
+            await contexto.SaveChangesAsync();
+            return (invitacion, token);
+        });
+    }
+
     /// <summary>Crea una cuenta nueva y la añade como integrante de un club.</summary>
     public async Task<(Usuario Usuario, UsuarioRol Integrante)> CrearIntegranteAsync(Club club, Rol rol)
     {

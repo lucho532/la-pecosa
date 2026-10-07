@@ -1,0 +1,59 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { api } from '../compartido/api/cliente';
+import type { ClubResumenDto } from '../compartido/api/tipos';
+import { useCarga } from '../compartido/api/useCarga';
+import { Aviso } from '../compartido/componentes/Aviso';
+import { Boton } from '../compartido/componentes/Boton';
+import { EtiquetaEstado, EtiquetaEstadoClub } from '../compartido/componentes/EtiquetaEstado';
+import { Tabla, type Columna } from '../compartido/componentes/Tabla';
+import { Tarjeta } from '../compartido/componentes/Tarjeta';
+import { FormularioCrearClub } from './FormularioCrearClub';
+
+const COLUMNAS: Columna<ClubResumenDto>[] = [
+  {
+    titulo: 'Club',
+    celda: (club) => <Link to={`/plataforma/clubes/${club.clubId}`}>{club.nombre}</Link>,
+  },
+  { titulo: 'Estado', celda: (club) => <EtiquetaEstadoClub estado={club.estado} /> },
+  {
+    titulo: 'Presidente',
+    celda: (club) =>
+      club.presidenteRegistrado ? (
+        <EtiquetaEstado tono="exito" texto="Registrado" />
+      ) : (
+        <EtiquetaEstado tono="aviso" texto="Presidente sin registrar" />
+      ),
+  },
+];
+
+/** Lista de todos los clubes de la plataforma y acceso a crear uno. */
+export function ListaClubes() {
+  const { datos, error, cargando } = useCarga('clubes', () => api.get<ClubResumenDto[]>('/api/plataforma/clubes'));
+  const [creando, setCreando] = useState(false);
+
+  return (
+    <>
+      <div className="cabecera">
+        <h1>Clubes</h1>
+        {!creando && <Boton onClick={() => setCreando(true)}>Crear club</Boton>}
+      </div>
+
+      {creando && <FormularioCrearClub alCancelar={() => setCreando(false)} />}
+
+      <Tarjeta>
+        {error && <Aviso tono="error">{error}</Aviso>}
+        {cargando && <p className="texto-suave">Cargando…</p>}
+        {datos && (
+          <Tabla
+            descripcion="Clubes de la plataforma"
+            columnas={COLUMNAS}
+            filas={datos}
+            clave={(club) => club.clubId}
+            vacio="Todavía no hay ningún club. Crea el primero con «Crear club»."
+          />
+        )}
+      </Tarjeta>
+    </>
+  );
+}
