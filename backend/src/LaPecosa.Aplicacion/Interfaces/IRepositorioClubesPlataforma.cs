@@ -49,6 +49,13 @@ public interface IRepositorioClubesPlataforma
     Task GuardarEscudoAsync(
         Guid clubId, byte[] contenido, string tipoContenido, CancellationToken cancelacion = default);
 
+    /// <summary>
+    /// Borra el club de inmediato, dentro de la transacción en curso: la cascada borra todo lo que
+    /// le pertenece, y después se borran las cuentas que se quedaron sin ningún club. Nunca borra
+    /// la cuenta DESARROLLADOR ni toca a quien pertenece también a otro club.
+    /// </summary>
+    Task EliminarConSusCuentasAsync(Guid clubId, CancellationToken cancelacion = default);
+
     /// <summary>Añade un club nuevo; se guarda con la unidad de trabajo.</summary>
     void Agregar(Club club);
 }

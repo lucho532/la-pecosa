@@ -101,5 +101,27 @@ public class RepositorioClubesPlataforma : IRepositorioClubesPlataforma
     }
 
     /// <inheritdoc />
+    public async Task EliminarConSusCuentasAsync(Guid clubId, CancellationToken cancelacion = default)
+    {
+        var cuentasDelClub = await _contexto.UsuariosRol
+            .IgnoreQueryFilters()
+            .Where(integrante => integrante.ClubId == clubId)
+            .Select(integrante => integrante.UsuarioId)
+            .Distinct()
+            .ToListAsync(cancelacion);
+
+        // La cascada de la base de datos borra integrantes, invitaciones y escudo (research §12).
+        await _contexto.Clubes.Where(club => club.Id == clubId).ExecuteDeleteAsync(cancelacion);
+
+        await _contexto.Usuarios
+            .Where(usuario => cuentasDelClub.Contains(usuario.Id)
+                && !usuario.EsDesarrollador
+                && !_contexto.UsuariosRol.IgnoreQueryFilters().Any(integrante => integrante.UsuarioId == usuario.Id))
+            .ExecuteDeleteAsync(cancelacion);
+
+        _contexto.ChangeTracker.Clear();
+    }
+
+    /// <inheritdoc />
     public void Agregar(Club club) => _contexto.Clubes.Add(club);
 }

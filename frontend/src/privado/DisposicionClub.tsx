@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../compartido/api/cliente';
+import { ErrorApi } from '../compartido/api/errores';
 import type { ClubDto } from '../compartido/api/tipos';
 import { useCarga } from '../compartido/api/useCarga';
 import { Aviso } from '../compartido/componentes/Aviso';
@@ -9,6 +10,7 @@ import { nombreDeRol } from '../compartido/formato';
 import { guardarUltimoClub } from '../compartido/sesion/ultimoClub';
 import { useSesion } from '../compartido/sesion/useSesion';
 import { Escudo, IdentidadClub } from '../compartido/tema/IdentidadClub';
+import { AvisoClubNoDisponible, esClubNoDisponible } from './AvisoClubNoDisponible';
 import type { ContextoDelClub } from './contextoClub';
 import { DesplegableClubes } from './DesplegableClubes';
 
@@ -22,7 +24,8 @@ export function DisposicionClub() {
   const { clubId = '' } = useParams();
   const { sesion, cerrar } = useSesion();
   const navegar = useNavigate();
-  const { datos: club, error, cargando, fijar } = useCarga(clubId, () => api.get<ClubDto>(`/api/clubes/${clubId}`));
+  const { datos: club, error, fallo, cargando, fijar } = useCarga(clubId, () => api.get<ClubDto>(`/api/clubes/${clubId}`));
+  const codigo = fallo instanceof ErrorApi ? fallo.codigo : undefined;
 
   useEffect(() => {
     guardarUltimoClub(clubId);
@@ -68,8 +71,18 @@ export function DisposicionClub() {
         </Boton>
       </aside>
       <main className="principal">
-        {error && <Aviso tono="error">{error}</Aviso>}
+        {esClubNoDisponible(codigo) ? (
+          <AvisoClubNoDisponible codigo={codigo} tieneOtrosClubes={(sesion?.clubes.length ?? 0) > 1} />
+        ) : (
+          error && <Aviso tono="error">{error}</Aviso>
+        )}
         {!contexto && cargando && <p className="texto-suave">Cargando…</p>}
+        {club?.estado === 'SUSPENDIDO' && (
+          <Aviso tono="aviso">
+            <strong>Club suspendido.</strong> Solo tú, como presidente, puedes entrar; los demás integrantes ven
+            un aviso de incidencia temporal.
+          </Aviso>
+        )}
         {contexto && <Outlet context={contexto} />}
       </main>
     </IdentidadClub>

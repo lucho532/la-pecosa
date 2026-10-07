@@ -50,9 +50,11 @@ public class Problema
     /// <summary>Problema 404 <c>no_encontrado</c>.</summary>
     public static Problema NoEncontrado() => new(404, "no_encontrado", "No se encontró lo que buscas.");
 
-    /// <summary>Convierte el problema en un resultado de MVC.</summary>
-    public ObjectResult ComoResultado() =>
-        new(this) { StatusCode = Status, ContentTypes = { TipoContenido } };
+    /// <summary>
+    /// Convierte el problema en un resultado de MVC que se escribe siempre como
+    /// <c>application/problem+json</c>, sin pasar por la negociación de contenido del controlador.
+    /// </summary>
+    public IActionResult ComoResultado() => new ResultadoProblema(this);
 
     /// <summary>Escribe el problema directamente en la respuesta, fuera de MVC.</summary>
     public async Task EscribirAsync(HttpContext contexto)
@@ -65,5 +67,11 @@ public class Problema
         contexto.Response.StatusCode = Status;
         contexto.Response.ContentType = TipoContenido;
         await JsonSerializer.SerializeAsync(contexto.Response.Body, this, OpcionesJson, contexto.RequestAborted);
+    }
+
+    /// <summary>Resultado de MVC que escribe el problema tal cual.</summary>
+    private sealed class ResultadoProblema(Problema problema) : IActionResult
+    {
+        public Task ExecuteResultAsync(ActionContext context) => problema.EscribirAsync(context.HttpContext);
     }
 }

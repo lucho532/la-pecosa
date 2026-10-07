@@ -5,6 +5,7 @@ import { useCarga } from '../compartido/api/useCarga';
 import { Aviso } from '../compartido/componentes/Aviso';
 import { EtiquetaEstadoClub } from '../compartido/componentes/EtiquetaEstado';
 import { SeccionDatos } from './SeccionDatos';
+import { SeccionEstado } from './SeccionEstado';
 import { SeccionIdentidad } from './SeccionIdentidad';
 import { SeccionInvitaciones } from './SeccionInvitaciones';
 import { SeccionPresidentes } from './SeccionPresidentes';
@@ -54,6 +55,7 @@ export function DetalleClub() {
       <SeccionIdentidad {...seccion} />
       <SeccionPresidentes {...seccion} />
       <SeccionInvitaciones {...seccion} />
+      <SeccionEstado {...seccion} />
     </>
   );
 }
