@@ -16,6 +16,9 @@ public interface IRepositorioSolicitudesRecuperacion
     /// <summary>Marca como usadas las solicitudes sin usar de la cuenta.</summary>
     Task AnularPendientesAsync(Guid usuarioId, DateTime ahoraUtc, CancellationToken cancelacion = default);
 
+    /// <summary>Marca la solicitud como usada solo si no lo estaba; devuelve si la marcó.</summary>
+    Task<bool> MarcarUsadaAsync(Guid solicitudId, DateTime ahoraUtc, CancellationToken cancelacion = default);
+
     /// <summary>Añade una solicitud nueva; se guarda con la unidad de trabajo.</summary>
     void Agregar(SolicitudRecuperacion solicitud);
 }

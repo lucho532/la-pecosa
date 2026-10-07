@@ -14,6 +14,7 @@ public static class RegistroDeCasosDeUso
     public static IServiceCollection AgregarCasosDeUso(this IServiceCollection servicios)
     {
         servicios.AddScoped<IServicioSesion, ServicioSesion>();
+        servicios.AddScoped<IServicioRecuperacion, ServicioRecuperacion>();
 
         return servicios;
     }

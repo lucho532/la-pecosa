@@ -33,5 +33,12 @@ public class RepositorioSolicitudesRecuperacion : IRepositorioSolicitudesRecuper
             .ExecuteUpdateAsync(cambios => cambios.SetProperty(solicitud => solicitud.UsadaEn, ahoraUtc), cancelacion);
 
     /// <inheritdoc />
+    public async Task<bool> MarcarUsadaAsync(
+        Guid solicitudId, DateTime ahoraUtc, CancellationToken cancelacion = default) =>
+        await _contexto.SolicitudesRecuperacion
+            .Where(solicitud => solicitud.Id == solicitudId && solicitud.UsadaEn == null)
+            .ExecuteUpdateAsync(cambios => cambios.SetProperty(solicitud => solicitud.UsadaEn, ahoraUtc), cancelacion) == 1;
+
+    /// <inheritdoc />
     public void Agregar(SolicitudRecuperacion solicitud) => _contexto.SolicitudesRecuperacion.Add(solicitud);
 }
