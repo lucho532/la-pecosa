@@ -112,6 +112,7 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
+        '429': { $ref: '#/components/responses/DemasiadasPeticiones' }
 
   /api/cuenta/foto:
     get:
@@ -179,6 +180,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/InvitacionVigenteDto' }
         '410': { $ref: '#/components/responses/InvitacionNoValida' }
+        '429': { $ref: '#/components/responses/DemasiadasPeticiones' }
 
   /api/invitaciones/registro:
     post:
@@ -206,6 +208,7 @@ paths:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
         '410': { $ref: '#/components/responses/InvitacionNoValida' }
+        '429': { $ref: '#/components/responses/DemasiadasPeticiones' }
 
   /api/invitaciones/aceptacion:
     post:
@@ -455,6 +458,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ClubDetalleDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
         '401': { $ref: '#/components/responses/SinSesion' }
         '403': { $ref: '#/components/responses/SoloDesarrollador' }
         '404': { $ref: '#/components/responses/NoEncontrado' }

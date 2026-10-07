@@ -250,6 +250,20 @@ detalle que la spec no fija; están reunidas al final para que el propietario la
 - **Alternativas**: servirla sin sesión como el escudo (expone fotos de personas a cualquiera que
   conozca un identificador); una foto por club (duplica el dato sin que nadie lo haya pedido).
 
+## Cambios del contrato durante la implementación
+
+`contracts/api.yaml` se ajustó en dos puntos al compararlo con el Swagger generado (T051). Ninguno
+cambia una regla de negocio; el contrato describía de menos lo que la decisión 5 y la validación
+de entrada (§23) ya pedían.
+
+- **`429` en todos los endpoints anónimos de cuenta.** La decisión 5 limita las peticiones por IP
+  en los endpoints anónimos de cuenta, pero el contrato solo lo decía en `POST /api/sesion` y
+  `POST /api/cuenta/recuperacion`. Se añadió a `POST /api/cuenta/recuperacion/confirmacion`,
+  `POST /api/invitaciones/consulta` y `POST /api/invitaciones/registro`, que también lo aplican:
+  son los que reciben un token y los que más interesa proteger de intentos repetidos.
+- **`400` en `PUT /api/plataforma/clubes/{clubId}/estado`.** Un cuerpo sin estado o con un estado
+  que no existe responde `datos_invalidos`, como en el resto de la API.
+
 ## Supuestos a confirmar por el propietario
 
 Ninguno bloquea el plan; si alguno cambia, el cambio es de configuración o de una validación.

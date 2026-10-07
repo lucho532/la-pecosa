@@ -35,6 +35,7 @@ public class ControladorInvitaciones : ControladorBase
     [AllowAnonymous]
     [EnableRateLimiting(ConfiguracionSeguridad.PoliticaAnonimo)]
     [ProducesResponseType<InvitacionVigenteDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Problema>(StatusCodes.Status429TooManyRequests, Problema.TipoContenido)]
     public Task<InvitacionVigenteDto> Consultar(TokenDto datos, CancellationToken cancelacion) =>
         _registro.ConsultarAsync(datos, cancelacion);
 
@@ -43,6 +44,7 @@ public class ControladorInvitaciones : ControladorBase
     [AllowAnonymous]
     [EnableRateLimiting(ConfiguracionSeguridad.PoliticaAnonimo)]
     [ProducesResponseType<TokenSesionDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<Problema>(StatusCodes.Status429TooManyRequests, Problema.TipoContenido)]
     [ProducesResponseType<Problema>(StatusCodes.Status400BadRequest, Problema.TipoContenido)]
     [ProducesResponseType<Problema>(StatusCodes.Status409Conflict, Problema.TipoContenido)]
     public async Task<IActionResult> Registrar(RegistrarConInvitacionDto datos, CancellationToken cancelacion) =>

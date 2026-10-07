@@ -48,6 +48,7 @@ public static class ConfiguracionApi
                 Scheme = "bearer",
                 BearerFormat = "JWT",
             });
+            opciones.OperationFilter<FiltroOperacionAnonima>();
             opciones.AddSecurityRequirement(documento => new OpenApiSecurityRequirement
             {
                 [new OpenApiSecuritySchemeReference("sesion", documento)] = [],

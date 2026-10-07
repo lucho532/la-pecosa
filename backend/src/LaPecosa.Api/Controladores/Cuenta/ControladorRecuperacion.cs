@@ -17,6 +17,7 @@ namespace LaPecosa.Api.Controladores.Cuenta;
 [Tags("Cuenta")]
 [AllowAnonymous]
 [EnableRateLimiting(ConfiguracionSeguridad.PoliticaAnonimo)]
+[ProducesResponseType<Problema>(StatusCodes.Status429TooManyRequests, Problema.TipoContenido)]
 public class ControladorRecuperacion : ControladorBase
 {
     private readonly IServicioRecuperacion _servicio;
@@ -30,7 +31,6 @@ public class ControladorRecuperacion : ControladorBase
     /// <summary>Pide el correo de recuperación. Siempre responde lo mismo, exista o no el correo.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
-    [ProducesResponseType<Problema>(StatusCodes.Status429TooManyRequests, Problema.TipoContenido)]
     public async Task<IActionResult> Pedir(PedirRecuperacionDto datos, CancellationToken cancelacion)
     {
         await _servicio.PedirAsync(datos, cancelacion);
