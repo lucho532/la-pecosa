@@ -34,6 +34,7 @@ public static class RegistroDeServicios
         servicios.AddScoped<IRepositorioUsuarios, RepositorioUsuarios>();
         servicios.AddScoped<IRepositorioSolicitudesRecuperacion, RepositorioSolicitudesRecuperacion>();
         servicios.AddScoped<IRepositorioPertenencias, RepositorioPertenencias>();
+        servicios.AddScoped<IRepositorioClub, RepositorioClub>();
         servicios.AddScoped<IRepositorioClubesPlataforma, RepositorioClubesPlataforma>();
         servicios.AddScoped<IRepositorioInvitacionesPlataforma, RepositorioInvitacionesPlataforma>();
 

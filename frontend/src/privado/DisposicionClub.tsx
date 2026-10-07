@@ -1,0 +1,73 @@
+import { useEffect } from 'react';
+import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
+import { api } from '../compartido/api/cliente';
+import type { ClubDto } from '../compartido/api/tipos';
+import { useCarga } from '../compartido/api/useCarga';
+import { Aviso } from '../compartido/componentes/Aviso';
+import { Boton } from '../compartido/componentes/Boton';
+import { nombreDeRol } from '../compartido/formato';
+import { guardarUltimoClub } from '../compartido/sesion/ultimoClub';
+import { useSesion } from '../compartido/sesion/useSesion';
+import type { ContextoDelClub } from './contextoClub';
+
+/**
+ * Armazón de la aplicación del club elegido: menú lateral, cabecera con el nombre del club siempre
+ * visible (constitución §7.2) y cierre de sesión. Pide el club a la API en cada entrada: es la API
+ * la que decide si la persona pertenece a él y si el club está disponible.
+ */
+export function DisposicionClub() {
+  const { clubId = '' } = useParams();
+  const { sesion, cerrar } = useSesion();
+  const navegar = useNavigate();
+  const { datos: club, error, cargando, fijar } = useCarga(clubId, () => api.get<ClubDto>(`/api/clubes/${clubId}`));
+
+  useEffect(() => {
+    guardarUltimoClub(clubId);
+  }, [clubId]);
+
+  // Mientras llega el club se muestra lo que ya trae la sesión, para que su nombre nunca falte.
+  const deSesion = sesion?.clubes.find((candidato) => candidato.clubId === clubId);
+  const nombre = club?.nombre ?? deSesion?.nombre ?? '';
+  const rol = club?.miRol ?? deSesion?.rol;
+
+  function cerrarSesion() {
+    cerrar();
+    navegar('/entrar', { replace: true });
+  }
+
+  const contexto: ContextoDelClub | null = club ? { club, fijarClub: fijar } : null;
+
+  return (
+    <div className="disposicion">
+      <aside className="lateral">
+        <div className="lateral-marca">
+          <span className="distintivo" aria-hidden="true">
+            {nombre.charAt(0)}
+          </span>
+          <span>{nombre}</span>
+        </div>
+        <nav className="lateral-menu" aria-label={`Menú de ${nombre}`}>
+          <NavLink to={`/club/${clubId}`} end>
+            Inicio
+          </NavLink>
+        </nav>
+        {deSesion && rol && (
+          <div className="lateral-pie">
+            <span>
+              {deSesion.nombres} {deSesion.apellidos}
+            </span>
+            <span>{nombreDeRol(rol)}</span>
+          </div>
+        )}
+        <Boton variante="lateral" onClick={cerrarSesion}>
+          Cerrar sesión
+        </Boton>
+      </aside>
+      <main className="principal">
+        {error && <Aviso tono="error">{error}</Aviso>}
+        {!contexto && cargando && <p className="texto-suave">Cargando…</p>}
+        {contexto && <Outlet context={contexto} />}
+      </main>
+    </div>
+  );
+}
