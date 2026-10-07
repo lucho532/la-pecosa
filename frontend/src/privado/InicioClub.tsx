@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Tarjeta } from '../compartido/componentes/Tarjeta';
 import { nombreDeRol } from '../compartido/formato';
 import { useClub } from './contextoClub';
@@ -19,6 +20,7 @@ export function InicioClub() {
         {club.sede && <p className="texto-suave">Sede: {club.sede}</p>}
         {club.direccion && <p className="texto-suave">Dirección: {club.direccion}</p>}
         {contacto && <p className="texto-suave">Contacto: {contacto}</p>}
+        {club.miRol === 'PRESIDENTE' && <Link to={`/club/${club.clubId}/configuracion`}>Editar los datos del club</Link>}
       </Tarjeta>
     </>
   );

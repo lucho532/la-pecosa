@@ -2,6 +2,7 @@ using LaPecosa.Api.Autorizacion;
 using LaPecosa.Api.Errores;
 using LaPecosa.Aplicacion.DTOs;
 using LaPecosa.Aplicacion.Servicios;
+using LaPecosa.Dominio.Enumeraciones;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LaPecosa.Api.Controladores.Club;
@@ -20,11 +21,13 @@ namespace LaPecosa.Api.Controladores.Club;
 public class ControladorClub : ControladorBase
 {
     private readonly IServicioConsultaClub _consulta;
+    private readonly IServicioConfiguracionClub _configuracion;
 
     /// <summary>Crea el controlador con sus servicios.</summary>
-    public ControladorClub(IServicioConsultaClub consulta)
+    public ControladorClub(IServicioConsultaClub consulta, IServicioConfiguracionClub configuracion)
     {
         _consulta = consulta;
+        _configuracion = configuracion;
     }
 
     /// <summary>Datos e identidad del club elegido.</summary>
@@ -32,4 +35,13 @@ public class ControladorClub : ControladorBase
     [IntegranteDelClub]
     [ProducesResponseType<ClubDto>(StatusCodes.Status200OK)]
     public Task<ClubDto> Obtener(CancellationToken cancelacion) => _consulta.ObtenerAsync(Integrante.Rol, cancelacion);
+
+    /// <summary>El PRESIDENTE edita nombre, sede, dirección y contacto de su club.</summary>
+    [HttpPut("configuracion")]
+    [IntegranteDelClub(Rol.PRESIDENTE)]
+    [ProducesResponseType<ClubDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Problema>(StatusCodes.Status400BadRequest, Problema.TipoContenido)]
+    [ProducesResponseType<Problema>(StatusCodes.Status409Conflict, Problema.TipoContenido)]
+    public Task<ClubDto> ActualizarConfiguracion(ActualizarConfiguracionClubDto datos, CancellationToken cancelacion) =>
+        _configuracion.ActualizarElPropioAsync(datos, Integrante.Rol, cancelacion);
 }

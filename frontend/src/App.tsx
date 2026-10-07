@@ -9,6 +9,7 @@ import { Inicio } from './Inicio';
 import { DetalleClub } from './plataforma/DetalleClub';
 import { DisposicionPlataforma } from './plataforma/DisposicionPlataforma';
 import { ListaClubes } from './plataforma/ListaClubes';
+import { ConfiguracionClub } from './privado/ConfiguracionClub';
 import { DisposicionClub } from './privado/DisposicionClub';
 import { InicioClub } from './privado/InicioClub';
 
@@ -34,6 +35,7 @@ export function App() {
           <Route element={<RutaProtegida quien="integrante" />}>
             <Route path="/club/:clubId" element={<DisposicionClub />}>
               <Route index element={<InicioClub />} />
+              <Route path="configuracion" element={<ConfiguracionClub />} />
             </Route>
           </Route>
 

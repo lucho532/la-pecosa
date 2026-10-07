@@ -53,6 +53,7 @@ export function DisposicionClub() {
           <NavLink to={`/club/${clubId}`} end>
             Inicio
           </NavLink>
+          {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/configuracion`}>Datos del club</NavLink>}
         </nav>
         {deSesion && rol && (
           <div className="lateral-pie">
