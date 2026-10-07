@@ -12,8 +12,8 @@ PRESIDENTE o un DIRECTIVO"
 
 **Plataforma**: La Pecosa
 
-**Constitución aplicable**: versión 3.6.0, en especial §7.1, §7.3, §8, §10, §12.1, §12.1.1, §12.2
-y §28.
+**Constitución aplicable**: versión 3.7.0, en especial §7.1, §7.3, §8, §10, §12.1, §12.1.1, §12.2
+y §14.
 
 **Depende de**: spec 001 (base multiclub), de la que reutiliza las invitaciones, el registro por
 enlace, el inicio de sesión y la elección de club.
@@ -27,6 +27,19 @@ enlace, el inicio de sesión y la elección de club.
 - P: ¿Qué pasa con una cuenta en espera que el club no quiere aceptar? → R: Se rechaza y se borra
   del club; la persona puede volver a registrarse si recibe una invitación nueva. Rechazan los
   mismos que aprueban.
+- P: ¿Cuándo es obligatorio el nombre del padre, madre o responsable en el registro? → R: Cuando,
+  por su fecha de nacimiento, la persona es menor de 18 años; para los adultos es opcional.
+- P: Mientras un club está suspendido, ¿se puede seguir invitando y registrándose en él? → R: Sí.
+  Su PRESIDENTE invita, aprueba y rechaza, y quien tiene un enlace válido se registra y queda en
+  espera. Los DIRECTIVOS no pueden hacer nada porque no entran al club.
+- P: Al rechazar a una persona, ¿qué pasa con la invitación que usó para registrarse? → R: Se
+  borra junto con la persona; en la lista de invitaciones del club no queda rastro de ese correo.
+- P: ¿Dónde ve el club quién aprobó cada ingreso, cuándo y con qué rol? → R: En una lista de
+  ingresos aprobados, de solo lectura, dentro del apartado "Ingresos". La ven el PRESIDENTE y los
+  DIRECTIVOS.
+- P: Cuando el club rechaza a una persona, ¿se le avisa por correo? → R: No. No se envía ningún
+  correo ni aviso; si su cuenta se borró, al intentar entrar ve el mensaje normal de datos
+  incorrectos.
 
 ## Escenarios de usuario y pruebas *(obligatorio)*
 
@@ -89,8 +102,8 @@ vuelve a entrar y se comprueba que sigue viendo lo mismo.
    puede cambiar ninguno de los dos.
 2. **Dado** la pantalla de registro, **cuando** la persona indica nombre completo, apellidos, tipo
    y número de documento, fecha de nacimiento, celular, nombre del padre, madre o responsable (si
-   quien ingresa es un jugador) y una contraseña válida, **entonces** queda registrada en ese
-   club, en espera, y ve la pantalla de sala de espera con el nombre del club.
+   es menor de 18 años) y una contraseña válida, **entonces** queda registrada en ese club, en
+   espera, y ve la pantalla de sala de espera con el nombre del club.
 3. **Dado** una invitación ya usada, vencida, cancelada o reemplazada por otra, **cuando** alguien
    abre su enlace, **entonces** el sistema le explica que la invitación ya no sirve y no permite
    registrarse.
@@ -107,6 +120,9 @@ vuelve a entrar y se comprueba que sigue viendo lo mismo.
 8. **Dado** una persona aprobada en un club y en espera en otro, **cuando** entra, **entonces**
    usa con normalidad el club donde está aprobada y ve la pantalla de espera solo al elegir el
    otro.
+9. **Dado** una persona que, por su fecha de nacimiento, es menor de 18 años, **cuando** envía el
+   registro sin el nombre del padre, madre o responsable, **entonces** el sistema lo rechaza y le
+   explica que ese dato es obligatorio; a una persona adulta no se lo exige.
 
 ---
 
@@ -151,8 +167,9 @@ espera.
 8. **Dado** una persona con la pantalla de espera abierta, **cuando** su ingreso se aprueba,
    **entonces** al actualizar o volver a entrar ya ve la aplicación de su club, sin tener que
    registrarse de nuevo.
-9. **Dado** un ingreso ya aprobado, **cuando** se consulta, **entonces** consta quién lo aprobó y
-   cuándo.
+9. **Dado** un ingreso ya aprobado, **cuando** el PRESIDENTE o un DIRECTIVO abre la lista de
+   ingresos aprobados del apartado "Ingresos", **entonces** ve a esa persona con su nombre, el rol
+   con el que entró, quién la aprobó y cuándo, y no puede modificar nada desde esa lista.
 10. **Dado** dos personas autorizadas con la sala de espera abierta, **cuando** las dos aprueban a
     la misma persona, **entonces** el ingreso se aprueba una sola vez y la segunda ve que ya
     estaba aprobado.
@@ -179,9 +196,11 @@ comprueba que puede registrarse otra vez.
    **entonces** el sistema le pide confirmación antes de hacerlo y le advierte de que el registro
    se borrará.
 2. **Dado** un rechazo confirmado, **cuando** se consulta el club, **entonces** esa persona ya no
-   está en la sala de espera ni entre los integrantes, y no queda ningún dato suyo en ese club.
+   está en la sala de espera ni entre los integrantes, la invitación que usó ya no aparece en la
+   lista de invitaciones y no queda ningún dato suyo en ese club.
 3. **Dado** una persona rechazada cuyo único club era ese, **cuando** intenta iniciar sesión,
-   **entonces** no puede: su cuenta ya no existe.
+   **entonces** no puede: su cuenta ya no existe y ve el mismo mensaje de datos incorrectos que
+   cualquier inicio de sesión fallido. No recibe ningún correo ni aviso del rechazo.
 4. **Dado** una persona rechazada que pertenece a otros clubes, **cuando** inicia sesión,
    **entonces** sigue entrando a sus otros clubes con normalidad y ya no ve el club que la
    rechazó.
@@ -213,7 +232,11 @@ comprueba que puede registrarse otra vez.
   se use: la invitación sigue sirviendo.
 - La persona en espera olvida su contraseña o bloquea la cuenta: la recupera por correo como
   cualquier otra y sigue en espera.
-- El club se suspende o se da de baja mientras hay personas en espera o invitaciones pendientes.
+- El club se suspende mientras hay personas en espera o invitaciones pendientes: las invitaciones
+  siguen sirviendo, quien se registra queda en espera y el PRESIDENTE sigue invitando, aprobando y
+  rechazando. La suspensión no alarga el plazo de las invitaciones.
+- El club se da de baja mientras hay personas en espera o invitaciones pendientes: no se puede
+  invitar, registrarse, aprobar ni rechazar; los enlaces dejan de servir mientras dure la baja.
 - Dos personas autorizadas aprueban al mismo tiempo a la misma persona.
 - Alguien intenta aprobar su propio ingreso.
 - Una persona autorizada aprueba y otra rechaza a la misma persona al mismo tiempo: vale la
@@ -256,7 +279,8 @@ comprueba que puede registrarse otra vez.
 - **RF-010**: El registro DEBE mostrar el nombre del club antes de confirmar y DEBE pedir nombre
   completo, apellidos, tipo y número de documento, fecha de nacimiento, celular de contacto y
   contraseña. DEBE permitir indicar el nombre del padre, madre o responsable, que es obligatorio
-  cuando quien ingresa es menor de edad.
+  cuando, por su fecha de nacimiento, quien ingresa es menor de 18 años el día del registro, y
+  opcional para los adultos. El sistema DEBE comprobarlo en el servidor.
 - **RF-011**: La cuenta de un jugador se registra con el documento del jugador y con el correo de
   su acudiente; un entrenador o directivo se registra con su propio documento. La pantalla de
   registro DEBE explicarlo con claridad.
@@ -299,23 +323,31 @@ comprueba que puede registrarse otra vez.
   entrar a la aplicación del club con su rol, sin registrarse de nuevo. El cambio DEBE aplicarse
   también a una sesión ya abierta.
 - **RF-025**: El sistema DEBE registrar quién aprobó cada ingreso, cuándo y con qué rol.
+- **RF-025a**: El PRESIDENTE y los DIRECTIVOS DEBEN poder ver, en el apartado "Ingresos", la lista
+  de ingresos aprobados de su club, de solo lectura, con el nombre de la persona, el rol con el
+  que entró, quién la aprobó y cuándo. Ningún otro rol DEBE poder verla.
 - **RF-026**: Aprobar dos veces el mismo ingreso NO DEBE producir ningún efecto adicional.
 - **RF-027**: El PRESIDENTE y los DIRECTIVOS DEBEN poder rechazar el ingreso de una persona en
   espera de su club, con confirmación previa. Ningún otro rol DEBE poder hacerlo, y NO DEBE ser
   posible rechazar a un integrante ya aprobado.
-- **RF-027a**: Rechazar DEBE borrar a esa persona del club sin dejar datos suyos en él. Si
+- **RF-027a**: Rechazar DEBE borrar a esa persona del club sin dejar datos suyos en él, incluida
+  la invitación con la que se registró, que deja de aparecer en la lista de invitaciones. Si
   pertenece a otros clubes, los conserva intactos; si ese era su único club, su cuenta se elimina.
 - **RF-027b**: Una persona rechazada DEBE poder volver a registrarse en ese club, con el mismo
   correo y el mismo documento, solamente si recibe una invitación nueva.
 
 **Aislamiento y generales**
 
-- **RF-028**: Las invitaciones, la sala de espera y las aprobaciones de un club DEBEN ser
+- **RF-028**: Las invitaciones, la sala de espera, las aprobaciones y la lista de ingresos
+  aprobados de un club DEBEN ser
   invisibles e inaccesibles para cualquier persona de otro club, también por identificador.
 - **RF-029**: El DESARROLLADOR NO DEBE poder ver la sala de espera de ningún club, aprobar
   ingresos ni enviar invitaciones que no sean las de presidente.
-- **RF-030**: En un club suspendido solo entra su PRESIDENTE, que puede seguir aprobando ingresos;
-  en un club dado de baja no se puede invitar, registrarse ni aprobar.
+- **RF-030**: En un club suspendido solo entra su PRESIDENTE, que DEBE poder seguir enviando,
+  reenviando y cancelando invitaciones, y aprobando y rechazando ingresos. Los DIRECTIVOS no
+  pueden hacerlo mientras dure la suspensión, porque no entran al club. Una invitación válida de
+  un club suspendido DEBE seguir permitiendo registrarse, y la persona queda en espera. En un club
+  dado de baja no se puede invitar, registrarse, aprobar ni rechazar.
 - **RF-031**: Todas las pantallas de esta funcionalidad DEBEN funcionar en teléfono y en
   escritorio, en tema claro y oscuro, con la identidad del club y en español.
 
@@ -324,11 +356,12 @@ comprueba que puede registrarse otra vez.
 - **Invitación del club**: enlace enviado por correo que permite registrarse en un club concreto.
   Guarda el correo, el club, quién la envió, cuándo, cuándo vence y su estado (pendiente, usada,
   vencida, cancelada). No lleva rol. Es la misma invitación de la spec 001, enviada ahora desde
-  dentro del club.
+  dentro del club. Se borra si la persona que se registró con ella es rechazada.
 - **Integrante**: pertenencia de una persona a un club, con su único rol en ese club. Gana un
   estado de ingreso.
 - **Estado de ingreso**: EN_ESPERA o APROBADO. Es propio de cada pertenencia a un club.
-- **Aprobación del ingreso**: quién aprobó a una persona, cuándo y con qué rol. Un rechazo no deja
+- **Aprobación del ingreso**: quién aprobó a una persona, cuándo y con qué rol. Se consulta en la
+  lista de ingresos aprobados del club. Un rechazo no deja
   registro: borra a la persona del club.
 - **Sala de espera**: conjunto de integrantes de un club en estado EN_ESPERA.
 
@@ -372,7 +405,7 @@ comprueba que puede registrarse otra vez.
 - La ficha de Jugador con el resto de sus datos (médicos, documentos) pertenece a la funcionalidad
   de jugadores.
 - No se envía ningún correo ni aviso a quien aprueba cuando alguien se registra, ni a la persona
-  cuando se aprueba su ingreso: cada quien lo ve al entrar.
+  cuando se aprueba o se rechaza su ingreso: cada quien lo ve al entrar.
 - Las invitaciones se envían de una en una; no hay carga masiva de correos.
 - Mientras no existan las funcionalidades posteriores, la persona aprobada ve la pantalla de
   inicio de su club que dejó la spec 001.
