@@ -88,7 +88,7 @@ La cuenta con la que se inicia sesión. Es una sola aunque la persona pertenezca
 | --- | --- | --- |
 | Id | Guid | Clave primaria |
 | Correo | texto (254) | Obligatorio |
-| CorreoNormalizado | texto (254) | Minúsculas. Índice único (RF-002) |
+| CorreoNormalizado | texto (254) | Minúsculas y sin espacios en los extremos. Índice único (RF-002) |
 | ContrasenaHash | texto | Nulo solo en la cuenta DESARROLLADOR recién creada. Nunca sale por la API (RF-019) |
 | Celular | texto (20) | Obligatorio al registrarse |
 | EsDesarrollador | booleano | Índice único parcial sobre `true`: como máximo una cuenta (RF-001) |
@@ -103,7 +103,8 @@ La cuenta con la que se inicia sesión. Es una sola aunque la persona pertenezca
 - Una cuenta sin `ContrasenaHash` o con `Bloqueada = true` no puede iniciar sesión.
 - Restablecer la contraseña pone `IntentosFallidos = 0`, `Bloqueada = false` y un `SelloSeguridad`
   nuevo (RF-005a).
-- La cuenta DESARROLLADOR no tiene ningún `UsuarioRol`. Las demás tienen siempre al menos uno: una
+- La cuenta DESARROLLADOR no tiene ningún `UsuarioRol` y su correo no admite invitaciones
+  (RF-001, `correo_del_desarrollador`). Las demás tienen siempre al menos uno: una
   cuenta que pierde su último integrante se elimina (RF-019a, supuesto de la spec).
 
 ## FotoPerfil
@@ -134,7 +135,7 @@ entidad de la constitución §12.3 y lo que la spec llama "integrante".
 | Nombres | texto (80) | Obligatorio |
 | Apellidos | texto (80) | Obligatorio |
 | TipoDocumento | `TipoDocumento` | Obligatorio (§10) |
-| NumeroDocumento | texto (20) | Obligatorio; sin espacios ni puntos |
+| NumeroDocumento | texto (20) | Obligatorio; sin espacios ni puntos y en minúsculas (RF-002) |
 | FechaNacimiento | fecha | Obligatoria; no futura |
 | CreadoEn | fecha y hora | Obligatorio |
 
@@ -143,7 +144,8 @@ entidad de la constitución §12.3 y lo que la spec llama "integrante".
 - Único `(ClubId, NumeroDocumento)`: el documento no se repite dentro de un club (RF-017).
 - Una persona es única y tiene un único inicio de sesión: un `NumeroDocumento` solo puede estar
   bajo un mismo `UsuarioId` en toda la plataforma (RF-017a). Lo comprueba el servicio de registro.
-- Un integrante tiene un único rol (RF-021); cambiarlo reemplaza el valor.
+- Un integrante tiene un único rol (RF-021); cambiarlo reemplaza el valor. Aceptar una invitación
+  a un club del que la cuenta ya es integrante reemplaza el rol de ese integrante (RF-018).
 - **Último presidente** (RF-020, RF-019a): no se puede quitar el rol ni eliminar a un integrante
   PRESIDENTE si es el único del club con ese rol. Las invitaciones pendientes no cuentan. La regla
   vive en `Dominio/Reglas` y se comprueba dentro de la misma transacción que el cambio.

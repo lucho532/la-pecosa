@@ -211,13 +211,20 @@ paths:
     post:
       tags: [Invitaciones]
       summary: Añade a quien ya tiene cuenta al club de la invitación
-      description: La sesión debe ser la de la cuenta cuyo correo recibió la invitación.
+      description: |
+        La sesión debe ser la de la cuenta cuyo correo recibió la invitación. Si esa cuenta ya es
+        integrante del club, no se crea otro integrante: su rol pasa a ser el de la invitación.
       requestBody:
         required: true
         content:
           application/json:
             schema: { $ref: '#/components/schemas/TokenDto' }
       responses:
+        '200':
+          description: La cuenta ya era integrante de ese club; su rol pasa a ser el de la invitación
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDeSesionDto' }
         '201':
           description: Pertenencia al club creada
           content:
@@ -226,11 +233,6 @@ paths:
         '401': { $ref: '#/components/responses/SinSesion' }
         '403':
           description: '`invitacion_de_otro_correo`'
-          content:
-            application/problem+json:
-              schema: { $ref: '#/components/schemas/Problema' }
-        '409':
-          description: '`documento_repetido_en_club`'
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
@@ -333,7 +335,13 @@ paths:
         '400': { $ref: '#/components/responses/DatosInvalidos' }
         '401': { $ref: '#/components/responses/SinSesion' }
         '403': { $ref: '#/components/responses/SoloDesarrollador' }
-        '409': { $ref: '#/components/responses/NombreRepetido' }
+        '409':
+          description: |
+            `nombre_de_club_repetido`, o `correo_del_desarrollador` (el correo indicado es el de
+            la cuenta DESARROLLADOR, que no puede pertenecer a ningún club).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
 
   /api/plataforma/clubes/{clubId}:
     parameters:
@@ -507,7 +515,7 @@ paths:
         '403': { $ref: '#/components/responses/SoloDesarrollador' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
         '409':
-          description: '`ya_es_presidente`. Ese correo ya es presidente del club'
+          description: '`ya_es_presidente` (ese correo ya es presidente del club) o `correo_del_desarrollador`'
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
@@ -539,7 +547,7 @@ paths:
         '403': { $ref: '#/components/responses/SoloDesarrollador' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
         '409':
-          description: '`invitacion_ya_usada`'
+          description: '`invitacion_ya_usada` o `correo_del_desarrollador`'
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
@@ -672,7 +680,11 @@ components:
       type: object
       required: [identificador, contrasena]
       properties:
-        identificador: { type: string, description: Correo o número de documento }
+        identificador:
+          type: string
+          description: |
+            Correo o número de documento. El servidor le quita los espacios de los extremos y lo
+            pasa a minúsculas antes de buscarlo. La contraseña no se modifica.
         contrasena: { type: string }
 
     TokenSesionDto:

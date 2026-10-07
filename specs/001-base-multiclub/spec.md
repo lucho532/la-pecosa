@@ -14,7 +14,7 @@ su club y, si pertenece a varios, elige cuál ver. Toda la interfaz tiene tema c
 
 **Plataforma**: La Pecosa
 
-**Constitución aplicable**: versión 3.5.0, en especial §7, §8, §10, §12.1, §12.4, §12.5 y §24.
+**Constitución aplicable**: versión 3.6.0, en especial §7, §8, §10, §12.1, §12.4, §12.5 y §24.
 
 ## Aclaraciones
 
@@ -37,6 +37,9 @@ su club y, si pertenece a varios, elige cuál ver. Toda la interfaz tiene tema c
 - P: ¿Qué pasa con la persona a la que el DESARROLLADOR le quita el rol de presidente en un club?
   → R: El DESARROLLADOR elige en ese momento entre asignarle otro rol en ese club o eliminarla del
   club por completo.
+- P: ¿Qué pasa si el DESARROLLADOR invita como presidente a alguien que ya es integrante de ese
+  club con otro rol? → R: Al aceptar la invitación, su rol en ese club pasa a ser PRESIDENTE, que
+  reemplaza al anterior. No se crea un segundo integrante.
 
 ### Sesión 2026-10-07 (plan)
 
@@ -44,6 +47,16 @@ su club y, si pertenece a varios, elige cuál ver. Toda la interfaz tiene tema c
   tiene un único inicio de sesión.
 - P: ¿Qué archivos se admiten como escudo? → R: PNG, JPEG o WebP de hasta 1 MB. Lo mismo vale
   para la foto de perfil que puede agregar cada usuario registrado.
+
+### Sesión 2026-10-07 (tareas)
+
+- P: ¿Se puede invitar como presidente al correo de la cuenta DESARROLLADOR? → R: No. Esa cuenta
+  usa un único correo, que no se usa para nada más: el sistema rechaza crear un club o enviar una
+  invitación con ese correo.
+- P: ¿Importan las mayúsculas o los espacios al escribir el correo o el documento para entrar? →
+  R: No. Correo y documento se guardan y se buscan sin espacios en los extremos y sin distinguir
+  mayúsculas de minúsculas; el documento, además, sin espacios ni puntos. La contraseña no se
+  toca: se compara tal como se escribió.
 
 ## Escenarios de usuario y pruebas *(obligatorio)*
 
@@ -144,6 +157,9 @@ la sesión y se vuelve a entrar con el correo y con el documento.
 14. **Dado** el único PRESIDENTE de un club, **cuando** intenta quitarse su rol o eliminar su
     cuenta, **entonces** el sistema se lo niega y le explica que antes debe existir otro
     PRESIDENTE.
+15. **Dado** un DIRECTIVO de un club, **cuando** el DESARROLLADOR lo invita como PRESIDENTE de ese
+    mismo club y acepta la invitación, **entonces** pasa a ser PRESIDENTE como único rol y el club
+    no tiene dos integrantes de la misma persona.
 
 ---
 
@@ -316,6 +332,8 @@ de club y se comprueba que sigue siendo la misma; después se quita.
 - El servicio de correo falla en el momento de crear el club.
 - El DESARROLLADOR carga como escudo un archivo que no es una imagen o que pesa demasiado.
 - El DESARROLLADOR intenta dejar un club sin PRESIDENTE: el sistema lo impide.
+- El DESARROLLADOR indica su propio correo como presidente de un club: el sistema lo rechaza.
+- Alguien escribe su correo con mayúsculas o con espacios al entrar: entra igual.
 - Alguien intenta iniciar sesión muchas veces seguidas con contraseñas incorrectas: al quinto
   fallo la cuenta se bloquea hasta recuperar la contraseña por correo.
 - Alguien bloquea a propósito la cuenta de otra persona fallando su contraseña: la persona
@@ -334,10 +352,15 @@ de club y se comprueba que sigue siendo la misma; después se quita.
 **Acceso y panel de administración**
 
 - **RF-001**: El sistema DEBE tener exactamente una cuenta DESARROLLADOR, que no pertenece a ningún
-  club. No DEBE ser posible crear otra ni asignar ese rol desde la aplicación.
+  club. No DEBE ser posible crear otra ni asignar ese rol desde la aplicación. Su correo no se usa
+  para nada más: el sistema DEBE rechazar la creación de un club o el envío de una invitación con
+  ese correo y explicar el motivo.
 - **RF-002**: El sistema DEBE permitir iniciar sesión con el correo o con el documento del
   integrante, más su contraseña. El correo DEBE ser único en la plataforma: el sistema DEBE rechazar
-  el registro de una cuenta nueva con un correo ya registrado y explicar el motivo.
+  el registro de una cuenta nueva con un correo ya registrado y explicar el motivo. El correo y el
+  documento DEBEN compararse sin los espacios de los extremos y sin distinguir mayúsculas de
+  minúsculas, y el documento también sin espacios ni puntos, tanto al guardarlos como al iniciar
+  sesión. La contraseña DEBE compararse tal como se escribió.
 - **RF-003**: El sistema DEBE dar acceso al panel de administración de la plataforma únicamente al
   DESARROLLADOR, y DEBE negar ese acceso y todas sus operaciones a cualquier otro rol y a quien no
   tenga sesión iniciada.
@@ -392,7 +415,8 @@ de club y se comprueba que sigue siendo la misma; después se quita.
   esa cuenta.
 - **RF-018**: Si la persona invitada ya tiene cuenta, el sistema NO DEBE crearle una segunda: al
   abrir la invitación inicia sesión con su cuenta y queda añadida al nuevo club con su rol,
-  conservando su único inicio de sesión.
+  conservando su único inicio de sesión. Si ya es integrante de ese mismo club con otro rol,
+  aceptar la invitación reemplaza ese rol por el de la invitación y no crea un segundo integrante.
 - **RF-019**: El sistema NO DEBE almacenar ni mostrar contraseñas en texto legible, y nadie asigna
   la contraseña de otra persona.
 - **RF-019a**: El DESARROLLADOR DEBE poder ver los presidentes de cada club y quitarle el rol a

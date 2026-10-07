@@ -60,7 +60,7 @@ funcionalidad tiene 7 entidades, 25 operaciones de API y 10 pantallas.
 | §4 Arquitectura por capas | Cuatro proyectos `LaPecosa.*` y `backend/pruebas`; `frontend/` separado | Cumple, con la nota 1 |
 | §5 Flujo de dependencias | Controlador → IServicio → IRepositorio → EF Core; entidad → mapper → DTO | Cumple |
 | §6 Tecnologías base | Solo las listadas, más las de la tabla de seguimiento | Cumple, con las notas 3 y 4 |
-| §7.1 Aislamiento entre clubes | Filtro global por `ClubId`, falla cerrado, con prueba que vigila el modelo | Cumple |
+| §7.1 Aislamiento entre clubes | Filtro global por `ClubId`, falla cerrado, con prueba que vigila el modelo. Las tres excepciones de §7.1 viven en `Repositorios/Plataforma/` | Cumple |
 | §7.2 Identidad y configuración | En base de datos; el código no menciona a ningún club | Cumple |
 | §7.3 y §12.3 Pertenencia a varios clubes | `UsuarioRol` por club; desplegable; pertenencia comprobada por petición | Cumple |
 | §7.4 Suspensión, baja, eliminación | Estados y transiciones del modelo de datos; cascada al eliminar | Cumple (solo manual; el impago está fuera de alcance) |

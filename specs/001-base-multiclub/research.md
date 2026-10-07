@@ -22,9 +22,13 @@ detalle que la spec no fija; están reunidas al final para que el propietario la
   `IContextoClub`. Si no hay club en el contexto, el filtro no devuelve nada (falla cerrado).
 - **Motivo**: cumple §7.1 ("ninguna consulta puede ejecutarse sin estar limitada a un club") sin
   depender de que cada consulta recuerde filtrar. Es lo más sencillo para clubes pequeños (§19).
-- **Excepción controlada**: solo los repositorios del panel de la plataforma
-  (`Repositorios/Plataforma/`) pueden saltarse el filtro, y solo para lo que §8 permite al
-  DESARROLLADOR: clubes, presidentes e invitaciones.
+- **Excepciones controladas** (§7.1): solo los repositorios de `Repositorios/Plataforma/` pueden
+  saltarse el filtro, y solo en tres casos: el panel del DESARROLLADOR (clubes, presidentes e
+  invitaciones, lo que §8 le permite); las consultas de la propia cuenta
+  (`RepositorioPertenencias`, siempre por `UsuarioId` o por documento); y abrir una invitación por
+  el hash de su token (`RepositorioInvitacionesPorToken`).
+- **El escudo no es una excepción**: el endpoint público fija en `IContextoClub` el club de la
+  ruta y lee con el filtro activo.
 - **Red de seguridad**: una prueba de integración recorre el modelo de EF y falla si alguna
   entidad no implementa `IPerteneceAClub` y no está en la lista expresa de entidades de la
   plataforma (`Club`, `Usuario`, `FotoPerfil`, `SolicitudRecuperacion`). Así, las funcionalidades futuras no
@@ -79,6 +83,10 @@ detalle que la spec no fija; están reunidas al final para que el propietario la
     60 minutos **(supuesto)**. La respuesta es siempre `202`, exista o no el correo.
   - Límite de peticiones por IP en los endpoints anónimos de cuenta, con el limitador incluido en
     ASP.NET Core.
+  - Normalización (decidido por el propietario el 2026-10-07, RF-002): correo y documento se
+    guardan y se buscan sin espacios en los extremos y en minúsculas; el documento, además, sin
+    espacios ni puntos. Se hace en un único lugar, `NormalizadorTexto`. La contraseña nunca se
+    normaliza: recortarla o pasarla a minúsculas la debilitaría.
 - **Alternativas**: tokens firmados sin tabla (obligan a persistir el anillo de claves de Data
   Protection, una complejidad menos visible que una tabla); bloqueo temporal (la aclaración de la
   spec pide bloqueo hasta recuperar por correo).
@@ -92,6 +100,10 @@ detalle que la spec no fija; están reunidas al final para que el propietario la
 - **Motivo**: respeta §12.4 ("nadie asigna la contraseña de otra persona") y evita guardar una
   contraseña inicial en la configuración. El DESARROLLADOR no tiene integrante en ningún club, de
   modo que cualquier endpoint de club le responde `404` (RF-004).
+- **Su correo no admite invitaciones** (decidido por el propietario el 2026-10-07, RF-001): crear
+  un club, invitar a un presidente o corregir una invitación con el correo de la cuenta
+  DESARROLLADOR responde `409` con el código `correo_del_desarrollador` y no crea nada. Así esa
+  cuenta nunca llega a tener un integrante.
 - **Alternativas**: contraseña inicial por variable de entorno (la constitución 3.0.0 eliminó las
   contraseñas por defecto); un `UsuarioRol` sin club (obliga a un `ClubId` nulo en la tabla de
   pertenencia y debilita el filtro de aislamiento).

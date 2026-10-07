@@ -101,6 +101,11 @@ Enmienda 3.4.0 → 3.5.0 (2026-10-07), decidida por el propietario del proyecto:
 - Título y §1: el proyecto pasa a llamarse La Pecosa; Valfor F.C. es solo su primer cliente
 - §1: formas del nombre sin espacios (LaPecosa, la-pecosa, lapecosa)
 - §4: los proyectos del backend pasan de Valfor.* a LaPecosa.*
+
+Enmienda 3.5.0 → 3.6.0 (2026-10-07), decidida por el propietario del proyecto tras el análisis de
+la spec 001:
+- §7.1: además del panel del DESARROLLADOR, se admiten como excepciones acotadas las consultas de
+  la propia cuenta (iniciar sesión y listar sus clubes) y abrir una invitación por su enlace
 -->
 
 # Constitución del Proyecto — La Pecosa, plataforma multiclub de escuelas de fútbol
@@ -443,8 +448,16 @@ comunicados, configuración) pertenece a exactamente un club.
 Un usuario de un club nunca accede a datos de otro club: ni los ve, ni los cuenta, ni puede
 consultarlos por su identificador.
 
-Ninguna consulta ni operación puede ejecutarse sin estar limitada a un club. La única excepción es
-el panel de administración del DESARROLLADOR (ver §8).
+Ninguna consulta ni operación puede ejecutarse sin estar limitada a un club. Las únicas
+excepciones son:
+
+- El panel de administración del DESARROLLADOR (ver §8).
+- Las consultas de la propia cuenta, necesarias para iniciar sesión y elegir club (ver §7.3 y
+  §12.4): encontrar la cuenta por su correo o su documento y listar los clubes a los que
+  pertenece. Siempre quedan limitadas a esa cuenta.
+- Abrir una invitación por su enlace (ver §12.1): devuelve solo esa invitación y su club.
+
+Ninguna excepción entrega datos de un club a quien no pertenece a él.
 
 ### 7.2. Identidad y configuración de cada club
 
@@ -1416,4 +1429,4 @@ Escalabilidad
 La solución más sencilla que cumpla correctamente las reglas de negocio será preferible a una
 solución más compleja.
 
-**Versión**: 3.5.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-07
+**Versión**: 3.6.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-07
