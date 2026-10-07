@@ -1,0 +1,42 @@
+name: la-pecosa
+
+services:
+  bd:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: lapecosa
+      POSTGRES_USER: lapecosa
+      POSTGRES_PASSWORD: lapecosa
+    volumes:
+      - datos-bd:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lapecosa -d lapecosa"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "8080:8080"
+    depends_on:
+      bd:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_URL_API: http://localhost:8080
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  datos-bd:

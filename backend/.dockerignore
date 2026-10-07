@@ -1,0 +1,6 @@
+bin/
+obj/
+pruebas/
+**/TestResults/
+Dockerfile
+.dockerignore
