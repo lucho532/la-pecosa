@@ -106,6 +106,20 @@ Enmienda 3.5.0 → 3.6.0 (2026-10-07), decidida por el propietario del proyecto 
 la spec 001:
 - §7.1: además del panel del DESARROLLADOR, se admiten como excepciones acotadas las consultas de
   la propia cuenta (iniciar sesión y listar sus clubes) y abrir una invitación por su enlace
+
+Enmienda 3.6.0 → 3.7.0 (2026-10-07), decidida por el propietario del proyecto en las aclaraciones
+de la spec 002:
+- §8 y §12.1: dentro del club invitan el PRESIDENTE y los DIRECTIVOS; toda invitación sirve una
+  sola vez, caduca y queda ligada a su correo
+- §12.1 y §12.1.1: quien se registra con una invitación del club pasa siempre por la sala de
+  espera
+- §8 y §12.1.1: el PRESIDENTE o un DIRECTIVO pueden rechazar un ingreso en espera; el rechazo
+  borra a la persona del club y solo puede volver con una invitación nueva
+- §14: el rechazo de un ingreso en espera es una eliminación física justificada
+- §20: pruebas nuevas
+- §28: se cierran tres decisiones
+- Principios modificados: ninguno renombrado. Secciones añadidas o eliminadas: ninguna
+- Pendientes: ninguno nuevo; siguen abiertas las siete decisiones restantes de la §28
 -->
 
 # Constitución del Proyecto — La Pecosa, plataforma multiclub de escuelas de fútbol
@@ -586,7 +600,8 @@ Puede:
 - Consultar las finanzas completas del club.
 - Registrar, anular y corregir pagos.
 - Gestionar torneos, partidos, arbitrajes y comunicados.
-- Aprobar el ingreso de las cuentas que están en espera.
+- Enviar invitaciones de registro a su club (ver §12.1).
+- Aprobar o rechazar el ingreso de las cuentas que están en espera.
 - Buscar usuarios registrados por su documento de identidad y asignarles o retirarles los roles
   ENTRENADOR o DIRECTIVO.
 
@@ -611,7 +626,8 @@ Puede:
 - Consultar las finanzas del club: recaudo, quién debe y quién está al día.
 - Consultar la documentación de cada jugador.
 - Consultar la seguridad social de cada jugador: su entidad de salud y dónde lo atienden.
-- Aprobar el ingreso de cualquier cuenta que está en espera.
+- Enviar invitaciones de registro a su club (ver §12.1).
+- Aprobar o rechazar el ingreso de cualquier cuenta que está en espera.
 - Asignar el rol ENTRENADOR a una cuenta cuyo ingreso acaba de aprobar.
 
 Su acceso a finanzas y fichas es de consulta. No puede registrar ni anular pagos, modificar el
@@ -768,6 +784,14 @@ club; ese enlace la lleva a registrarse en ese club y la cuenta queda ligada a �
 No existe un registro abierto sin invitación, y nadie elige su club al registrarse: lo determina
 el enlace.
 
+Dentro de un club, las invitaciones de registro las envían el PRESIDENTE y los DIRECTIVOS de ese
+club, y nadie más. La invitación de un PRESIDENTE la envía el DESARROLLADOR (ver §12.5).
+
+Toda invitación sirve una sola vez, caduca y queda ligada al club y al correo al que se envió: la
+persona no puede registrarse con otro correo.
+
+Quien se registra con una invitación del club pasa siempre por la sala de espera (ver §12.1.1).
+
 - La cuenta de un jugador se registra con el documento del jugador (el niño), no con el de su
   familia.
 - Un entrenador o un directivo se registra con su propio documento.
@@ -821,12 +845,23 @@ El ingreso lo aprueba el PRESIDENTE o un DIRECTIVO.
 Al aprobarse el ingreso de un jugador, se le asigna la categoría que corresponde a su año de
 nacimiento y empieza a generarse su mensualidad.
 
+El PRESIDENTE o un DIRECTIVO también pueden rechazar un ingreso en espera. Rechazar borra a esa
+persona del club, sin dejar datos suyos en él:
+
+- Si pertenece a otros clubes, los conserva intactos.
+- Si ese era su único club, su cuenta se elimina.
+- Solo puede volver a registrarse en ese club si recibe una invitación nueva.
+
+Solo se rechaza a quien está en espera; a un integrante ya aprobado no se le rechaza.
+
 El estado de ingreso de una cuenta es:
 
 ```text
 EN_ESPERA
 APROBADO
 ```
+
+El rechazo no es un estado: no queda registro del ingreso rechazado.
 
 ### 12.2. Asignación de roles
 
@@ -993,6 +1028,9 @@ Esto aplica, entre otras, a:
 Un jugador retirado se desactiva; su historial deportivo y financiero se conserva.
 
 La eliminación física deberá justificarse explícitamente.
+
+El rechazo de un ingreso en espera (ver §12.1.1) es una eliminación física justificada: esa
+persona nunca llegó a entrar al club y no tiene historial en él.
 
 ## 15. Reglas de negocio en backend
 
@@ -1239,7 +1277,12 @@ Las pruebas deben validar principalmente:
 - Que la ficha de Jugador se elimina cuando la cuenta pasa a ENTRENADOR o DIRECTIVO.
 - Recuperación de contraseña.
 - Que una cuenta en espera no accede a ninguna información del club ni genera mensualidad.
-- Que solamente el PRESIDENTE o un DIRECTIVO pueden aprobar un ingreso.
+- Que solamente el PRESIDENTE o un DIRECTIVO pueden aprobar o rechazar un ingreso.
+- Que solamente el PRESIDENTE o un DIRECTIVO pueden enviar invitaciones de registro a su club.
+- Que una invitación no sirve dos veces, no sirve vencida y no admite otro correo.
+- Que quien se registra con una invitación del club queda en espera.
+- Que rechazar un ingreso borra a la persona de ese club, no afecta a sus otros clubes y le
+  permite volver solo con una invitación nueva.
 - Aislamiento entre categorías y entre cuentas de jugador.
 - Que una cuenta no convocada no puede ver ni consultar un partido próximo, y que sí ve todos los
   entrenamientos de su categoría.
@@ -1390,10 +1433,6 @@ Cuando sea necesario, se deben agregar pruebas para evitar que el defecto reapar
 Estas decisiones no están tomadas. Según §25, no deben resolverse por cuenta propia durante la
 implementación.
 
-- **Quién invita dentro del club.** Qué roles del club pueden enviar invitaciones de registro, si
-  la invitación caduca y si sirve una sola vez. La del PRESIDENTE la envía el DESARROLLADOR.
-- **Invitación y sala de espera.** Si quien se registra con una invitación del club sigue pasando
-  por la sala de espera o entra ya aprobado.
 - **Dirección del sitio público.** Cómo llega un visitante al sitio público de un club concreto.
 - **Pago por el uso de la plataforma.** Valor, periodicidad, fecha de corte y quién lo paga dentro
   del club.
@@ -1407,8 +1446,6 @@ implementación.
   habrá que decidir el canal.
 - **Ficha con historial.** Qué pasa si una cuenta que ya tiene cargos, pagos o partidos como
   jugador pasa a ENTRENADOR o DIRECTIVO.
-- **Registros que no se aprueban.** Qué pasa con una cuenta en espera que el club no quiere
-  aceptar: si se puede rechazar, si se borra y si esa persona puede volver a registrarse.
 
 ## 29. Principio final
 
@@ -1429,4 +1466,4 @@ Escalabilidad
 La solución más sencilla que cumpla correctamente las reglas de negocio será preferible a una
 solución más compleja.
 
-**Versión**: 3.6.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-07
+**Versión**: 3.7.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-07

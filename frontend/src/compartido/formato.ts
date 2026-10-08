@@ -1,4 +1,4 @@
-import type { Rol } from './api/tipos';
+import type { Rol, TipoDocumento } from './api/tipos';
 
 const FECHA = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
 const FECHA_Y_HORA = new Intl.DateTimeFormat('es-CO', {
@@ -12,6 +12,16 @@ const FECHA_Y_HORA = new Intl.DateTimeFormat('es-CO', {
 /** Fecha en español a partir de la fecha en formato ISO que entrega la API. */
 export function fecha(iso: string): string {
   return FECHA.format(new Date(iso));
+}
+
+const DIA = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+/**
+ * Día en español a partir de una fecha sin hora (`AAAA-MM-DD`), como la de nacimiento. No depende
+ * de la zona horaria del dispositivo: el día que se muestra es el que se escribió.
+ */
+export function dia(fechaSinHora: string): string {
+  return DIA.format(new Date(`${fechaSinHora}T00:00:00Z`));
 }
 
 /** Fecha y hora en español a partir de la fecha en formato ISO que entrega la API. */
@@ -30,4 +40,16 @@ const ROLES: Record<Rol, string> = {
 /** Nombre de un rol para mostrar. */
 export function nombreDeRol(rol: Rol): string {
   return ROLES[rol];
+}
+
+const TIPOS_DOCUMENTO: Record<TipoDocumento, string> = {
+  REGISTRO_CIVIL: 'Registro civil',
+  TARJETA_IDENTIDAD: 'Tarjeta de identidad',
+  CEDULA_CIUDADANIA: 'Cédula de ciudadanía',
+  CEDULA_EXTRANJERIA: 'Cédula de extranjería',
+};
+
+/** Nombre de un tipo de documento para mostrar. */
+export function nombreDeTipoDocumento(tipo: TipoDocumento): string {
+  return TIPOS_DOCUMENTO[tipo];
 }

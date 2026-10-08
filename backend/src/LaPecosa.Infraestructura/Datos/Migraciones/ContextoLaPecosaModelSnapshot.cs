@@ -244,6 +244,10 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                     b.Property<int>("IntentosFallidos")
                         .HasColumnType("integer");
 
+                    b.Property<string>("NombreResponsable")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
                     b.Property<Guid>("SelloSeguridad")
                         .HasColumnType("uuid");
 
@@ -274,6 +278,16 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 
+                    b.Property<DateTime?>("AprobadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AprobadoPorNombre")
+                        .HasMaxLength(161)
+                        .HasColumnType("character varying(161)");
+
+                    b.Property<Guid?>("AprobadoPorUsuarioId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("ClubId")
                         .HasColumnType("uuid");
 
@@ -303,6 +317,10 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("RolDeIngreso")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("TipoDocumento")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -313,9 +331,13 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AprobadoPorUsuarioId");
+
                     b.HasIndex("NumeroDocumento");
 
                     b.HasIndex("UsuarioId");
+
+                    b.HasIndex("ClubId", "EstadoIngreso");
 
                     b.HasIndex("ClubId", "NumeroDocumento")
                         .IsUnique()
@@ -372,6 +394,11 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
 
             modelBuilder.Entity("LaPecosa.Dominio.Entidades.UsuarioRol", b =>
                 {
+                    b.HasOne("LaPecosa.Dominio.Entidades.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("AprobadoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("LaPecosa.Dominio.Entidades.Club", "Club")
                         .WithMany()
                         .HasForeignKey("ClubId")

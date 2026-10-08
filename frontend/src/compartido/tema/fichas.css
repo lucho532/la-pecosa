@@ -1,0 +1,114 @@
+/* Fichas de personas y grupos de opciones. Separado de componentes.css para no pasar de 250 líneas. */
+
+/* Ficha apilada: los datos de una persona, uno bajo otro en pantallas estrechas. */
+.ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borde);
+}
+
+.ficha h3 {
+  font-size: 18px;
+}
+
+.ficha-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.ficha-datos dt {
+  color: var(--texto-suave);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ficha-datos dd {
+  margin: 0;
+}
+
+/* Las celdas de una tabla no parten las palabras: si no cabe, la tabla se desplaza en su caja. */
+.tabla th,
+.tabla td {
+  overflow-wrap: normal;
+}
+
+/* En pantallas estrechas cada fila de una tabla se apila como una ficha, con su título al lado. */
+@media (max-width: 720px) {
+  .tabla,
+  .tabla tbody,
+  .tabla tr {
+    display: block;
+  }
+
+  .tabla thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .tabla tr {
+    padding: 12px 0;
+    border-top: 1px solid var(--borde);
+  }
+
+  .tabla td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 4px 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .tabla td::before {
+    content: attr(data-titulo);
+    flex: 0 0 96px;
+    color: var(--texto-suave);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .tabla td:empty {
+    display: none;
+  }
+}
+
+/* Grupo de opciones excluyentes dentro de un diálogo. */
+.opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.opciones legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.opcion input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+}

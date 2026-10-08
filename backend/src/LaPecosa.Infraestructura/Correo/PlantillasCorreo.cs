@@ -11,14 +11,22 @@ namespace LaPecosa.Infraestructura.Correo;
 /// </summary>
 public static class PlantillasCorreo
 {
-    /// <summary>Redacta la invitación para registrarse en un club con un rol.</summary>
+    /// <summary>
+    /// Redacta la invitación para registrarse en un club. La de presidente nombra su rol; la que
+    /// envía el club no nombra ninguno, porque el rol se decide al aprobar el ingreso (RF-003).
+    /// </summary>
     public static MensajeCorreo Invitacion(string urlBaseFrontend, string nombreClub, Rol rol, string token)
     {
         var enlace = $"{urlBaseFrontend.TrimEnd('/')}/invitacion#{token}";
+        var invitacion = rol == Rol.PRESIDENTE
+            ? $"Te invitaron a La Pecosa como presidente de {nombreClub}.\n\n" +
+              $"Para aceptar la invitación, abre este enlace:\n{enlace}\n\n"
+            : $"{nombreClub} te invita a registrarte en La Pecosa.\n\n" +
+              $"Para aceptar la invitación, abre este enlace:\n{enlace}\n\n" +
+              "Después, el club revisará tu ingreso antes de darte acceso.\n\n";
         var texto =
             $"Hola:\n\n" +
-            $"Te invitaron a La Pecosa como {NombreDeRol(rol)} de {nombreClub}.\n\n" +
-            $"Para aceptar la invitación, abre este enlace:\n{enlace}\n\n" +
+            invitacion +
             "El enlace sirve una sola vez y vence en 7 días. Si no esperabas este correo, ignóralo.";
 
         return new MensajeCorreo($"Invitación a {nombreClub} en La Pecosa", texto, enlace);
@@ -36,13 +44,4 @@ public static class PlantillasCorreo
 
         return new MensajeCorreo("Crea tu contraseña de La Pecosa", texto, enlace);
     }
-
-    private static string NombreDeRol(Rol rol) => rol switch
-    {
-        Rol.PRESIDENTE => "presidente",
-        Rol.DIRECTIVO => "directivo",
-        Rol.ENTRENADOR => "entrenador",
-        Rol.JUGADOR => "jugador",
-        _ => rol.ToString().ToLowerInvariant(),
-    };
 }

@@ -70,14 +70,19 @@ public class Sembrador
 
     /// <summary>Añade a una cuenta que ya existe como integrante de un club.</summary>
     public async Task<UsuarioRol> CrearIntegranteAsync(
-        Club club, Usuario usuario, Rol rol, string? documento = null, string nombres = "Ana")
+        Club club,
+        Usuario usuario,
+        Rol rol,
+        string? documento = null,
+        string nombres = "Ana",
+        EstadoIngreso estadoIngreso = EstadoIngreso.APROBADO)
     {
         var integrante = new UsuarioRol
         {
             ClubId = club.Id,
             UsuarioId = usuario.Id,
             Rol = rol,
-            EstadoIngreso = EstadoIngreso.APROBADO,
+            EstadoIngreso = estadoIngreso,
             Nombres = nombres,
             Apellidos = "Pérez",
             TipoDocumento = TipoDocumento.CEDULA_CIUDADANIA,
@@ -94,18 +99,28 @@ public class Sembrador
         });
     }
 
-    /// <summary>Crea una invitación de presidente y devuelve también su token en claro.</summary>
+    /// <summary>
+    /// Crea una invitación y devuelve también su token en claro. Sin indicar el rol es de
+    /// presidente; con <see cref="Rol.JUGADOR"/> es una invitación enviada desde el club.
+    /// </summary>
     public async Task<(Invitacion Invitacion, string Token)> CrearInvitacionAsync(
-        Club club, string? correo = null, DateTime? venceEn = null, DateTime? usadaEn = null, DateTime? anuladaEn = null)
+        Club club,
+        string? correo = null,
+        DateTime? venceEn = null,
+        DateTime? usadaEn = null,
+        DateTime? anuladaEn = null,
+        Rol rol = Rol.PRESIDENTE,
+        Usuario? creadaPor = null)
     {
         var (token, hash) = GeneradorTokens.Nuevo();
         var invitacion = new Invitacion
         {
             ClubId = club.Id,
-            Rol = Rol.PRESIDENTE,
+            Rol = rol,
             Correo = NormalizadorTexto.Correo(correo ?? CorreoUnico()),
             TokenHash = hash,
             EstadoEnvio = EstadoEnvio.ENVIADO,
+            CreadaPorUsuarioId = creadaPor?.Id ?? Guid.Empty,
             CreadaEn = DateTime.UtcNow,
             VenceEn = venceEn ?? DateTime.UtcNow.AddDays(Invitacion.DiasDeVigencia),
             UsadaEn = usadaEn,
@@ -125,5 +140,14 @@ public class Sembrador
     {
         var usuario = await CrearCuentaAsync();
         return (usuario, await CrearIntegranteAsync(club, usuario, rol));
+    }
+
+    /// <summary>Crea una cuenta nueva y la deja en la sala de espera de un club, como JUGADOR.</summary>
+    public async Task<(Usuario Usuario, UsuarioRol Integrante)> CrearIntegranteEnEsperaAsync(Club club)
+    {
+        var usuario = await CrearCuentaAsync();
+        var integrante = await CrearIntegranteAsync(
+            club, usuario, Rol.JUGADOR, estadoIngreso: EstadoIngreso.EN_ESPERA);
+        return (usuario, integrante);
     }
 }

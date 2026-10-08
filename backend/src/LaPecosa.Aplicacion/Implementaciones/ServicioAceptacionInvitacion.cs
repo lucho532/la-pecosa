@@ -4,17 +4,19 @@ using LaPecosa.Aplicacion.Mappers;
 using LaPecosa.Aplicacion.Servicios;
 using LaPecosa.Aplicacion.Utilidades;
 using LaPecosa.Dominio.Entidades;
-using LaPecosa.Dominio.Enumeraciones;
+using LaPecosa.Dominio.Reglas;
 
 namespace LaPecosa.Aplicacion.Implementaciones;
 
 /// <summary>
 /// Representa el servicio que acepta una invitación con una cuenta existente.
 /// Su responsabilidad es comprobar que la invitación está vigente y es del correo de la sesión, y
-/// en una transacción marcarla como usada y crear el integrante (copiando la identidad del
-/// integrante más reciente de la cuenta) o reemplazar el rol del que ya tenía en ese club.
-/// No crea cuentas ni pide de nuevo los datos de la persona. No accede al contexto de Entity
-/// Framework ni conoce HTTP.
+/// en una transacción marcarla como usada y crear el integrante, copiando la identidad del
+/// integrante más reciente de la cuenta. Con una invitación del club el integrante nuevo queda
+/// como JUGADOR en la sala de espera, y si la cuenta ya está en ese club no cambia nada (409). Solo
+/// una invitación de presidente reemplaza el rol de quien ya era integrante.
+/// No crea cuentas ni pide de nuevo los datos de la persona, tampoco el responsable. No accede al
+/// contexto de Entity Framework ni conoce HTTP.
 /// </summary>
 public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
 {
@@ -47,7 +49,9 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
         var invitacion = string.IsNullOrWhiteSpace(datos.Token)
             ? null
             : await _invitaciones.ObtenerPorHashAsync(GeneradorTokens.Hash(datos.Token), cancelacion);
-        if (invitacion?.Club is null || !invitacion.EstaVigente(ahora))
+        if (invitacion?.Club is null
+            || !invitacion.EstaVigente(ahora)
+            || !ReglaIngresoPorInvitacion.ElClubPermiteUsarla(invitacion.Rol, invitacion.Club.Estado))
         {
             throw ErroresDeInvitacion.NoValida();
         }
@@ -62,6 +66,12 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
         }
 
         var existente = await _pertenencias.ObtenerAsync(usuarioId, invitacion.ClubId, cancelacion);
+        if (existente is not null && ReglaIngresoPorInvitacion.PasaPorSalaDeEspera(invitacion.Rol))
+        {
+            // Una invitación del club no degrada a quien ya está en él: no se gasta ni cambia nada.
+            throw ErroresDeInvitacion.YaPertenecesAlClub();
+        }
+
         var integrante = existente ?? await NuevoIntegranteAsync(usuario, invitacion, ahora, cancelacion);
 
         try
@@ -80,9 +90,10 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
                     }
                     else
                     {
-                        // Ya era integrante de este club: su rol pasa a ser el de la invitación (RF-018).
+                        // Ya era integrante de este club y la invitación es de presidente: su rol
+                        // pasa a ser el de la invitación (RF-018 de la 001).
                         existente.Rol = invitacion.Rol;
-                        existente.EstadoIngreso = EstadoIngreso.APROBADO;
+                        existente.EstadoIngreso = ReglaIngresoPorInvitacion.EstadoDeIngreso(invitacion.Rol);
                     }
 
                     await _unidadDeTrabajo.GuardarAsync(cancelacion);
@@ -114,7 +125,7 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
             ClubId = invitacion.ClubId,
             UsuarioId = usuario.Id,
             Rol = invitacion.Rol,
-            EstadoIngreso = EstadoIngreso.APROBADO,
+            EstadoIngreso = ReglaIngresoPorInvitacion.EstadoDeIngreso(invitacion.Rol),
             Nombres = identidad.Nombres,
             Apellidos = identidad.Apellidos,
             TipoDocumento = identidad.TipoDocumento,

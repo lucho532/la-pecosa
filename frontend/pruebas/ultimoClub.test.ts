@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ClubDeSesionDto } from '../src/compartido/api/tipos';
+import type { ClubDeSesionDto, EstadoIngreso } from '../src/compartido/api/tipos';
 import { clubDeEntrada, guardarUltimoClub } from '../src/compartido/sesion/ultimoClub';
 
-function club(clubId: string): ClubDeSesionDto {
+function club(clubId: string, estadoIngreso: EstadoIngreso = 'APROBADO'): ClubDeSesionDto {
   return {
     clubId,
     nombre: `Club ${clubId}`,
-    rol: 'PRESIDENTE',
+    rol: estadoIngreso === 'APROBADO' ? 'PRESIDENTE' : 'JUGADOR',
     estado: 'ACTIVO',
+    estadoIngreso,
     identidad: { colorPrincipal: null, colorAcento: null, urlEscudo: null },
     nombres: 'Ana',
     apellidos: 'Pérez',
@@ -42,6 +43,26 @@ describe('club de entrada', () => {
     guardarUltimoClub('ajeno');
 
     expect(clubDeEntrada([club('a'), club('b')])).toBe('a');
+  });
+
+  it('sin elección previa prefiere un club con el ingreso aprobado', () => {
+    expect(clubDeEntrada([club('a', 'EN_ESPERA'), club('b'), club('c')])).toBe('b');
+  });
+
+  it('respeta el último club elegido aunque en él esté en espera', () => {
+    guardarUltimoClub('a');
+
+    expect(clubDeEntrada([club('a', 'EN_ESPERA'), club('b')])).toBe('a');
+  });
+
+  it('si en todos está en espera entra al primero', () => {
+    expect(clubDeEntrada([club('a', 'EN_ESPERA'), club('b', 'EN_ESPERA')])).toBe('a');
+  });
+
+  it('si el último club ya no es suyo, vuelve a uno aprobado', () => {
+    guardarUltimoClub('ajeno');
+
+    expect(clubDeEntrada([club('a', 'EN_ESPERA'), club('b')])).toBe('b');
   });
 
   it('funciona aunque el almacenamiento local no esté disponible', () => {

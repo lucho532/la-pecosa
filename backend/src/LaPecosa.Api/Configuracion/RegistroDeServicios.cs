@@ -40,6 +40,8 @@ public static class RegistroDeServicios
         servicios.AddScoped<IRepositorioInvitacionesPorToken, RepositorioInvitacionesPorToken>();
         servicios.AddScoped<IRepositorioClubesPlataforma, RepositorioClubesPlataforma>();
         servicios.AddScoped<IRepositorioInvitacionesPlataforma, RepositorioInvitacionesPlataforma>();
+        servicios.AddScoped<IRepositorioInvitacionesClub, RepositorioInvitacionesClub>();
+        servicios.AddScoped<IRepositorioIngresos, RepositorioIngresos>();
 
         servicios.Configure<OpcionesCorreo>(opciones =>
         {

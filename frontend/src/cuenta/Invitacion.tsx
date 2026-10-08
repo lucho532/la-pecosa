@@ -10,9 +10,10 @@ import { DisposicionCuenta } from './DisposicionCuenta';
 import { FormularioRegistro } from './FormularioRegistro';
 
 /**
- * Pantalla del enlace de invitación (`/invitacion#<token>`). Muestra el club, el rol y el correo,
- * que no se pueden cambiar; ofrece el registro o, si el correo ya tiene cuenta, la aceptación. Si
- * la invitación no sirve, lo explica y no muestra ningún formulario.
+ * Pantalla del enlace de invitación (`/invitacion#<token>`). Muestra el club y el correo, que no
+ * se pueden cambiar, y el rol solo si es una invitación de presidente: la que envía el club no
+ * nombra ninguno. Ofrece el registro o, si el correo ya tiene cuenta, la aceptación. Si la
+ * invitación no sirve, lo explica y no muestra ningún formulario.
  */
 export function Invitacion() {
   const token = useLocation().hash.replace(/^#/, '');
@@ -42,7 +43,11 @@ export function Invitacion() {
   return (
     <DisposicionCuenta
       titulo={invitacion.nombreClub}
-      subtitulo={`Invitación para ser ${nombreDeRol(invitacion.rol).toLowerCase()} del club`}
+      subtitulo={
+        invitacion.pasaPorSalaDeEspera
+          ? 'Invitación para registrarte en el club'
+          : `Invitación para ser ${nombreDeRol(invitacion.rol).toLowerCase()} del club`
+      }
       identidad={invitacion.identidad}
     >
       {invitacion.tieneCuenta ? (

@@ -23,6 +23,7 @@ public class ConfiguracionUsuario : IEntityTypeConfiguration<Usuario>
         builder.Property(usuario => usuario.Correo).HasMaxLength(254).IsRequired();
         builder.Property(usuario => usuario.CorreoNormalizado).HasMaxLength(254).IsRequired();
         builder.Property(usuario => usuario.Celular).HasMaxLength(20);
+        builder.Property(usuario => usuario.NombreResponsable).HasMaxLength(160);
         builder.Ignore(usuario => usuario.PuedeIniciarSesion);
 
         builder.HasIndex(usuario => usuario.CorreoNormalizado)

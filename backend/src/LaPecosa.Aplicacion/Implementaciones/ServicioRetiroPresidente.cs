@@ -11,29 +11,27 @@ namespace LaPecosa.Aplicacion.Implementaciones;
 /// Representa el servicio que quita el rol a un presidente.
 /// Su responsabilidad es comprobar la regla del último presidente dentro de la misma transacción
 /// que el cambio, con la fila del club bloqueada para que dos retiros simultáneos no dejen el club
-/// sin presidente, y aplicar la opción elegida.
+/// sin presidente, y aplicar la opción elegida. Si lo elimina del club, deja a
+/// <see cref="EliminadorDeCuentaSinClub"/> decidir si su cuenta se queda sin ningún club.
 /// No accede al contexto de Entity Framework ni conoce HTTP. La eliminación física del integrante
 /// la ordena la especificación (§14: aún no tiene historial deportivo ni financiero).
 /// </summary>
 public class ServicioRetiroPresidente : IServicioRetiroPresidente
 {
     private readonly IRepositorioClubesPlataforma _clubes;
-    private readonly IRepositorioPertenencias _pertenencias;
-    private readonly IRepositorioUsuarios _usuarios;
+    private readonly EliminadorDeCuentaSinClub _eliminador;
     private readonly IUnidadDeTrabajo _unidadDeTrabajo;
     private readonly IServicioConsultaClubes _consulta;
 
     /// <summary>Crea el servicio con sus dependencias.</summary>
     public ServicioRetiroPresidente(
         IRepositorioClubesPlataforma clubes,
-        IRepositorioPertenencias pertenencias,
-        IRepositorioUsuarios usuarios,
+        EliminadorDeCuentaSinClub eliminador,
         IUnidadDeTrabajo unidadDeTrabajo,
         IServicioConsultaClubes consulta)
     {
         _clubes = clubes;
-        _pertenencias = pertenencias;
-        _usuarios = usuarios;
+        _eliminador = eliminador;
         _unidadDeTrabajo = unidadDeTrabajo;
         _consulta = consulta;
     }
@@ -71,15 +69,7 @@ public class ServicioRetiroPresidente : IServicioRetiroPresidente
                 await _unidadDeTrabajo.GuardarAsync(cancelacion);
 
                 // Una cuenta que pierde su último integrante se elimina (RF-019a).
-                if (!await _pertenencias.TieneAlgunaAsync(presidente.UsuarioId, cancelacion))
-                {
-                    var cuenta = await _usuarios.ObtenerPorIdAsync(presidente.UsuarioId, cancelacion);
-                    if (cuenta is { EsDesarrollador: false })
-                    {
-                        _usuarios.Eliminar(cuenta);
-                        await _unidadDeTrabajo.GuardarAsync(cancelacion);
-                    }
-                }
+                await _eliminador.EliminarSiQuedoSinClubAsync(presidente.UsuarioId, cancelacion);
             },
             cancelacion);
 

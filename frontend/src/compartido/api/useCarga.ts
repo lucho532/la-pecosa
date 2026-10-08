@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { mensajeDe } from './errores';
 
-interface Carga<T> {
+export interface Carga<T> {
   datos: T | null;
   /** Mensaje del error de la última carga, o `null`. */
   error: string | null;

@@ -2,7 +2,7 @@ namespace LaPecosa.Dominio.Reglas;
 
 /// <summary>
 /// Representa el resultado de evaluar el acceso de un integrante a su club.
-/// Su responsabilidad es distinguir el acceso permitido de los dos motivos de rechazo.
+/// Su responsabilidad es distinguir el acceso permitido de los tres motivos de rechazo.
 /// No contiene el mensaje ni el código de error que ve la persona.
 /// </summary>
 public enum ResultadoAcceso
@@ -15,4 +15,7 @@ public enum ResultadoAcceso
 
     /// <summary>El club está dado de baja: no entra nadie.</summary>
     ClubDadoDeBaja,
+
+    /// <summary>El club le dejaría entrar, pero su ingreso sigue pendiente de aprobación.</summary>
+    IngresoEnEspera,
 }

@@ -7,8 +7,9 @@ namespace LaPecosa.Infraestructura.Datos.Configuraciones;
 
 /// <summary>
 /// Representa la configuración de persistencia de <see cref="UsuarioRol"/>.
-/// Su responsabilidad es fijar la tabla, las longitudes, el documento único por club (RF-017) y el
-/// borrado en cascada desde el club.
+/// Su responsabilidad es fijar la tabla, las longitudes, el documento único por club (RF-017), el
+/// borrado en cascada desde el club, la referencia a quien aprobó el ingreso y el índice de la
+/// sala de espera.
 /// No contiene reglas de negocio.
 /// </summary>
 public class ConfiguracionUsuarioRol : IEntityTypeConfiguration<UsuarioRol>
@@ -26,6 +27,8 @@ public class ConfiguracionUsuarioRol : IEntityTypeConfiguration<UsuarioRol>
         builder.Property(integrante => integrante.Apellidos).HasMaxLength(80).IsRequired();
         builder.Property(integrante => integrante.TipoDocumento).HasConversion<string>().HasMaxLength(30).IsRequired();
         builder.Property(integrante => integrante.NumeroDocumento).HasMaxLength(20).IsRequired();
+        builder.Property(integrante => integrante.AprobadoPorNombre).HasMaxLength(161);
+        builder.Property(integrante => integrante.RolDeIngreso).HasConversion<string>().HasMaxLength(20);
 
         builder.HasOne(integrante => integrante.Club)
             .WithMany()
@@ -36,6 +39,14 @@ public class ConfiguracionUsuarioRol : IEntityTypeConfiguration<UsuarioRol>
             .WithMany()
             .HasForeignKey(integrante => integrante.UsuarioId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Quien aprobó puede dejar la plataforma: la aprobación conserva su nombre copiado (§13).
+        builder.HasOne<Usuario>()
+            .WithMany()
+            .HasForeignKey(integrante => integrante.AprobadoPorUsuarioId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(integrante => new { integrante.ClubId, integrante.EstadoIngreso });
 
         builder.HasIndex(integrante => new { integrante.ClubId, integrante.NumeroDocumento })
             .IsUnique()
