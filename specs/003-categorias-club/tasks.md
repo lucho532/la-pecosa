@@ -340,7 +340,7 @@ tarea y revisar en cada punto de control.
   de categorías y equipos, y la baja de entrenadores o directivos (spec, "Fuera de alcance").
 - Recorrido del quickstart: los pasos 1 a 9 se validaron contra la aplicación levantada (T027). El
   paso 10 (tiempos con cronómetro) y su tarea T028 los retiró el propietario el 2026-10-08, junto
-  con CE-001, CE-005, CE-010 y CE-013.
+  con CE-001, CE-002, CE-005, CE-010 y CE-013.
 - Los ocho supuestos de research.md los confirmó el propietario el 2026-10-08 y están en la spec.
 - Si una tarea descubre una regla de negocio sin decidir, se detiene esa parte y se pregunta
   (§25); no se inventa.

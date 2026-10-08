@@ -597,11 +597,9 @@ DIRECTIVO y se comprueba que ve las dos y ninguna opción para modificarlas.
 
 ### Resultados medibles
 
-Los criterios CE-001, CE-005, CE-010 y CE-013 (tiempos medidos con cronómetro) los retiró el
+Los criterios de tiempo de uso (CE-001, CE-002, CE-005, CE-010 y CE-013) los retiró el
 propietario el 2026-10-08. Los demás conservan su número.
 
-- **CE-002**: Un club nuevo deja creadas sus categorías y asignados sus entrenadores en menos de
-  10 minutos, sin ayuda.
 - **CE-003**: En el 100 % de los ingresos aprobados como jugador cuya categoría de año existe y
   está activa, el jugador queda en ella sin ninguna acción adicional.
 - **CE-004**: En el 100 % de los casos probados, al crear una categoría entran en ella todos los
