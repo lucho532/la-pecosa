@@ -17,7 +17,7 @@ interface Props {
 
 /**
  * Alta de una categoría: un solo campo, el año de nacimiento, y un botón, a la vista sin abrir
- * nada (CE-001). Tras crearla dice cuántos jugadores sin categoría entraron solos en ella. Solo se
+ * nada. Tras crearla dice cuántos jugadores sin categoría entraron solos en ella. Solo se
  * pinta al presidente; quien decide si se crea es la API.
  */
 export function FormularioCrearCategoria({ clubId, alCrear }: Props) {

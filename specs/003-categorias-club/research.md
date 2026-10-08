@@ -230,7 +230,7 @@ propietario las confirme.
   solo se pintan al PRESIDENTE; la protección real es la del servidor (§15).
 - **Detalle de una categoría**: `/club/:clubId/categorias/:categoriaId`, con tres secciones:
   entrenadores, equipos y jugadores. En la sección de jugadores, cada fila muestra una casilla por
-  equipo, de modo que repartir 20 jugadores entre dos equipos son 20 toques (CE-010).
+  equipo, de modo que repartir 20 jugadores entre dos equipos son 20 toques.
 - **Familia**: una tarjeta "Mi categoría" en el inicio del club, solo para el rol JUGADOR.
 - **Retirado**: `DisposicionClub` mira `retirado` en la sesión antes de pedir nada al club, igual
   que hace con la sala de espera, y `ultimoClub.ts` deja de preferir un club en el que la persona
