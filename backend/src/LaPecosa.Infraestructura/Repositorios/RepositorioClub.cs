@@ -7,8 +7,8 @@ namespace LaPecosa.Infraestructura.Repositorios;
 
 /// <summary>
 /// Representa el acceso al club de la petición con Entity Framework.
-/// Su responsabilidad es leer únicamente el club fijado en <see cref="IContextoClub"/>.
-/// No lee ningún otro club: sin club en el contexto devuelve nulo (falla cerrado).
+/// Su responsabilidad es leer y bloquear únicamente el club fijado en <see cref="IContextoClub"/>.
+/// No toca ningún otro club: sin club en el contexto devuelve nulo (falla cerrado).
 /// </summary>
 public class RepositorioClub : IRepositorioClub
 {
@@ -20,6 +20,18 @@ public class RepositorioClub : IRepositorioClub
     {
         _contexto = contexto;
         _contextoClub = contextoClub;
+    }
+
+    /// <inheritdoc />
+    public async Task<Guid> BloquearAsync(CancellationToken cancelacion = default)
+    {
+        var clubId = _contextoClub.ClubId
+            ?? throw new InvalidOperationException("No hay club en el contexto de la petición.");
+
+        // El mismo recurso que bloquea el retiro de un presidente desde el panel.
+        await _contexto.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT 1 FROM \"Clubes\" WHERE \"Id\" = {clubId} FOR UPDATE", cancelacion);
+        return clubId;
     }
 
     /// <inheritdoc />

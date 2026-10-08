@@ -35,6 +35,11 @@ public interface IRepositorioInvitacionesClub
     Task<EstadoIngreso?> EstadoDeIngresoDelCorreoAsync(string correoNormalizado, CancellationToken cancelacion = default);
 
     /// <summary>
+    /// Indica si ese correo normalizado es el de la cuenta de un jugador que el club retiró.
+    /// </summary>
+    Task<bool> EsDeUnRetiradoAsync(string correoNormalizado, CancellationToken cancelacion = default);
+
+    /// <summary>
     /// Nombre completo, por cuenta, de los integrantes del club que tienen alguna de esas cuentas.
     /// Una cuenta que ya no está en el club no aparece en el resultado.
     /// </summary>

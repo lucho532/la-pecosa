@@ -59,9 +59,7 @@ export const api = {
   get: async <T>(ruta: string) => comoJson<T>(await enviar('GET', ruta)),
   post: async <T = void>(ruta: string, cuerpo?: unknown) => comoJson<T>(await enviar('POST', ruta, cuerpo)),
   put: async <T = void>(ruta: string, cuerpo: unknown) => comoJson<T>(await enviar('PUT', ruta, cuerpo)),
-  delete: async (ruta: string) => {
-    await enviar('DELETE', ruta);
-  },
+  delete: async <T = void>(ruta: string) => comoJson<T>(await enviar('DELETE', ruta)),
 
   /** Envía un archivo en el campo `archivo` de un formulario `multipart/form-data`. */
   putArchivo: async <T>(ruta: string, archivo: File) => {

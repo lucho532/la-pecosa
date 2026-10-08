@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Tarjeta } from '../compartido/componentes/Tarjeta';
 import { nombreDeRol } from '../compartido/formato';
 import { useClub } from './contextoClub';
+import { TarjetaMiCategoria } from './TarjetaMiCategoria';
 
 /** Pantalla de inicio de la aplicación del club: su nombre y lo que ese club ha publicado de sí. */
 export function InicioClub() {
@@ -22,6 +23,7 @@ export function InicioClub() {
         {contacto && <p className="texto-suave">Contacto: {contacto}</p>}
         {club.miRol === 'PRESIDENTE' && <Link to={`/club/${club.clubId}/configuracion`}>Editar los datos del club</Link>}
       </Tarjeta>
+      {club.miRol === 'JUGADOR' && <TarjetaMiCategoria clubId={club.clubId} />}
     </>
   );
 }

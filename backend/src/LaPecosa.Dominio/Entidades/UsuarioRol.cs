@@ -7,9 +7,12 @@ namespace LaPecosa.Dominio.Entidades;
 /// "integrante" (constitución §12.3).
 /// Su responsabilidad es guardar el único rol de la persona en ese club, su identidad en él
 /// (nombre, documento y fecha de nacimiento), su estado de ingreso y, cuando alguien del club lo
-/// aprobó, quién lo hizo, cuándo y con qué rol.
+/// aprobó, quién lo hizo, cuándo y con qué rol. De un jugador guarda además su categoría actual y,
+/// si el club lo retiró, quién lo hizo y cuándo (constitución §11.2 y §14.1): todavía no existe la
+/// entidad Jugador y aquí el jugador es el integrante aprobado con el rol JUGADOR.
 /// No guarda el correo ni la contraseña, que son de la cuenta, y nunca lleva el rol DESARROLLADOR.
-/// No guarda un historial de estados ni ningún rastro de un rechazo: quien es rechazado se borra.
+/// No guarda un historial de estados, de categorías ni de retiros, ni ningún rastro de un rechazo:
+/// quien es rechazado se borra.
 /// </summary>
 public class UsuarioRol : IPerteneceAClub
 {
@@ -77,4 +80,47 @@ public class UsuarioRol : IPerteneceAClub
 
     /// <summary>Fecha de creación, en UTC.</summary>
     public DateTime CreadoEn { get; set; }
+
+    /// <summary>
+    /// Opcional. Categoría actual del jugador (RF-013). Solo puede tener valor en un jugador del
+    /// club (<see cref="EsJugadorDelClub"/>), y la categoría debe ser de su mismo club y estar
+    /// activa (RF-007, RF-012).
+    /// </summary>
+    public Guid? CategoriaId { get; set; }
+
+    /// <summary>Categoría actual del jugador.</summary>
+    public Categoria? Categoria { get; set; }
+
+    /// <summary>
+    /// Obligatorio. Verdadero por defecto, también para las filas que ya existen. Falso significa
+    /// retirado del club (§14.1); solo puede ser falso en un JUGADOR aprobado (RF-041).
+    /// </summary>
+    public bool Activo { get; set; } = true;
+
+    /// <summary>
+    /// Opcional. Fecha y hora del retiro, en UTC. Solo tiene valor mientras está retirado. Los
+    /// tres datos del retiro se rellenan juntos al retirar y se vacían juntos al reincorporar.
+    /// </summary>
+    public DateTime? RetiradoEn { get; set; }
+
+    /// <summary>
+    /// Opcional. Cuenta de quien lo retiró. Foránea a <see cref="Usuario"/>; pasa a nulo si esa
+    /// cuenta se elimina.
+    /// </summary>
+    public Guid? RetiradoPorUsuarioId { get; set; }
+
+    /// <summary>
+    /// Opcional. Nombres y apellidos de quien lo retiró, copiados en ese momento (§13).
+    /// </summary>
+    public string? RetiradoPorNombre { get; set; }
+
+    /// <summary>Equipos de su categoría en los que juega; puede no haber ninguno (RF-026).</summary>
+    public List<JugadorEquipo> Equipos { get; set; } = [];
+
+    /// <summary>
+    /// Indica si es un jugador del club: rol JUGADOR, ingreso aprobado y no retirado. Solo ellos
+    /// tienen categoría y equipos (RF-012).
+    /// </summary>
+    public bool EsJugadorDelClub =>
+        Rol == Rol.JUGADOR && EstadoIngreso == EstadoIngreso.APROBADO && Activo;
 }

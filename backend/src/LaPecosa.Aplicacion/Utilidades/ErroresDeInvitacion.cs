@@ -40,6 +40,15 @@ public static class ErroresDeInvitacion
     public static ExcepcionDeAplicacion YaPertenecesAlClub() => ExcepcionDeAplicacion.Conflicto(
         "ya_perteneces_al_club", "Ya perteneces a este club. No hace falta que aceptes esta invitación.");
 
+    /// <summary>
+    /// 409: el correo o el documento son los de un jugador que el club retiró. Siguen ocupados en
+    /// ese club: no se le invita ni se le registra de nuevo, se le reincorpora (RF-046 de la 003).
+    /// </summary>
+    public static ExcepcionDeAplicacion PersonaRetirada() => ExcepcionDeAplicacion.Conflicto(
+        "persona_retirada",
+        "Esa persona es un jugador retirado de este club. No hace falta invitarla ni registrarla de nuevo: " +
+        "el presidente puede reincorporarla desde el apartado Categorías.");
+
     /// <summary>409: el correo es el de la cuenta DESARROLLADOR, que no pertenece a ningún club.</summary>
     public static ExcepcionDeAplicacion CorreoDelDesarrollador() => ExcepcionDeAplicacion.Conflicto(
         "correo_del_desarrollador",

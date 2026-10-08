@@ -45,9 +45,31 @@ public class ReglaAccesoPorEstadoPruebas
     public void En_un_club_dado_de_baja_quien_esta_en_espera_recibe_el_motivo_del_club() =>
         Assert.Equal(ResultadoAcceso.ClubDadoDeBaja, EnEspera(EstadoClub.DADO_DE_BAJA));
 
+    [Fact]
+    public void En_un_club_activo_un_jugador_retirado_no_entra() =>
+        Assert.Equal(ResultadoAcceso.IntegranteRetirado, Retirado(EstadoClub.ACTIVO));
+
+    // Primero el estado del club, después el ingreso y después el retiro (supuesto 6 de la 003).
+    [Fact]
+    public void En_un_club_suspendido_un_jugador_retirado_recibe_el_motivo_del_club() =>
+        Assert.Equal(ResultadoAcceso.ClubSuspendido, Retirado(EstadoClub.SUSPENDIDO));
+
+    [Fact]
+    public void En_un_club_dado_de_baja_un_jugador_retirado_recibe_el_motivo_del_club() =>
+        Assert.Equal(ResultadoAcceso.ClubDadoDeBaja, Retirado(EstadoClub.DADO_DE_BAJA));
+
+    [Fact]
+    public void El_ingreso_en_espera_se_mira_antes_que_el_retiro() =>
+        Assert.Equal(
+            ResultadoAcceso.IngresoEnEspera,
+            ReglaAccesoPorEstado.Evaluar(EstadoClub.ACTIVO, Rol.JUGADOR, EstadoIngreso.EN_ESPERA, activo: false));
+
+    private static ResultadoAcceso Retirado(EstadoClub estado) =>
+        ReglaAccesoPorEstado.Evaluar(estado, Rol.JUGADOR, EstadoIngreso.APROBADO, activo: false);
+
     private static ResultadoAcceso Aprobado(EstadoClub estado, Rol rol) =>
-        ReglaAccesoPorEstado.Evaluar(estado, rol, EstadoIngreso.APROBADO);
+        ReglaAccesoPorEstado.Evaluar(estado, rol, EstadoIngreso.APROBADO, activo: true);
 
     private static ResultadoAcceso EnEspera(EstadoClub estado) =>
-        ReglaAccesoPorEstado.Evaluar(estado, Rol.JUGADOR, EstadoIngreso.EN_ESPERA);
+        ReglaAccesoPorEstado.Evaluar(estado, Rol.JUGADOR, EstadoIngreso.EN_ESPERA, activo: true);
 }

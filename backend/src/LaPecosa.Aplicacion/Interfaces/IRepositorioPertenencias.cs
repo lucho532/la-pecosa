@@ -23,6 +23,19 @@ public interface IRepositorioPertenencias
     /// <summary>Indica si ese número de documento ya normalizado existe en el club.</summary>
     Task<bool> ExisteDocumentoEnClubAsync(Guid clubId, string numeroDocumento, CancellationToken cancelacion = default);
 
+    /// <summary>
+    /// Indica si ese número de documento ya normalizado es, en ese club, el de un jugador que el
+    /// club retiró.
+    /// </summary>
+    Task<bool> EsDocumentoDeRetiradoAsync(Guid clubId, string numeroDocumento, CancellationToken cancelacion = default);
+
+    /// <summary>
+    /// Saca de inmediato a ese integrante de todos los equipos en los que juega, dentro de la
+    /// transacción en curso. Se usa cuando deja de ser jugador al aceptar una invitación de
+    /// presidente.
+    /// </summary>
+    Task SacarDeSusEquiposAsync(Guid usuarioRolId, CancellationToken cancelacion = default);
+
     /// <summary>Indica si la cuenta tiene algún integrante en algún club.</summary>
     Task<bool> TieneAlgunaAsync(Guid usuarioId, CancellationToken cancelacion = default);
 

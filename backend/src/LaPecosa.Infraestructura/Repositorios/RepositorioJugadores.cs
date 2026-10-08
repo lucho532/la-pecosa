@@ -1,0 +1,125 @@
+using System.Linq.Expressions;
+using LaPecosa.Aplicacion.Interfaces;
+using LaPecosa.Dominio.Entidades;
+using LaPecosa.Dominio.Enumeraciones;
+using LaPecosa.Infraestructura.Datos;
+using Microsoft.EntityFrameworkCore;
+
+namespace LaPecosa.Infraestructura.Repositorios;
+
+/// <summary>
+/// Representa el acceso a los jugadores del club de la petición con Entity Framework.
+/// Su responsabilidad es leer las listas de jugadores y cambiar su categoría y su retiro con una
+/// única sentencia condicionada cada vez. Trabaja siempre con el filtro de aislamiento activo: sin
+/// club en el contexto no devuelve ni cambia nada.
+/// No se salta el filtro de aislamiento ni contiene reglas de negocio: solo expresa en la consulta
+/// qué es un jugador del club.
+/// </summary>
+public class RepositorioJugadores : IRepositorioJugadores
+{
+    /// <summary>Jugador del club: rol JUGADOR, ingreso aprobado y no retirado (RF-012).</summary>
+    internal static readonly Expression<Func<UsuarioRol, bool>> EsJugadorDelClub = integrante =>
+        integrante.Rol == Rol.JUGADOR && integrante.EstadoIngreso == EstadoIngreso.APROBADO && integrante.Activo;
+
+    private readonly ContextoLaPecosa _contexto;
+
+    /// <summary>Crea el repositorio sobre el contexto de la petición.</summary>
+    public RepositorioJugadores(ContextoLaPecosa contexto)
+    {
+        _contexto = contexto;
+    }
+
+    private IQueryable<UsuarioRol> Jugadores => _contexto.UsuariosRol.Where(EsJugadorDelClub);
+
+    /// <inheritdoc />
+    public Task<UsuarioRol?> ObtenerAsync(Guid usuarioRolId, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol.AsNoTracking()
+            .FirstOrDefaultAsync(integrante => integrante.Id == usuarioRolId, cancelacion);
+
+    /// <inheritdoc />
+    public Task<UsuarioRol?> ObtenerConEquiposAsync(Guid usuarioRolId, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol.AsNoTracking()
+            .Include(integrante => integrante.Equipos)
+            .FirstOrDefaultAsync(integrante => integrante.Id == usuarioRolId, cancelacion);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<UsuarioRol>> ListarSinCategoriaAsync(CancellationToken cancelacion = default) =>
+        await Jugadores.AsNoTracking().Where(jugador => jugador.CategoriaId == null).ToListAsync(cancelacion);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<UsuarioRol>> ListarDeCategoriaAsync(
+        Guid categoriaId, CancellationToken cancelacion = default) =>
+        await Jugadores.AsNoTracking()
+            .Include(jugador => jugador.Equipos)
+            .Where(jugador => jugador.CategoriaId == categoriaId)
+            .ToListAsync(cancelacion);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<UsuarioRol>> ListarRetiradosAsync(CancellationToken cancelacion = default) =>
+        await _contexto.UsuariosRol.AsNoTracking()
+            .Where(integrante => integrante.Rol == Rol.JUGADOR && !integrante.Activo)
+            .OrderByDescending(integrante => integrante.RetiradoEn)
+            .ToListAsync(cancelacion);
+
+    /// <inheritdoc />
+    public async Task<bool> UbicarSiNoTieneAsync(
+        Guid usuarioRolId, Guid categoriaId, CancellationToken cancelacion = default) =>
+        await Jugadores
+            .Where(jugador => jugador.Id == usuarioRolId && jugador.CategoriaId == null)
+            .ExecuteUpdateAsync(cambios => cambios.SetProperty(jugador => jugador.CategoriaId, categoriaId), cancelacion) == 1;
+
+    /// <inheritdoc />
+    public Task<int> RecogerDelAnioAsync(Guid categoriaId, int anio, CancellationToken cancelacion = default)
+    {
+        // El año de nacimiento se compara con su intervalo, sin columna calculada (research §4).
+        var primerDia = new DateOnly(anio, 1, 1);
+        var ultimoDia = new DateOnly(anio, 12, 31);
+
+        return Jugadores
+            .Where(jugador => jugador.CategoriaId == null
+                && jugador.FechaNacimiento >= primerDia
+                && jugador.FechaNacimiento <= ultimoDia)
+            .ExecuteUpdateAsync(cambios => cambios.SetProperty(jugador => jugador.CategoriaId, categoriaId), cancelacion);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> CambiarCategoriaAsync(
+        Guid usuarioRolId, Guid categoriaId, CancellationToken cancelacion = default) =>
+        await Jugadores
+            .Where(jugador => jugador.Id == usuarioRolId)
+            .ExecuteUpdateAsync(cambios => cambios.SetProperty(jugador => jugador.CategoriaId, categoriaId), cancelacion) == 1;
+
+    /// <inheritdoc />
+    public Task SacarDeSusEquiposAsync(Guid usuarioRolId, CancellationToken cancelacion = default) =>
+        _contexto.JugadoresEquipo.Where(fila => fila.UsuarioRolId == usuarioRolId).ExecuteDeleteAsync(cancelacion);
+
+    /// <inheritdoc />
+    public async Task<bool> RetirarAsync(
+        Guid usuarioRolId,
+        DateTime ahoraUtc,
+        Guid retiradoPorUsuarioId,
+        string retiradoPorNombre,
+        CancellationToken cancelacion = default) =>
+        await Jugadores
+            .Where(jugador => jugador.Id == usuarioRolId)
+            .ExecuteUpdateAsync(
+                cambios => cambios
+                    .SetProperty(jugador => jugador.Activo, false)
+                    .SetProperty(jugador => jugador.CategoriaId, (Guid?)null)
+                    .SetProperty(jugador => jugador.RetiradoEn, ahoraUtc)
+                    .SetProperty(jugador => jugador.RetiradoPorUsuarioId, retiradoPorUsuarioId)
+                    .SetProperty(jugador => jugador.RetiradoPorNombre, retiradoPorNombre),
+                cancelacion) == 1;
+
+    /// <inheritdoc />
+    public async Task<bool> ReincorporarAsync(Guid usuarioRolId, CancellationToken cancelacion = default) =>
+        await _contexto.UsuariosRol
+            .Where(integrante => integrante.Id == usuarioRolId && integrante.Rol == Rol.JUGADOR && !integrante.Activo)
+            .ExecuteUpdateAsync(
+                cambios => cambios
+                    .SetProperty(integrante => integrante.Activo, true)
+                    .SetProperty(integrante => integrante.RetiradoEn, (DateTime?)null)
+                    .SetProperty(integrante => integrante.RetiradoPorUsuarioId, (Guid?)null)
+                    .SetProperty(integrante => integrante.RetiradoPorNombre, (string?)null),
+                cancelacion) == 1;
+}

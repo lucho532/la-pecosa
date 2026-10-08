@@ -1,0 +1,925 @@
+openapi: 3.1.0
+info:
+  title: La Pecosa - API de la funcionalidad 003 (categorías del club)
+  version: 0.3.0
+  description: |
+    Contrato de lo que esta funcionalidad añade o cambia respecto de los contratos de la 001 y la
+    002. Lo que no aparece aquí sigue igual.
+
+    Convenciones (las de la 001 y la 002, más las marcadas como NUEVO):
+    - Todos los errores usan `application/problem+json` con un campo `codigo` estable.
+    - `/api/clubes/{clubId}/**` exige un integrante del usuario en ese club. Sin él responde 404,
+      también al DESARROLLADOR y también cuando el identificador es de otro club.
+    - Club suspendido y rol distinto de PRESIDENTE: 403 `club_suspendido`. Club dado de baja:
+      403 `club_dado_de_baja`. Ingreso en espera: 403 `ingreso_en_espera`.
+    - NUEVO: un jugador retirado recibe 403 `integrante_retirado` en **todos** los endpoints
+      `/api/clubes/{clubId}/**`, sin excepción. Se comprueba después del estado del club y del
+      ingreso.
+    - NUEVO: toda operación que cambia algo exige rol PRESIDENTE; a otro rol, 403
+      `rol_no_autorizado`. Las confirmaciones las pide la pantalla antes de llamar.
+    - NUEVO: un identificador de categoría, equipo o integrante que no es de este club responde
+      404. Un ENTRENADOR recibe el mismo 404 para una categoría que no tiene asignada o que está
+      inactiva.
+    - Ninguna lista de jugadores devuelve documento, correo ni celular.
+
+servers:
+  - url: http://localhost:8080
+
+security:
+  - sesion: []
+
+tags:
+  - name: Categorias
+    description: Categorías del club, sus entrenadores y sus equipos
+  - name: Jugadores
+    description: Categoría de cada jugador, retiro y reincorporación
+  - name: Ingresos
+  - name: Invitaciones
+  - name: Sesion
+
+paths:
+  # ---------------------------------------------------------------- Categorías
+
+  /api/clubes/{clubId}/categorias:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Categorias]
+      summary: Categorías que le corresponden a quien pregunta, ordenadas por año
+      description: |
+        PRESIDENTE y DIRECTIVO: todas, activas e inactivas. ENTRENADOR: solo las activas que tiene
+        asignadas; si no tiene ninguna, una lista vacía. JUGADOR: 403.
+      responses:
+        '200':
+          description: Categorías, cada una con sus equipos, sus entrenadores y su número de jugadores
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CategoriaDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    post:
+      tags: [Categorias]
+      summary: Crea la categoría de un año de nacimiento
+      description: |
+        Solo PRESIDENTE. Al crearla entran en ella los jugadores sin categoría nacidos ese año; la
+        respuesta dice cuántos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CrearCategoriaDto' }
+      responses:
+        '201':
+          description: Categoría creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaConUbicadosDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`categoria_ya_existe` o `categoria_inactiva_ya_existe` (se puede reactivar)'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/categorias/{categoriaId}:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+    get:
+      tags: [Categorias]
+      summary: Una categoría con sus equipos, sus entrenadores y sus jugadores
+      description: |
+        PRESIDENTE y DIRECTIVO: cualquiera del club. ENTRENADOR: solo una activa que tenga
+        asignada; ve a todos sus jugadores, dirija o no su equipo. JUGADOR: 403.
+      responses:
+        '200':
+          description: Detalle de la categoría
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    delete:
+      tags: [Categorias]
+      summary: Borra una categoría que nunca ha tenido jugadores ni entrenadores
+      description: Solo PRESIDENTE. Sus equipos se borran con ella.
+      responses:
+        '204':
+          description: Categoría borrada; el club puede volver a crear la de ese año
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`categoria_con_historial`. Tiene o tuvo jugadores o entrenadores; solo se puede desactivar'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/categorias/{categoriaId}/desactivacion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+    post:
+      tags: [Categorias]
+      summary: Desactiva una categoría sin jugadores
+      description: |
+        Solo PRESIDENTE. Sus entrenadores dejan de estar asignados a ella. Desactivar una ya
+        inactiva no tiene efecto.
+      responses:
+        '200':
+          description: Categoría inactiva
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`categoria_con_jugadores`. Antes hay que pasarlos a otra categoría o retirarlos'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/categorias/{categoriaId}/reactivacion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+    post:
+      tags: [Categorias]
+      summary: Reactiva una categoría inactiva
+      description: |
+        Solo PRESIDENTE. Vuelve sin entrenadores. Entran en ella los jugadores sin categoría
+        nacidos ese año; la respuesta dice cuántos.
+      responses:
+        '200':
+          description: Categoría activa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaConUbicadosDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  # ---------------------------------------------------------------- Entrenadores de la categoría
+
+  /api/clubes/{clubId}/categorias/{categoriaId}/entrenadores/candidatos:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+    get:
+      tags: [Categorias]
+      summary: Integrantes que se pueden asignar como entrenadores de la categoría
+      description: |
+        Solo PRESIDENTE. Integrantes aprobados del club con rol ENTRENADOR, DIRECTIVO o PRESIDENTE
+        que todavía no están asignados a ella, incluido quien pregunta.
+      responses:
+        '200':
+          description: Candidatos, por apellidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CandidatoEntrenadorDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/categorias/{categoriaId}/entrenadores/{usuarioRolId}:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    put:
+      tags: [Categorias]
+      summary: Asigna un entrenador a la categoría
+      description: |
+        Solo PRESIDENTE. No cambia el rol del integrante. Asignar a quien ya está asignado no
+        tiene efecto.
+      responses:
+        '200':
+          description: Categoría con el entrenador asignado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`no_asignable_como_entrenador` (es JUGADOR o está en espera) o `categoria_inactiva`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+    delete:
+      tags: [Categorias]
+      summary: Retira a un entrenador de la categoría
+      description: |
+        Solo PRESIDENTE. Deja de dirigir los equipos de esta categoría y conserva sus demás
+        categorías y su rol. Retirar a quien no está asignado no tiene efecto.
+      responses:
+        '200':
+          description: Categoría sin ese entrenador
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/categorias/{categoriaId}/entrenadores/{usuarioRolId}/equipos:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    put:
+      tags: [Categorias]
+      summary: Indica qué equipos de la categoría dirige un entrenador
+      description: |
+        Solo PRESIDENTE. Reemplaza la lista completa; vacía significa que es entrenador de la
+        categoría en general.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EquiposDeEntrenadorDto' }
+      responses:
+        '200':
+          description: Categoría actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404':
+          description: '`no_encontrado`. La categoría, el integrante o alguno de los equipos no existe en esta categoría'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409':
+          description: '`entrenador_no_asignado`. Solo dirige un equipo quien está asignado a la categoría'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  # ---------------------------------------------------------------- Equipos de la categoría
+
+  /api/clubes/{clubId}/categorias/{categoriaId}/equipos:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+    post:
+      tags: [Categorias]
+      summary: Crea un equipo dentro de la categoría
+      description: Solo PRESIDENTE. Nace sin jugadores y sin entrenadores.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NombreEquipoDto' }
+      responses:
+        '201':
+          description: Categoría con el equipo nuevo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`equipo_ya_existe` (mismo nombre en la categoría, sin distinguir mayúsculas) o `categoria_inactiva`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/categorias/{categoriaId}/equipos/{equipoId}:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+      - $ref: '#/components/parameters/equipoId'
+    put:
+      tags: [Categorias]
+      summary: Cambia el nombre de un equipo
+      description: Solo PRESIDENTE. Conserva sus jugadores y sus entrenadores.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NombreEquipoDto' }
+      responses:
+        '200':
+          description: Categoría con el equipo renombrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`equipo_ya_existe`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+    delete:
+      tags: [Categorias]
+      summary: Borra un equipo que nunca ha tenido jugadores ni entrenadores
+      description: Solo PRESIDENTE.
+      responses:
+        '200':
+          description: Categoría sin ese equipo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`equipo_con_historial`. Tiene o tuvo jugadores o entrenadores; solo se puede desactivar'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/categorias/{categoriaId}/equipos/{equipoId}/desactivacion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+      - $ref: '#/components/parameters/equipoId'
+    post:
+      tags: [Categorias]
+      summary: Desactiva un equipo
+      description: |
+        Solo PRESIDENTE. El equipo deja de mostrarse; sus jugadores siguen en la categoría y sus
+        entrenadores siguen asignados a ella.
+      responses:
+        '200':
+          description: Categoría sin ese equipo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/categorias/{categoriaId}/equipos/{equipoId}/jugadores/{usuarioRolId}:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+      - $ref: '#/components/parameters/equipoId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    put:
+      tags: [Categorias]
+      summary: Pone a un jugador de la categoría en un equipo
+      description: |
+        Solo PRESIDENTE. El jugador sigue en los demás equipos en los que ya estaba. Ponerlo dos
+        veces no tiene efecto.
+      responses:
+        '200':
+          description: Categoría actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`jugador_de_otra_categoria`. El jugador no está en la categoría de ese equipo'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+    delete:
+      tags: [Categorias]
+      summary: Saca a un jugador de un equipo
+      description: |
+        Solo PRESIDENTE. Sigue en su categoría y en sus demás equipos. Sacarlo de un equipo en el
+        que no está no tiene efecto.
+      responses:
+        '200':
+          description: Categoría actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  # ---------------------------------------------------------------- Jugadores
+
+  /api/clubes/{clubId}/jugadores/sin-categoria:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Jugadores]
+      summary: Jugadores aprobados y no retirados que todavía no tienen categoría
+      description: PRESIDENTE y DIRECTIVO. Por apellidos.
+      responses:
+        '200':
+          description: Lista "Sin categoría"
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/JugadorDeCategoriaDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/jugadores/retirados:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Jugadores]
+      summary: Jugadores retirados del club
+      description: PRESIDENTE y DIRECTIVO. Del retiro más reciente al más antiguo.
+      responses:
+        '200':
+          description: Jugadores retirados
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/JugadorRetiradoDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/categoria:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    put:
+      tags: [Jugadores]
+      summary: Ubica a un jugador en una categoría o lo pasa a otra
+      description: |
+        Solo PRESIDENTE. La categoría puede no ser la de su año de nacimiento. Si venía de otra
+        categoría, sale de todos sus equipos. No crea otro jugador ni cambia ningún otro dato.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UbicarJugadorDto' }
+      responses:
+        '200':
+          description: Categoría de destino, con el jugador ya en ella
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoriaDetalleDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404':
+          description: '`no_encontrado`. El integrante o la categoría no existen en este club'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409':
+          description: '`no_es_jugador` (otro rol, en espera o retirado) o `categoria_inactiva`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/retiro:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    post:
+      tags: [Jugadores]
+      summary: Retira del club a un jugador aprobado
+      description: |
+        Solo PRESIDENTE. El jugador sale de su categoría y de sus equipos y deja de entrar a este
+        club; sus datos se conservan. No envía ningún correo. Retirar a quien ya está retirado no
+        tiene efecto.
+      responses:
+        '204':
+          description: Jugador retirado
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`no_es_jugador`. El retiro solo aplica a jugadores aprobados'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/reincorporacion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    post:
+      tags: [Jugadores]
+      summary: Reincorpora a un jugador retirado
+      description: |
+        Solo PRESIDENTE. Vuelve a entrar con su misma cuenta y queda en la categoría activa de su
+        año o sin categoría. No recupera sus equipos.
+      responses:
+        '200':
+          description: Jugador reincorporado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReincorporacionDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`jugador_no_retirado`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/mi-categoria:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Jugadores]
+      summary: La categoría, los equipos y los entrenadores del jugador de la cuenta
+      description: |
+        Solo rol JUGADOR. No recibe ningún identificador: siempre responde sobre el propio
+        jugador. De cada entrenador devuelve solo nombre, apellidos y los equipos que dirige.
+      responses:
+        '200':
+          description: Su categoría, o `categoria` nulo si todavía no tiene
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MiCategoriaDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  # ---------------------------------------------------------------- Endpoints de la 001 y la 002 que cambian
+
+  /api/sesion:
+    get:
+      tags: [Sesion]
+      summary: Devuelve la cuenta actual y los clubes a los que pertenece
+      description: |
+        CAMBIO: cada club lleva `retirado`. Con `true`, el frontend muestra solo el aviso de que la
+        persona ya no está en ese club, con el nombre y la identidad que ya vienen aquí.
+      responses:
+        '200':
+          description: Sesión actual
+          content:
+            application/json:
+              schema:
+                type: object
+                description: '`SesionDto` de la 001; solo cambia el esquema de sus clubes'
+                properties:
+                  clubes:
+                    type: array
+                    items: { $ref: '#/components/schemas/ClubDeSesionDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+
+  /api/clubes/{clubId}/ingresos/{usuarioRolId}/aprobacion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    post:
+      tags: [Ingresos]
+      summary: Aprueba el ingreso de una persona en espera y fija su rol
+      description: |
+        CAMBIO sin cambio de esquema: si el rol es JUGADOR, queda en la categoría activa de su año
+        de nacimiento; si el club no la tiene, el ingreso se aprueba igual y queda sin categoría.
+        Con ENTRENADOR o DIRECTIVO no se le asigna categoría. Cuerpo y respuestas, los de la 002.
+      responses:
+        '200':
+          description: '`IngresoAprobadoDto` de la 002'
+
+  /api/clubes/{clubId}/invitaciones:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    post:
+      tags: [Ingresos]
+      summary: Invita a una persona por correo a registrarse en el club
+      description: |
+        CAMBIO: si el correo es el de un jugador retirado de este club responde 409
+        `persona_retirada`. Lo demás, como en la 002.
+      responses:
+        '201':
+          description: '`InvitacionClubDto` de la 002'
+        '409':
+          description: '`persona_retirada`, además de los códigos de la 002'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/invitaciones/registro:
+    post:
+      tags: [Invitaciones]
+      summary: Registra una cuenta nueva con una invitación e inicia su sesión
+      description: |
+        CAMBIO: si el documento es el de un jugador retirado de ese club responde 409
+        `persona_retirada` en lugar de `documento_repetido_en_club`. Lo demás, como en la 002.
+      security: []
+      responses:
+        '201':
+          description: '`TokenSesionDto` de la 001'
+        '409':
+          description: '`persona_retirada`, además de los códigos de la 002'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/invitaciones/aceptacion:
+    post:
+      tags: [Invitaciones]
+      summary: Añade a quien ya tiene cuenta al club de la invitación
+      description: |
+        CAMBIO: con una invitación del club, si la cuenta es la de un jugador retirado de ese club
+        responde 409 `persona_retirada`. Con una invitación de presidente, quien era jugador del
+        club pasa a PRESIDENTE, sale de su categoría y de sus equipos y deja de estar retirado.
+      responses:
+        '201':
+          description: '`ClubDeSesionDto`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDeSesionDto' }
+        '409':
+          description: '`persona_retirada`, además de los códigos de la 002'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+components:
+  securitySchemes:
+    sesion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    clubId:
+      name: clubId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    categoriaId:
+      name: categoriaId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    equipoId:
+      name: equipoId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    usuarioRolId:
+      name: usuarioRolId
+      in: path
+      required: true
+      description: Identificador del integrante en este club
+      schema: { type: string, format: uuid }
+
+  responses:
+    SinSesion:
+      description: '`sin_sesion`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    NoAutorizado:
+      description: '`rol_no_autorizado`, `integrante_retirado`, `ingreso_en_espera`, `club_suspendido` o `club_dado_de_baja`. No devuelve ningún dato'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    NoEncontrado:
+      description: '`no_encontrado`. También cuando el club o el recurso son de otro club, o la categoría no está asignada al ENTRENADOR que pregunta'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    DatosInvalidos:
+      description: '`datos_invalidos`, con el detalle por campo en `errores`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+
+  schemas:
+    Problema:
+      type: object
+      required: [title, status, codigo]
+      properties:
+        title: { type: string, description: Mensaje en español para mostrar a la persona }
+        status: { type: integer }
+        codigo: { type: string }
+        errores:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    Rol:
+      type: string
+      enum: [DESARROLLADOR, PRESIDENTE, DIRECTIVO, ENTRENADOR, JUGADOR]
+    RolDeEntrenador:
+      type: string
+      description: Roles de quien puede quedar asignado a una categoría
+      enum: [ENTRENADOR, DIRECTIVO, PRESIDENTE]
+    EstadoIngreso:
+      type: string
+      enum: [EN_ESPERA, APROBADO]
+
+    CrearCategoriaDto:
+      type: object
+      required: [anio]
+      properties:
+        anio:
+          type: integer
+          minimum: 1000
+          description: Año de nacimiento, de cuatro cifras y no posterior al año en curso
+
+    NombreEquipoDto:
+      type: object
+      required: [nombre]
+      properties:
+        nombre: { type: string, minLength: 1, maxLength: 30 }
+
+    EquiposDeEntrenadorDto:
+      type: object
+      required: [equipoIds]
+      properties:
+        equipoIds:
+          type: array
+          description: Equipos activos de esta categoría que dirige; puede ir vacía
+          items: { type: string, format: uuid }
+
+    UbicarJugadorDto:
+      type: object
+      required: [categoriaId]
+      properties:
+        categoriaId: { type: string, format: uuid, description: Categoría activa de este club }
+
+    EquipoDto:
+      type: object
+      description: Un equipo activo de una categoría
+      required: [equipoId, nombre, numeroJugadores, sePuedeBorrar]
+      properties:
+        equipoId: { type: string, format: uuid }
+        nombre: { type: string }
+        numeroJugadores: { type: integer }
+        sePuedeBorrar:
+          type: boolean
+          description: Verdadero si nunca ha tenido jugadores ni entrenadores
+
+    EquipoDeReferenciaDto:
+      type: object
+      required: [equipoId, nombre]
+      properties:
+        equipoId: { type: string, format: uuid }
+        nombre: { type: string }
+
+    EntrenadorDeCategoriaDto:
+      type: object
+      description: Un integrante asignado a la categoría, tal como lo ve el club
+      required: [usuarioRolId, nombres, apellidos, rol, equipos]
+      properties:
+        usuarioRolId: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        rol: { $ref: '#/components/schemas/RolDeEntrenador' }
+        equipos:
+          type: array
+          description: Equipos que dirige; vacía si es entrenador de la categoría en general
+          items: { $ref: '#/components/schemas/EquipoDeReferenciaDto' }
+
+    CandidatoEntrenadorDto:
+      type: object
+      required: [usuarioRolId, nombres, apellidos, rol]
+      properties:
+        usuarioRolId: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        rol: { $ref: '#/components/schemas/RolDeEntrenador' }
+
+    JugadorDeCategoriaDto:
+      type: object
+      description: Un jugador en una lista del club. No lleva ningún otro dato suyo
+      required: [usuarioRolId, nombres, apellidos, anioNacimiento, fueraDeSuAnio, equipos]
+      properties:
+        usuarioRolId: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        anioNacimiento: { type: integer }
+        fueraDeSuAnio:
+          type: boolean
+          description: Verdadero si su categoría no es la de su año de nacimiento; falso en "Sin categoría"
+        equipos:
+          type: array
+          items: { $ref: '#/components/schemas/EquipoDeReferenciaDto' }
+
+    CategoriaDto:
+      type: object
+      required: [categoriaId, anio, activa, sePuedeBorrar, numeroJugadores, equipos, entrenadores]
+      properties:
+        categoriaId: { type: string, format: uuid }
+        anio: { type: integer }
+        activa: { type: boolean }
+        sePuedeBorrar:
+          type: boolean
+          description: Verdadero si nunca ha tenido jugadores ni entrenadores
+        numeroJugadores:
+          type: integer
+          description: Cada jugador cuenta una vez, aunque esté en varios equipos
+        equipos:
+          type: array
+          description: Solo los activos, por nombre
+          items: { $ref: '#/components/schemas/EquipoDto' }
+        entrenadores:
+          type: array
+          description: Solo las asignaciones activas, por apellidos
+          items: { $ref: '#/components/schemas/EntrenadorDeCategoriaDto' }
+
+    CategoriaDetalleDto:
+      allOf:
+        - $ref: '#/components/schemas/CategoriaDto'
+        - type: object
+          required: [jugadores]
+          properties:
+            jugadores:
+              type: array
+              description: Todos los jugadores de la categoría, de cualquier equipo o de ninguno, por apellidos
+              items: { $ref: '#/components/schemas/JugadorDeCategoriaDto' }
+
+    CategoriaConUbicadosDto:
+      type: object
+      required: [categoria, jugadoresUbicados]
+      properties:
+        categoria: { $ref: '#/components/schemas/CategoriaDto' }
+        jugadoresUbicados:
+          type: integer
+          description: Cuántos jugadores sin categoría nacidos ese año entraron; puede ser 0
+
+    JugadorRetiradoDto:
+      type: object
+      required: [usuarioRolId, nombres, apellidos, anioNacimiento, retiradoPor, retiradoEn]
+      properties:
+        usuarioRolId: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        anioNacimiento: { type: integer }
+        retiradoPor: { type: string, description: Nombre de quien lo retiró, tal como era en ese momento }
+        retiradoEn: { type: string, format: date-time }
+
+    ReincorporacionDto:
+      type: object
+      required: [usuarioRolId]
+      properties:
+        usuarioRolId: { type: string, format: uuid }
+        categoriaId:
+          type: [string, 'null']
+          format: uuid
+          description: Categoría en la que quedó; nulo si quedó sin categoría
+        anio: { type: [integer, 'null'] }
+
+    EntrenadorParaFamiliaDto:
+      type: object
+      description: Lo único que una familia ve de un entrenador. Sin identificador, rol ni contacto
+      required: [nombres, apellidos, equipos]
+      properties:
+        nombres: { type: string }
+        apellidos: { type: string }
+        equipos:
+          type: array
+          description: Nombres de los equipos que dirige; vacía si lo es de la categoría en general
+          items: { type: string }
+
+    MiCategoriaDto:
+      type: object
+      required: [categoria]
+      properties:
+        categoria:
+          description: Nulo si el jugador todavía no tiene categoría
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [anio, equipos, entrenadores]
+              properties:
+                anio: { type: integer }
+                equipos:
+                  type: array
+                  description: Nombres de los equipos en los que está el jugador
+                  items: { type: string }
+                entrenadores:
+                  type: array
+                  description: Vacía si la categoría todavía no tiene entrenador
+                  items: { $ref: '#/components/schemas/EntrenadorParaFamiliaDto' }
+
+    ClubDeSesionDto:
+      type: object
+      description: El de la 002 más `retirado`
+      required: [clubId, nombre, rol, estado, estadoIngreso, retirado, identidad, nombres, apellidos]
+      properties:
+        clubId: { type: string, format: uuid }
+        nombre: { type: string }
+        rol: { $ref: '#/components/schemas/Rol' }
+        estado: { type: string, enum: [ACTIVO, SUSPENDIDO, DADO_DE_BAJA] }
+        estadoIngreso: { $ref: '#/components/schemas/EstadoIngreso' }
+        retirado:
+          type: boolean
+          description: Verdadero si el club retiró a este jugador; no entra a él hasta que lo reincorporen
+        identidad: { type: object, description: '`IdentidadClubDto` de la 001' }
+        nombres: { type: string }
+        apellidos: { type: string }

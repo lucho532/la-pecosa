@@ -80,6 +80,27 @@
   }
 }
 
+/* Casillas de una fila: una por equipo, para marcar con un toque. Si no caben, bajan de línea. */
+.casillas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.casilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.casilla input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-club-principal);
+}
+
 /* Grupo de opciones excluyentes dentro de un diálogo. */
 .opciones {
   display: flex;

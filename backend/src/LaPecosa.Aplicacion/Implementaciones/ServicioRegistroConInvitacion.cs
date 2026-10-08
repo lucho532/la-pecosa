@@ -80,7 +80,10 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
 
         if (await _pertenencias.ExisteDocumentoEnClubAsync(invitacion.ClubId, documento, cancelacion))
         {
-            throw ErroresDeInvitacion.DocumentoRepetidoEnClub();
+            // El documento de un jugador retirado sigue ocupado, pero el mensaje es otro (RF-046 de la 003).
+            throw await _pertenencias.EsDocumentoDeRetiradoAsync(invitacion.ClubId, documento, cancelacion)
+                ? ErroresDeInvitacion.PersonaRetirada()
+                : ErroresDeInvitacion.DocumentoRepetidoEnClub();
         }
 
         if (await _pertenencias.ObtenerCuentaPorDocumentoAsync(documento, cancelacion) is not null)

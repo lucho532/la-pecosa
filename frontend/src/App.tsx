@@ -11,6 +11,8 @@ import { Inicio } from './Inicio';
 import { DetalleClub } from './plataforma/DetalleClub';
 import { DisposicionPlataforma } from './plataforma/DisposicionPlataforma';
 import { ListaClubes } from './plataforma/ListaClubes';
+import { Categorias } from './privado/categorias/Categorias';
+import { DetalleCategoria } from './privado/categorias/DetalleCategoria';
 import { ConfiguracionClub } from './privado/ConfiguracionClub';
 import { DisposicionClub } from './privado/DisposicionClub';
 import { Ingresos } from './privado/ingresos/Ingresos';
@@ -45,6 +47,8 @@ export function App() {
                 <Route index element={<InicioClub />} />
                 <Route path="configuracion" element={<ConfiguracionClub />} />
                 <Route path="ingresos" element={<Ingresos />} />
+                <Route path="categorias" element={<Categorias />} />
+                <Route path="categorias/:categoriaId" element={<DetalleCategoria />} />
               </Route>
             </Route>
 

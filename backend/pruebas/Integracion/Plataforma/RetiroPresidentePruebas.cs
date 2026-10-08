@@ -170,6 +170,51 @@ public class RetiroPresidentePruebas
         Assert.Equal("solo_desarrollador", await ClienteDePrueba.CodigoAsync(respuesta));
     }
 
+    // Los tres roles son asignables a una categoría: quien pasa a otro rol sigue entrenando (003, research §11).
+    [Theory]
+    [InlineData("DIRECTIVO")]
+    [InlineData("ENTRENADOR")]
+    public async Task Un_presidente_que_entrena_conserva_sus_categorias_al_pasar_a_otro_rol(string rolNuevo)
+    {
+        var club = await _fabrica.Sembrador.CrearClubAsync();
+        var (_, retirado) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
+        await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
+        var categoria = await _fabrica.Categorias.CrearCategoriaAsync(club, 2014);
+        var asignacion = await _fabrica.Categorias.AsignarEntrenadorAsync(categoria, retirado);
+        var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
+
+        var respuesta = await cliente.PostAsync(Ruta(club.Id, retirado.Id), new { accion = "ASIGNAR_ROL", rolNuevo });
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        Assert.True(await AsignacionActivaAsync(asignacion.Id));
+    }
+
+    // Supuesto 7 de la 003: sus asignaciones se van con él y la categoría sigue contando como usada.
+    [Fact]
+    public async Task Eliminar_del_club_a_un_presidente_que_entrena_borra_sus_asignaciones()
+    {
+        var club = await _fabrica.Sembrador.CrearClubAsync();
+        var (_, retirado) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
+        await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
+        var categoria = await _fabrica.Categorias.CrearCategoriaAsync(club, 2014);
+        var equipo = await _fabrica.Categorias.CrearEquipoAsync(categoria, "A");
+        var asignacion = await _fabrica.Categorias.AsignarEntrenadorAsync(categoria, retirado);
+        await _fabrica.Categorias.DirigirEquipoAsync(asignacion, equipo);
+        var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
+
+        var respuesta = await cliente.PostAsync(Ruta(club.Id, retirado.Id), new { accion = "ELIMINAR_DEL_CLUB" });
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        Assert.Null(await AsignacionActivaAsync(asignacion.Id));
+        Assert.True(await _fabrica.ConContextoAsync(contexto => contexto.Categorias
+            .IgnoreQueryFilters().Where(fila => fila.Id == categoria.Id).Select(fila => fila.Usada).SingleAsync()));
+    }
+
+    /// <summary>Si la asignación está activa, o nulo si ya no existe.</summary>
+    private Task<bool?> AsignacionActivaAsync(Guid asignacionId) => _fabrica.ConContextoAsync(contexto =>
+        contexto.AsignacionesEntrenadorCategoria.IgnoreQueryFilters()
+            .Where(fila => fila.Id == asignacionId).Select(fila => (bool?)fila.Activa).SingleOrDefaultAsync());
+
     private static string Ruta(Guid clubId, Guid usuarioRolId) =>
         $"/api/plataforma/clubes/{clubId}/presidentes/{usuarioRolId}/retiro";
 
