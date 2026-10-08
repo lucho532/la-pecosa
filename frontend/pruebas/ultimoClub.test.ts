@@ -2,13 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ClubDeSesionDto, EstadoIngreso } from '../src/compartido/api/tipos';
 import { clubDeEntrada, guardarUltimoClub } from '../src/compartido/sesion/ultimoClub';
 
-function club(clubId: string, estadoIngreso: EstadoIngreso = 'APROBADO'): ClubDeSesionDto {
+function club(clubId: string, estadoIngreso: EstadoIngreso = 'APROBADO', retirado = false): ClubDeSesionDto {
   return {
     clubId,
     nombre: `Club ${clubId}`,
-    rol: estadoIngreso === 'APROBADO' ? 'PRESIDENTE' : 'JUGADOR',
+    rol: estadoIngreso === 'APROBADO' && !retirado ? 'PRESIDENTE' : 'JUGADOR',
     estado: 'ACTIVO',
     estadoIngreso,
+    retirado,
     identidad: { colorPrincipal: null, colorAcento: null, urlEscudo: null },
     nombres: 'Ana',
     apellidos: 'Pérez',
@@ -63,6 +64,24 @@ describe('club de entrada', () => {
     guardarUltimoClub('ajeno');
 
     expect(clubDeEntrada([club('a', 'EN_ESPERA'), club('b')])).toBe('b');
+  });
+
+  it('sin elección previa prefiere un club en el que no está retirada', () => {
+    expect(clubDeEntrada([club('a', 'APROBADO', true), club('b'), club('c')])).toBe('b');
+  });
+
+  it('entre uno retirado y otro en espera prefiere el que está en espera', () => {
+    expect(clubDeEntrada([club('a', 'APROBADO', true), club('b', 'EN_ESPERA')])).toBe('b');
+  });
+
+  it('respeta el último club elegido aunque esté retirada en él', () => {
+    guardarUltimoClub('a');
+
+    expect(clubDeEntrada([club('a', 'APROBADO', true), club('b')])).toBe('a');
+  });
+
+  it('si está retirada en todos entra al primero', () => {
+    expect(clubDeEntrada([club('a', 'APROBADO', true), club('b', 'APROBADO', true)])).toBe('a');
   });
 
   it('funciona aunque el almacenamiento local no esté disponible', () => {

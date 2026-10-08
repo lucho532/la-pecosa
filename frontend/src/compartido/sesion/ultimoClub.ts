@@ -21,8 +21,9 @@ function leerUltimoClub(): string | null {
 
 /**
  * Club al que entra una persona: el último que eligió, si sigue siendo suyo, aunque en él esté en
- * espera. Si no, el primero de los suyos en el que su ingreso está aprobado y, solo si no hay
- * ninguno, el primero. Devuelve `null` si no pertenece a ninguno. Nunca devuelve un club ajeno.
+ * espera o retirada. Si no, el primero de los suyos en el que su ingreso está aprobado y no está
+ * retirada; después, el primero en el que no está retirada; y, solo si no hay ninguno, el primero.
+ * Devuelve `null` si no pertenece a ninguno. Nunca devuelve un club ajeno.
  */
 export function clubDeEntrada(clubes: ClubDeSesionDto[]): string | null {
   if (clubes.length === 0) {
@@ -34,6 +35,7 @@ export function clubDeEntrada(clubes: ClubDeSesionDto[]): string | null {
     return ultimo;
   }
 
-  const aprobado = clubes.find((club) => club.estadoIngreso === 'APROBADO');
-  return (aprobado ?? clubes[0]).clubId;
+  const dondeEntra = clubes.find((club) => club.estadoIngreso === 'APROBADO' && !club.retirado);
+  const dondeNoEstaRetirada = clubes.find((club) => !club.retirado);
+  return (dondeEntra ?? dondeNoEstaRetirada ?? clubes[0]).clubId;
 }

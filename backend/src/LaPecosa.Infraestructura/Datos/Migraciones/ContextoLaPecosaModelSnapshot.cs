@@ -22,6 +22,67 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.AsignacionEntrenadorCategoria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("CategoriaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClubId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UsuarioRolId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubId");
+
+                    b.HasIndex("CategoriaId", "UsuarioRolId")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioRolId", "Activa");
+
+                    b.ToTable("AsignacionesEntrenadorCategoria", (string)null);
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.Categoria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Anio")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ClubId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Usada")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubId", "Anio")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Categorias_ClubId_Anio");
+
+                    b.ToTable("Categorias", (string)null);
+                });
+
             modelBuilder.Entity("LaPecosa.Dominio.Entidades.Club", b =>
                 {
                     b.Property<Guid>("Id")
@@ -85,6 +146,68 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                         .HasDatabaseName("IX_Clubes_NombreNormalizado");
 
                     b.ToTable("Clubes", (string)null);
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.EntrenadorEquipo", b =>
+                {
+                    b.Property<Guid>("AsignacionEntrenadorCategoriaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EquipoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClubId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("AsignacionEntrenadorCategoriaId", "EquipoId");
+
+                    b.HasIndex("ClubId");
+
+                    b.HasIndex("EquipoId");
+
+                    b.ToTable("EntrenadoresEquipo", (string)null);
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.Equipo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("CategoriaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClubId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("NombreNormalizado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("Usado")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubId");
+
+                    b.HasIndex("CategoriaId", "NombreNormalizado")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Equipos_CategoriaId_NombreNormalizado")
+                        .HasFilter("\"Activo\"");
+
+                    b.ToTable("Equipos", (string)null);
                 });
 
             modelBuilder.Entity("LaPecosa.Dominio.Entidades.EscudoClub", b =>
@@ -176,6 +299,26 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                     b.HasIndex("ClubId", "Correo");
 
                     b.ToTable("Invitaciones", (string)null);
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.JugadorEquipo", b =>
+                {
+                    b.Property<Guid>("UsuarioRolId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EquipoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClubId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UsuarioRolId", "EquipoId");
+
+                    b.HasIndex("ClubId");
+
+                    b.HasIndex("EquipoId");
+
+                    b.ToTable("JugadoresEquipo", (string)null);
                 });
 
             modelBuilder.Entity("LaPecosa.Dominio.Entidades.SolicitudRecuperacion", b =>
@@ -273,6 +416,11 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("Apellidos")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -286,6 +434,9 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                         .HasColumnType("character varying(161)");
 
                     b.Property<Guid?>("AprobadoPorUsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CategoriaId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ClubId")
@@ -312,6 +463,16 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<DateTime?>("RetiradoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RetiradoPorNombre")
+                        .HasMaxLength(161)
+                        .HasColumnType("character varying(161)");
+
+                    b.Property<Guid?>("RetiradoPorUsuarioId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Rol")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -333,9 +494,15 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
 
                     b.HasIndex("AprobadoPorUsuarioId");
 
+                    b.HasIndex("CategoriaId");
+
                     b.HasIndex("NumeroDocumento");
 
+                    b.HasIndex("RetiradoPorUsuarioId");
+
                     b.HasIndex("UsuarioId");
+
+                    b.HasIndex("ClubId", "CategoriaId");
 
                     b.HasIndex("ClubId", "EstadoIngreso");
 
@@ -346,6 +513,90 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                     b.HasIndex("ClubId", "UsuarioId");
 
                     b.ToTable("UsuariosRol", (string)null);
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.AsignacionEntrenadorCategoria", b =>
+                {
+                    b.HasOne("LaPecosa.Dominio.Entidades.Categoria", "Categoria")
+                        .WithMany("Asignaciones")
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LaPecosa.Dominio.Entidades.Club", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LaPecosa.Dominio.Entidades.UsuarioRol", "UsuarioRol")
+                        .WithMany()
+                        .HasForeignKey("UsuarioRolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Categoria");
+
+                    b.Navigation("Club");
+
+                    b.Navigation("UsuarioRol");
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.Categoria", b =>
+                {
+                    b.HasOne("LaPecosa.Dominio.Entidades.Club", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Club");
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.EntrenadorEquipo", b =>
+                {
+                    b.HasOne("LaPecosa.Dominio.Entidades.AsignacionEntrenadorCategoria", "Asignacion")
+                        .WithMany("Equipos")
+                        .HasForeignKey("AsignacionEntrenadorCategoriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LaPecosa.Dominio.Entidades.Club", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LaPecosa.Dominio.Entidades.Equipo", "Equipo")
+                        .WithMany("Entrenadores")
+                        .HasForeignKey("EquipoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Asignacion");
+
+                    b.Navigation("Club");
+
+                    b.Navigation("Equipo");
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.Equipo", b =>
+                {
+                    b.HasOne("LaPecosa.Dominio.Entidades.Categoria", "Categoria")
+                        .WithMany("Equipos")
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LaPecosa.Dominio.Entidades.Club", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Categoria");
+
+                    b.Navigation("Club");
                 });
 
             modelBuilder.Entity("LaPecosa.Dominio.Entidades.EscudoClub", b =>
@@ -381,6 +632,33 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                     b.Navigation("Club");
                 });
 
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.JugadorEquipo", b =>
+                {
+                    b.HasOne("LaPecosa.Dominio.Entidades.Club", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LaPecosa.Dominio.Entidades.Equipo", "Equipo")
+                        .WithMany("Jugadores")
+                        .HasForeignKey("EquipoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LaPecosa.Dominio.Entidades.UsuarioRol", "UsuarioRol")
+                        .WithMany("Equipos")
+                        .HasForeignKey("UsuarioRolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Club");
+
+                    b.Navigation("Equipo");
+
+                    b.Navigation("UsuarioRol");
+                });
+
             modelBuilder.Entity("LaPecosa.Dominio.Entidades.SolicitudRecuperacion", b =>
                 {
                     b.HasOne("LaPecosa.Dominio.Entidades.Usuario", "Usuario")
@@ -399,11 +677,21 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                         .HasForeignKey("AprobadoPorUsuarioId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("LaPecosa.Dominio.Entidades.Categoria", "Categoria")
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("LaPecosa.Dominio.Entidades.Club", "Club")
                         .WithMany()
                         .HasForeignKey("ClubId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("LaPecosa.Dominio.Entidades.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("RetiradoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("LaPecosa.Dominio.Entidades.Usuario", "Usuario")
                         .WithMany()
@@ -411,9 +699,35 @@ namespace LaPecosa.Infraestructura.Datos.Migraciones
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Categoria");
+
                     b.Navigation("Club");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.AsignacionEntrenadorCategoria", b =>
+                {
+                    b.Navigation("Equipos");
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.Categoria", b =>
+                {
+                    b.Navigation("Asignaciones");
+
+                    b.Navigation("Equipos");
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.Equipo", b =>
+                {
+                    b.Navigation("Entrenadores");
+
+                    b.Navigation("Jugadores");
+                });
+
+            modelBuilder.Entity("LaPecosa.Dominio.Entidades.UsuarioRol", b =>
+                {
+                    b.Navigation("Equipos");
                 });
 #pragma warning restore 612, 618
         }

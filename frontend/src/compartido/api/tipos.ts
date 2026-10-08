@@ -1,5 +1,6 @@
 // Tipos de los esquemas de specs/001-base-multiclub/contracts/api.yaml y de
-// specs/002-ingreso-club/contracts/api.yaml, con los mismos nombres.
+// specs/002-ingreso-club/contracts/api.yaml, con los mismos nombres. Los de
+// specs/003-categorias-club/contracts/api.yaml están en tiposCategorias.ts.
 
 export type Rol = 'DESARROLLADOR' | 'PRESIDENTE' | 'DIRECTIVO' | 'ENTRENADOR' | 'JUGADOR';
 export type EstadoClub = 'ACTIVO' | 'SUSPENDIDO' | 'DADO_DE_BAJA';
@@ -46,6 +47,8 @@ export interface ClubDeSesionDto {
   rol: Rol;
   estado: EstadoClub;
   estadoIngreso: EstadoIngreso;
+  /** Verdadero si el club retiró a este jugador; no entra a él hasta que lo reincorporen. */
+  retirado: boolean;
   identidad: IdentidadClubDto;
   nombres: string;
   apellidos: string;

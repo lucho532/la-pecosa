@@ -1,0 +1,60 @@
+import { useNavigate } from 'react-router-dom';
+import type { ClubDeSesionDto } from '../compartido/api/tipos';
+import { Aviso } from '../compartido/componentes/Aviso';
+import { Boton } from '../compartido/componentes/Boton';
+import { BotonTema } from '../compartido/componentes/BotonTema';
+import { useSesion } from '../compartido/sesion/useSesion';
+import { Escudo, IdentidadClub } from '../compartido/tema/IdentidadClub';
+import { AvisoClubNoDisponible } from './AvisoClubNoDisponible';
+import { DesplegableClubes } from './DesplegableClubes';
+
+/**
+ * Lo único que ve de un club el jugador al que ese club retiró (RF-043): el nombre y la identidad
+ * del club, que ya trae la sesión, y el aviso de que ya no está en él. No tiene menú y no pide
+ * nada al club: la API se lo negaría. Conserva el tema, el cambio de club, porque el retiro es de
+ * cada club, y el cierre de sesión. Si el club está suspendido o dado de baja muestra ese aviso,
+ * como a cualquier otro integrante.
+ */
+export function AvisoRetirado({ club }: { club: ClubDeSesionDto }) {
+  const { sesion, cerrar } = useSesion();
+  const navegar = useNavigate();
+  const tieneOtrosClubes = (sesion?.clubes.length ?? 0) > 1;
+
+  function cerrarSesion() {
+    cerrar();
+    navegar('/entrar', { replace: true });
+  }
+
+  return (
+    <IdentidadClub identidad={club.identidad} className="centrado">
+      <header className="columna">
+        <div className="cabecera">
+          <Escudo identidad={club.identidad} nombre={club.nombre} />
+          <BotonTema />
+        </div>
+        <h1>{club.nombre}</h1>
+      </header>
+      <main className="tarjeta">
+        {club.estado === 'ACTIVO' ? (
+          <>
+            <h2>Ya no estás en este club</h2>
+            <Aviso tono="aviso">
+              {club.nombres} ya no está en {club.nombre}. Si crees que es un error, comunícate con el presidente del
+              club.
+            </Aviso>
+            {tieneOtrosClubes && <p className="texto-suave">Puedes pasar a otro de tus clubes con el desplegable.</p>}
+          </>
+        ) : (
+          <AvisoClubNoDisponible
+            codigo={club.estado === 'SUSPENDIDO' ? 'club_suspendido' : 'club_dado_de_baja'}
+            tieneOtrosClubes={tieneOtrosClubes}
+          />
+        )}
+        <DesplegableClubes clubId={club.clubId} />
+        <Boton variante="secundario" onClick={cerrarSesion}>
+          Cerrar sesión
+        </Boton>
+      </main>
+    </IdentidadClub>
+  );
+}

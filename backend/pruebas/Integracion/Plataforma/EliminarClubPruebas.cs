@@ -66,6 +66,8 @@ public class EliminarClubPruebas
         var (soloDelOtro, _) = await _fabrica.Sembrador.CrearIntegranteAsync(otroClub, Rol.JUGADOR);
         await _fabrica.Sembrador.CrearInvitacionAsync(club);
         await _fabrica.Sembrador.CrearInvitacionAsync(otroClub);
+        await SembrarCategoriaConEquipoAsync(club);
+        await SembrarCategoriaConEquipoAsync(otroClub);
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
         await cliente.PutArchivoAsync($"/api/plataforma/clubes/{club.Id}/escudo", Imagenes.Png());
         await cliente.PutArchivoAsync($"/api/plataforma/clubes/{otroClub.Id}/escudo", Imagenes.Png());
@@ -112,6 +114,18 @@ public class EliminarClubPruebas
     }
 
     private static string Ruta(Guid clubId) => $"/api/plataforma/clubes/{clubId}/eliminacion";
+
+    /// <summary>Una categoría con un equipo, un jugador en él y un entrenador que lo dirige.</summary>
+    private async Task SembrarCategoriaConEquipoAsync(Club club)
+    {
+        var categoria = await _fabrica.Categorias.CrearCategoriaAsync(club, 2014);
+        var equipo = await _fabrica.Categorias.CrearEquipoAsync(categoria, "A");
+        var (_, jugador) = await _fabrica.Categorias.CrearJugadorAsync(club, 2014, categoria);
+        var (_, entrenador) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.ENTRENADOR);
+        var asignacion = await _fabrica.Categorias.AsignarEntrenadorAsync(categoria, entrenador);
+        await _fabrica.Categorias.PonerEnEquipoAsync(jugador, equipo);
+        await _fabrica.Categorias.DirigirEquipoAsync(asignacion, equipo);
+    }
 
     private Task<bool> ExisteClubAsync(Guid clubId) =>
         _fabrica.ConContextoAsync(contexto => contexto.Clubes.AnyAsync(club => club.Id == clubId));

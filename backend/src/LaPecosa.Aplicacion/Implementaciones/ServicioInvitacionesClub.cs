@@ -120,6 +120,12 @@ public class ServicioInvitacionesClub : IServicioInvitacionesClub
             throw ErroresDeInvitacion.CorreoDelDesarrollador();
         }
 
+        // Su correo sigue ocupado en el club, pero el mensaje es otro: se le reincorpora (RF-046 de la 003).
+        if (await _invitaciones.EsDeUnRetiradoAsync(correo, cancelacion))
+        {
+            throw ErroresDeInvitacion.PersonaRetirada();
+        }
+
         switch (await _invitaciones.EstadoDeIngresoDelCorreoAsync(correo, cancelacion))
         {
             case EstadoIngreso.APROBADO:

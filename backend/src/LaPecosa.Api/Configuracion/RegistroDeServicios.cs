@@ -42,6 +42,10 @@ public static class RegistroDeServicios
         servicios.AddScoped<IRepositorioInvitacionesPlataforma, RepositorioInvitacionesPlataforma>();
         servicios.AddScoped<IRepositorioInvitacionesClub, RepositorioInvitacionesClub>();
         servicios.AddScoped<IRepositorioIngresos, RepositorioIngresos>();
+        servicios.AddScoped<IRepositorioCategorias, RepositorioCategorias>();
+        servicios.AddScoped<IRepositorioJugadores, RepositorioJugadores>();
+        servicios.AddScoped<IRepositorioEquipos, RepositorioEquipos>();
+        servicios.AddScoped<IRepositorioAsignaciones, RepositorioAsignaciones>();
 
         servicios.Configure<OpcionesCorreo>(opciones =>
         {

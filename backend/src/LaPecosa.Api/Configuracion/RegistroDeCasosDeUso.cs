@@ -39,6 +39,17 @@ public static class RegistroDeCasosDeUso
         servicios.AddScoped<IServicioRechazoIngreso, ServicioRechazoIngreso>();
         servicios.AddScoped<EliminadorDeCuentaSinClub>();
 
+        servicios.AddScoped<UbicadorDeJugadores>();
+        servicios.AddScoped<LectorDeCategorias>();
+        servicios.AddScoped<IServicioCategorias, ServicioCategorias>();
+        servicios.AddScoped<IServicioConsultaCategorias, ServicioConsultaCategorias>();
+        servicios.AddScoped<IServicioEntrenadoresDeCategoria, ServicioEntrenadoresDeCategoria>();
+        servicios.AddScoped<IServicioUbicacionJugador, ServicioUbicacionJugador>();
+        servicios.AddScoped<IServicioEquipos, ServicioEquipos>();
+        servicios.AddScoped<IServicioJugadoresDeEquipo, ServicioJugadoresDeEquipo>();
+        servicios.AddScoped<IServicioRetiroJugador, ServicioRetiroJugador>();
+        servicios.AddScoped<IServicioMiCategoria, ServicioMiCategoria>();
+
         return servicios;
     }
 }

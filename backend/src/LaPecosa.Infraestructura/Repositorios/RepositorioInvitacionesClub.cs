@@ -71,6 +71,12 @@ public class RepositorioInvitacionesClub : IRepositorioInvitacionesClub
             .FirstOrDefaultAsync(cancelacion);
 
     /// <inheritdoc />
+    public Task<bool> EsDeUnRetiradoAsync(string correoNormalizado, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol.AnyAsync(
+            integrante => integrante.Usuario!.CorreoNormalizado == correoNormalizado && !integrante.Activo,
+            cancelacion);
+
+    /// <inheritdoc />
     public async Task<IReadOnlyDictionary<Guid, string>> NombresDeIntegrantesAsync(
         IReadOnlyCollection<Guid> usuarioIds, CancellationToken cancelacion = default)
     {

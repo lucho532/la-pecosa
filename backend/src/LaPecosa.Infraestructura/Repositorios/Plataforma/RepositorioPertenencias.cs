@@ -58,6 +58,24 @@ public class RepositorioPertenencias : IRepositorioPertenencias
             .AnyAsync(integrante => integrante.ClubId == clubId && integrante.NumeroDocumento == numeroDocumento, cancelacion);
 
     /// <inheritdoc />
+    public Task<bool> EsDocumentoDeRetiradoAsync(
+        Guid clubId, string numeroDocumento, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol
+            .IgnoreQueryFilters()
+            .AnyAsync(
+                integrante => integrante.ClubId == clubId
+                    && integrante.NumeroDocumento == numeroDocumento
+                    && !integrante.Activo,
+                cancelacion);
+
+    /// <inheritdoc />
+    public Task SacarDeSusEquiposAsync(Guid usuarioRolId, CancellationToken cancelacion = default) =>
+        _contexto.JugadoresEquipo
+            .IgnoreQueryFilters()
+            .Where(fila => fila.UsuarioRolId == usuarioRolId)
+            .ExecuteDeleteAsync(cancelacion);
+
+    /// <inheritdoc />
     public Task<bool> TieneAlgunaAsync(Guid usuarioId, CancellationToken cancelacion = default) =>
         _contexto.UsuariosRol
             .IgnoreQueryFilters()

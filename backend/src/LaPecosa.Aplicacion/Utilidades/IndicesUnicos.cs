@@ -19,4 +19,10 @@ public static class IndicesUnicos
 
     /// <summary>Documento dentro de un club (RF-017).</summary>
     public const string DocumentoEnClub = "IX_UsuariosRol_ClubId_NumeroDocumento";
+
+    /// <summary>Una sola categoría por club y año de nacimiento, contando las inactivas (RF-003).</summary>
+    public const string CategoriaEnClub = "IX_Categorias_ClubId_Anio";
+
+    /// <summary>Nombre de un equipo activo dentro de su categoría, sin distinguir mayúsculas (RF-023).</summary>
+    public const string EquipoEnCategoria = "IX_Equipos_CategoriaId_NombreNormalizado";
 }

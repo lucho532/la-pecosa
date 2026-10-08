@@ -47,6 +47,22 @@ public class ContextoLaPecosa : DbContext
     /// <summary>Solicitudes de recuperación de contraseña.</summary>
     public DbSet<SolicitudRecuperacion> SolicitudesRecuperacion => Set<SolicitudRecuperacion>();
 
+    /// <summary>Categorías de los clubes.</summary>
+    public DbSet<Categoria> Categorias => Set<Categoria>();
+
+    /// <summary>Equipos de las categorías.</summary>
+    public DbSet<Equipo> Equipos => Set<Equipo>();
+
+    /// <summary>Asignaciones de entrenadores a categorías.</summary>
+    public DbSet<AsignacionEntrenadorCategoria> AsignacionesEntrenadorCategoria =>
+        Set<AsignacionEntrenadorCategoria>();
+
+    /// <summary>Equipos que dirige cada asignación.</summary>
+    public DbSet<EntrenadorEquipo> EntrenadoresEquipo => Set<EntrenadorEquipo>();
+
+    /// <summary>Equipos en los que juega cada jugador.</summary>
+    public DbSet<JugadorEquipo> JugadoresEquipo => Set<JugadorEquipo>();
+
     /// <summary>Club de la petición; lo lee el filtro global en cada consulta.</summary>
     private Guid? ClubDeLaPeticion => _contextoClub.ClubId;
 

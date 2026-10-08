@@ -13,17 +13,20 @@ import { guardarUltimoClub } from '../compartido/sesion/ultimoClub';
 import { useSesion } from '../compartido/sesion/useSesion';
 import { Escudo, IdentidadClub } from '../compartido/tema/IdentidadClub';
 import { AvisoClubNoDisponible, esClubNoDisponible } from './AvisoClubNoDisponible';
+import { AvisoRetirado } from './AvisoRetirado';
+import { puedeVerCategorias } from './categorias/textos';
 import type { ContextoDelClub } from './contextoClub';
 import { DesplegableClubes } from './DesplegableClubes';
 import { SalaDeEspera } from './SalaDeEspera';
 
 /** Códigos con los que la API dice que la sesión guardada ya no refleja la relación con el club. */
-const SESION_DESACTUALIZADA = ['ingreso_en_espera', 'no_encontrado'];
+const SESION_DESACTUALIZADA = ['ingreso_en_espera', 'integrante_retirado', 'no_encontrado'];
 
 /**
  * Entrada al club elegido. Antes de pedir nada al club mira el estado de ingreso que trae la
  * sesión: quien está en espera ve solo la sala de espera (RF-015) y no se llama a la API del club,
- * que se lo negaría. Los demás ven la aplicación del club.
+ * que se lo negaría. Lo mismo quien fue retirado del club: solo ve el aviso de que ya no está en
+ * él. Los demás ven la aplicación del club.
  */
 export function DisposicionClub() {
   const { clubId = '' } = useParams();
@@ -36,6 +39,11 @@ export function DisposicionClub() {
 
   if (deSesion?.estadoIngreso === 'EN_ESPERA') {
     return <SalaDeEspera club={deSesion} />;
+  }
+
+  // Igual con quien fue retirado del club: solo ve el aviso, sin pedir nada al club (RF-043).
+  if (deSesion?.retirado) {
+    return <AvisoRetirado club={deSesion} />;
   }
 
   return <AplicacionDelClub clubId={clubId} deSesion={deSesion} />;
@@ -94,6 +102,7 @@ function AplicacionDelClub({ clubId, deSesion }: Props) {
             Inicio
           </NavLink>
           {(rol === 'PRESIDENTE' || rol === 'DIRECTIVO') && <NavLink to={`/club/${clubId}/ingresos`}>Ingresos</NavLink>}
+          {rol && puedeVerCategorias(rol) && <NavLink to={`/club/${clubId}/categorias`}>Categorías</NavLink>}
           {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/configuracion`}>Datos del club</NavLink>}
         </nav>
         {deSesion && rol && (

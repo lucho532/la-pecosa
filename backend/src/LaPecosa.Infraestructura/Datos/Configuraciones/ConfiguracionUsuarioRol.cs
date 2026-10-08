@@ -8,8 +8,8 @@ namespace LaPecosa.Infraestructura.Datos.Configuraciones;
 /// <summary>
 /// Representa la configuración de persistencia de <see cref="UsuarioRol"/>.
 /// Su responsabilidad es fijar la tabla, las longitudes, el documento único por club (RF-017), el
-/// borrado en cascada desde el club, la referencia a quien aprobó el ingreso y el índice de la
-/// sala de espera.
+/// borrado en cascada desde el club, la referencia a quien aprobó el ingreso, el índice de la
+/// sala de espera y, del jugador, su categoría actual y los datos de su retiro.
 /// No contiene reglas de negocio.
 /// </summary>
 public class ConfiguracionUsuarioRol : IEntityTypeConfiguration<UsuarioRol>
@@ -46,6 +46,22 @@ public class ConfiguracionUsuarioRol : IEntityTypeConfiguration<UsuarioRol>
             .HasForeignKey(integrante => integrante.AprobadoPorUsuarioId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.Property(integrante => integrante.Activo).HasDefaultValue(true);
+        builder.Property(integrante => integrante.RetiradoPorNombre).HasMaxLength(161);
+
+        // Borrar una categoría no borra a nadie: solo se borra la que nunca se usó (RF-004a).
+        builder.HasOne(integrante => integrante.Categoria)
+            .WithMany()
+            .HasForeignKey(integrante => integrante.CategoriaId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Quien retiró puede dejar la plataforma: el retiro conserva su nombre copiado (§13).
+        builder.HasOne<Usuario>()
+            .WithMany()
+            .HasForeignKey(integrante => integrante.RetiradoPorUsuarioId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(integrante => new { integrante.ClubId, integrante.CategoriaId });
         builder.HasIndex(integrante => new { integrante.ClubId, integrante.EstadoIngreso });
 
         builder.HasIndex(integrante => new { integrante.ClubId, integrante.NumeroDocumento })

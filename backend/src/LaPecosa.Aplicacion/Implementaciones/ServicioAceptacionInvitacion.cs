@@ -14,7 +14,9 @@ namespace LaPecosa.Aplicacion.Implementaciones;
 /// en una transacción marcarla como usada y crear el integrante, copiando la identidad del
 /// integrante más reciente de la cuenta. Con una invitación del club el integrante nuevo queda
 /// como JUGADOR en la sala de espera, y si la cuenta ya está en ese club no cambia nada (409). Solo
-/// una invitación de presidente reemplaza el rol de quien ya era integrante.
+/// una invitación de presidente reemplaza el rol de quien ya era integrante; si era jugador, sale
+/// de su categoría y de sus equipos y deja de estar retirado. A un jugador retirado no lo devuelve
+/// al club una invitación del club (409): se le reincorpora.
 /// No crea cuentas ni pide de nuevo los datos de la persona, tampoco el responsable. No accede al
 /// contexto de Entity Framework ni conoce HTTP.
 /// </summary>
@@ -69,7 +71,8 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
         if (existente is not null && ReglaIngresoPorInvitacion.PasaPorSalaDeEspera(invitacion.Rol))
         {
             // Una invitación del club no degrada a quien ya está en él: no se gasta ni cambia nada.
-            throw ErroresDeInvitacion.YaPertenecesAlClub();
+            // A un jugador retirado tampoco lo devuelve: eso es reincorporarlo (RF-046 de la 003).
+            throw existente.Activo ? ErroresDeInvitacion.YaPertenecesAlClub() : ErroresDeInvitacion.PersonaRetirada();
         }
 
         var integrante = existente ?? await NuevoIntegranteAsync(usuario, invitacion, ahora, cancelacion);
@@ -94,6 +97,15 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
                         // pasa a ser el de la invitación (RF-018 de la 001).
                         existente.Rol = invitacion.Rol;
                         existente.EstadoIngreso = ReglaIngresoPorInvitacion.EstadoDeIngreso(invitacion.Rol);
+
+                        // Si era jugador deja de serlo: solo los jugadores tienen categoría y equipos
+                        // y solo a ellos se les retira (RF-012 y RF-041 de la 003).
+                        existente.CategoriaId = null;
+                        existente.Activo = true;
+                        existente.RetiradoEn = null;
+                        existente.RetiradoPorUsuarioId = null;
+                        existente.RetiradoPorNombre = null;
+                        await _pertenencias.SacarDeSusEquiposAsync(existente.Id, cancelacion);
                     }
 
                     await _unidadDeTrabajo.GuardarAsync(cancelacion);

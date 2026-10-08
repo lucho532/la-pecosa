@@ -15,8 +15,10 @@ namespace LaPecosa.Api.Autorizacion;
 /// disponible para el controlador. Puede exigir además uno de varios roles.
 /// No confía en el token para el club ni el rol, y no revela que un club existe a quien no
 /// pertenece a él: responde el mismo 404 que para un club inexistente, también al DESARROLLADOR.
-/// No abre ningún endpoint a quien está en la sala de espera: se le niega por defecto, antes de
-/// mirar los roles, así que cualquier endpoint de club futuro queda cubierto (research §4).
+/// No abre ningún endpoint a quien está en la sala de espera ni a un jugador retirado del club: se
+/// les niega por defecto, antes de mirar los roles, así que cualquier endpoint de club futuro queda
+/// cubierto (research §4 de la 002 y §10 de la 003). Como se consulta la base de datos en cada
+/// petición, el retiro se aplica también a una sesión ya abierta (RF-043).
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public sealed class IntegranteDelClubAttribute : Attribute, IAsyncAuthorizationFilter
@@ -64,7 +66,8 @@ public sealed class IntegranteDelClubAttribute : Attribute, IAsyncAuthorizationF
             return;
         }
 
-        var acceso = ReglaAccesoPorEstado.Evaluar(integrante.Club.Estado, integrante.Rol, integrante.EstadoIngreso);
+        var acceso = ReglaAccesoPorEstado.Evaluar(
+            integrante.Club.Estado, integrante.Rol, integrante.EstadoIngreso, integrante.Activo);
         var problema = acceso switch
         {
             ResultadoAcceso.ClubSuspendido => new Problema(
@@ -72,6 +75,8 @@ public sealed class IntegranteDelClubAttribute : Attribute, IAsyncAuthorizationF
             ResultadoAcceso.ClubDadoDeBaja => new Problema(403, "club_dado_de_baja", "Este club no está disponible."),
             ResultadoAcceso.IngresoEnEspera => new Problema(
                 403, "ingreso_en_espera", "Tu ingreso está pendiente de aprobación."),
+            ResultadoAcceso.IntegranteRetirado => new Problema(
+                403, "integrante_retirado", "Ya no estás en este club."),
             _ when _rolesExigidos.Length > 0 && !_rolesExigidos.Contains(integrante.Rol) => new Problema(
                 403, "rol_no_autorizado", "Tu rol en este club no permite hacer esto."),
             _ => null,
