@@ -1,0 +1,524 @@
+openapi: 3.1.0
+info:
+  title: La Pecosa - API de la funcionalidad 004 (invitación con rol e ingreso directo)
+  version: 0.4.0
+  description: |
+    Contrato de lo que esta funcionalidad cambia respecto de los contratos de la 001, la 002 y la
+    003. No añade ningún endpoint. Lo que no aparece aquí sigue igual.
+
+    ELIMINADO: `POST /api/plataforma/clubes/{clubId}/invitaciones` (invitar a un presidente a un
+    club que ya existe) deja de existir. El DESARROLLADOR solo invita al crear el club. La ruta
+    se retira del contrato de la 001. Crear un club y
+    `POST /api/plataforma/clubes/{clubId}/invitaciones/{invitacionId}/reenvio` no cambian.
+
+    Convenciones: las de la 001, la 002 y la 003, más las marcadas como CAMBIO.
+    - Todos los errores usan `application/problem+json` con un campo `codigo` estable.
+    - `/api/clubes/{clubId}/**` exige un integrante del usuario en ese club. Sin él responde 404,
+      también al DESARROLLADOR y también cuando el identificador es de otro club.
+    - Club suspendido y rol distinto de PRESIDENTE: 403 `club_suspendido`. Club dado de baja:
+      403 `club_dado_de_baja`. Ingreso en espera: 403 `ingreso_en_espera`. Jugador retirado:
+      403 `integrante_retirado`.
+    - CAMBIO: los ocho endpoints de invitaciones e ingresos del club exigen rol PRESIDENTE. A
+      cualquier otro rol, también al DIRECTIVO, 403 `rol_no_autorizado`, sin devolver ningún dato.
+    - CAMBIO: ningún registro ni aceptación con invitación deja a nadie `EN_ESPERA`. El código
+      `ingreso_en_espera` se conserva para el jugador agregado desde la ficha de un hermano.
+    - CAMBIO: el rol con el que entra una persona sale siempre de su invitación. Ningún cuerpo de
+      registro o aceptación lo lleva, y un `rol` enviado de más se ignora.
+
+servers:
+  - url: http://localhost:8080
+
+security:
+  - sesion: []
+
+tags:
+  - name: Ingresos
+    description: Invitaciones del club, sala de espera, aprobación y rechazo
+  - name: Invitaciones
+
+paths:
+  # ---------------------------------------------------------------- Endpoints de la 002 que cambian
+
+  /api/clubes/{clubId}/invitaciones:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Ingresos]
+      summary: Invitaciones enviadas desde el club, una por correo (la más reciente)
+      description: |
+        CAMBIO: solo el PRESIDENTE. Cada invitación lleva su `rol`. Una invitación usada es el
+        registro de que esa persona entró, con qué rol y quién la invitó.
+      responses:
+        '200':
+          description: Invitaciones del club
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/InvitacionClubDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    post:
+      tags: [Ingresos]
+      summary: Invita a una persona por correo a registrarse en el club con un rol
+      description: |
+        CAMBIO: solo el PRESIDENTE. El cuerpo lleva `rol`, obligatorio: JUGADOR, ENTRENADOR o
+        DIRECTIVO. Si ese correo ya tenía una invitación pendiente del club, queda anulada y vale
+        el rol de la nueva.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InvitarAlClubDto' }
+      responses:
+        '201':
+          description: |
+            Invitación creada. Si el correo no pudo enviarse llega con `estadoEnvio: FALLIDO` y se
+            puede reenviar.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitacionClubDto' }
+        '400':
+          description: '`datos_invalidos`. Falta el correo o el rol, o no son válidos; detalle por campo en `errores`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403':
+          description: |
+            `rol_no_invitable` (el rol indicado es PRESIDENTE o DESARROLLADOR), además de
+            `rol_no_autorizado` (quien llama no es PRESIDENTE) y los de club no disponible. No se
+            crea ni se envía nada.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`ya_esta_en_el_club`, `ya_esta_en_espera`, `persona_retirada` o `correo_del_desarrollador`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/invitaciones/{invitacionId}/reenvio:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/invitacionId'
+    post:
+      tags: [Ingresos]
+      summary: Reenvía una invitación pendiente al mismo correo y con el mismo rol
+      description: |
+        CAMBIO: solo el PRESIDENTE. La invitación nueva conserva el rol de la anterior.
+      responses:
+        '201':
+          description: Invitación nueva, con el mismo rol
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitacionClubDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`invitacion_no_pendiente`, además de los códigos de invitar'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/invitaciones/{invitacionId}/cancelacion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/invitacionId'
+    post:
+      tags: [Ingresos]
+      summary: Cancela una invitación pendiente
+      description: 'CAMBIO: solo el PRESIDENTE.'
+      responses:
+        '200':
+          description: Invitación cancelada; su enlace deja de servir
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitacionClubDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`invitacion_no_pendiente`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/ingresos/{usuarioRolId}/aprobacion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    post:
+      tags: [Ingresos]
+      summary: Aprueba el ingreso de una persona en espera, que entra como JUGADOR
+      description: |
+        CAMBIO: solo el PRESIDENTE, y ya no se elige rol. La persona queda siempre como JUGADOR y se ubica en la
+        categoría activa de su año de nacimiento, o sin categoría si el club no la tiene. El
+        cuerpo es opcional; si indica un rol distinto de JUGADOR, la aprobación se niega. Deja de
+        existir el 400 por no indicar rol.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AprobarIngresoDto' }
+      responses:
+        '200':
+          description: Ingreso aprobado; `rolDeIngreso` es siempre JUGADOR
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IngresoAprobadoDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403':
+          description: |
+            `rol_no_asignable` (el cuerpo indica un rol distinto de JUGADOR; la persona sigue en
+            espera), `rol_no_autorizado`, `ingreso_en_espera` o club no disponible.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`ingreso_ya_aprobado`. Ya no está en espera; no se produce ningún efecto'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/ingresos/en-espera:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Ingresos]
+      summary: Sala de espera del club
+      description: 'CAMBIO: solo el PRESIDENTE. El esquema es el `IngresoEnEsperaDto` de la 002.'
+      responses:
+        '200':
+          description: Personas en espera; vacía mientras no exista agregar hermanos
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/ingresos/aprobados:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Ingresos]
+      summary: Ingresos aprobados del club, de solo lectura
+      description: |
+        CAMBIO: solo el PRESIDENTE. Sigue mostrando las aprobaciones anteriores tal como
+        quedaron. Quien entra con una invitación no aparece aquí.
+      responses:
+        '200':
+          description: Ingresos aprobados
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/IngresoAprobadoDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/ingresos/{usuarioRolId}/rechazo:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    post:
+      tags: [Ingresos]
+      summary: Rechaza el ingreso de una persona en espera y la borra del club
+      description: 'CAMBIO: solo el PRESIDENTE. Lo demás, como en la 002.'
+      responses:
+        '204':
+          description: Ingreso rechazado; no queda ningún dato de la persona en el club
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: '`ingreso_ya_aprobado`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  # ---------------------------------------------------------------- Endpoints de la 001 que cambian
+
+  /api/invitaciones/consulta:
+    post:
+      tags: [Invitaciones]
+      summary: Devuelve los datos fijos de una invitación para mostrar el registro
+      description: |
+        CAMBIO: desaparece `pasaPorSalaDeEspera` y llega `pideResponsable`. La pantalla muestra
+        siempre el rol, también en las invitaciones del club.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TokenDto' }
+      responses:
+        '200':
+          description: Invitación vigente
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitacionVigenteDto' }
+        '410': { $ref: '#/components/responses/InvitacionNoValida' }
+
+  /api/invitaciones/registro:
+    post:
+      tags: [Invitaciones]
+      summary: Registra una cuenta nueva con una invitación, la deja dentro del club e inicia su sesión
+      description: |
+        CAMBIO: el integrante queda con el rol de la invitación, como único rol, y `APROBADO`; no
+        pasa por la sala de espera. Con una invitación de JUGADOR queda además en la categoría
+        activa de su año de nacimiento, o sin categoría si el club no la tiene. `nombreResponsable`
+        solo se usa con una invitación de JUGADOR: obligatorio si es menor de 18 años, opcional si
+        es adulto; con cualquier otro rol se ignora y no se guarda. El correo, el club y el rol
+        son siempre los de la invitación.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegistrarConInvitacionDto' }
+      responses:
+        '201':
+          description: Cuenta e integrante creados; devuelve el `TokenSesionDto` de la 001
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '409':
+          description: '`correo_ya_registrado`, `documento_repetido_en_club`, `documento_en_otra_cuenta` o `persona_retirada`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '410': { $ref: '#/components/responses/InvitacionNoValida' }
+
+  /api/invitaciones/aceptacion:
+    post:
+      tags: [Invitaciones]
+      summary: Añade a quien ya tiene cuenta al club de la invitación, con el rol de la invitación
+      description: |
+        CAMBIO: con una invitación del club, la pertenencia se crea con el rol de la invitación y
+        `APROBADO`; si es de JUGADOR, queda ubicada en su categoría como en el registro. No se
+        crea otra cuenta ni cambia nada en los demás clubes de la persona. Si la cuenta ya es
+        integrante de ese club sigue respondiendo 409, como en la 002 y la 003.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TokenDto' }
+      responses:
+        '201':
+          description: Pertenencia al club creada; `estadoIngreso` es `APROBADO`
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDeSesionDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403':
+          description: '`invitacion_de_otro_correo`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409':
+          description: '`ya_perteneces_al_club` o `persona_retirada`'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '410': { $ref: '#/components/responses/InvitacionNoValida' }
+
+components:
+  securitySchemes:
+    sesion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    clubId:
+      name: clubId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    invitacionId:
+      name: invitacionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    usuarioRolId:
+      name: usuarioRolId
+      in: path
+      required: true
+      description: Identificador del integrante en este club
+      schema: { type: string, format: uuid }
+
+  responses:
+    SinSesion:
+      description: '`sin_sesion`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    NoAutorizado:
+      description: |
+        `rol_no_autorizado` (quien llama no es PRESIDENTE), `ingreso_en_espera`, `integrante_retirado`, `club_suspendido` o
+        `club_dado_de_baja`. No devuelve ningún dato.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    NoEncontrado:
+      description: '`no_encontrado`. También cuando el club o el recurso son de otro club'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    DatosInvalidos:
+      description: '`datos_invalidos`, con el detalle por campo en `errores`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    InvitacionNoValida:
+      description: '`invitacion_no_valida`. Ya se usó, venció, fue cancelada o reemplazada, no existe o su club está dado de baja'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+
+  schemas:
+    Problema:
+      type: object
+      required: [title, status, codigo]
+      properties:
+        title: { type: string, description: Mensaje en español para mostrar a la persona }
+        status: { type: integer }
+        codigo: { type: string }
+        errores:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    Rol:
+      type: string
+      enum: [DESARROLLADOR, PRESIDENTE, DIRECTIVO, ENTRENADOR, JUGADOR]
+    RolDeIngreso:
+      type: string
+      description: Roles con los que se entra a un club mediante una invitación del club
+      enum: [JUGADOR, ENTRENADOR, DIRECTIVO]
+    EstadoIngreso:
+      type: string
+      enum: [EN_ESPERA, APROBADO]
+    EstadoInvitacion:
+      type: string
+      enum: [PENDIENTE, USADA, VENCIDA, CANCELADA]
+    EstadoEnvio:
+      type: string
+      enum: [PENDIENTE, ENVIADO, FALLIDO]
+    TipoDocumento:
+      type: string
+      enum: [REGISTRO_CIVIL, TARJETA_IDENTIDAD, CEDULA_CIUDADANIA, CEDULA_EXTRANJERIA]
+
+    TokenDto:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    InvitarAlClubDto:
+      type: object
+      description: 'CAMBIO: el correo y el rol. El club es el de la ruta'
+      required: [correo, rol]
+      properties:
+        correo: { type: string, format: email }
+        rol:
+          $ref: '#/components/schemas/Rol'
+          description: |
+            Rol con el que entra la persona: JUGADOR, ENTRENADOR o DIRECTIVO. Se admite cualquier
+            valor de la enumeración para que PRESIDENTE o DESARROLLADOR se rechacen con
+            `rol_no_invitable` y no como un dato mal escrito.
+
+    InvitacionClubDto:
+      type: object
+      description: 'CAMBIO: gana `rol`. Una invitación tal como la ve el club. Nunca incluye el token'
+      required: [invitacionId, correo, rol, estado, estadoEnvio, creadaEn, venceEn]
+      properties:
+        invitacionId: { type: string, format: uuid }
+        correo: { type: string, format: email }
+        rol: { $ref: '#/components/schemas/RolDeIngreso' }
+        estado: { $ref: '#/components/schemas/EstadoInvitacion' }
+        estadoEnvio: { $ref: '#/components/schemas/EstadoEnvio' }
+        enviadaPor:
+          type: [string, 'null']
+          description: Nombre de quien la envió; nulo si ya no está en el club
+        creadaEn: { type: string, format: date-time }
+        venceEn: { type: string, format: date-time }
+
+    AprobarIngresoDto:
+      type: object
+      description: 'CAMBIO: `rol` es opcional y solo se admite JUGADOR'
+      properties:
+        rol:
+          oneOf:
+            - $ref: '#/components/schemas/Rol'
+            - type: 'null'
+          description: Si se indica y no es JUGADOR, la aprobación responde 403 `rol_no_asignable`
+
+    IngresoAprobadoDto:
+      type: object
+      description: |
+        Sin cambio de esquema. En las aprobaciones nuevas `rolDeIngreso` es siempre JUGADOR; las
+        anteriores conservan el suyo.
+      required: [usuarioRolId, nombres, apellidos, rolDeIngreso, aprobadoPor, aprobadoEn]
+      properties:
+        usuarioRolId: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        rolDeIngreso: { $ref: '#/components/schemas/RolDeIngreso' }
+        aprobadoPor: { type: string, description: Nombre de quien aprobó, tal como era en ese momento }
+        aprobadoEn: { type: string, format: date-time }
+
+    ClubDeSesionDto:
+      type: object
+      description: Sin cambios; el de la 003
+      properties:
+        clubId: { type: string, format: uuid }
+        rol: { $ref: '#/components/schemas/Rol' }
+        estadoIngreso: { $ref: '#/components/schemas/EstadoIngreso' }
+
+    InvitacionVigenteDto:
+      type: object
+      description: 'CAMBIO: `pideResponsable` sustituye a `pasaPorSalaDeEspera`'
+      required: [nombreClub, rol, correo, tieneCuenta, pideResponsable, identidad]
+      properties:
+        nombreClub: { type: string }
+        rol:
+          $ref: '#/components/schemas/Rol'
+          description: Rol con el que entra la persona; la pantalla lo muestra siempre y no se puede cambiar
+        correo: { type: string, format: email, description: Fijo; no se puede cambiar }
+        tieneCuenta: { type: boolean }
+        pideResponsable:
+          type: boolean
+          description: Verdadero solo en las invitaciones de JUGADOR; el registro pide entonces el nombre del responsable
+        identidad: { type: object, description: '`IdentidadClubDto` de la 001' }
+
+    RegistrarConInvitacionDto:
+      type: object
+      description: 'Sin cambio de campos; cambia cuándo se usa `nombreResponsable`. No lleva correo, club ni rol'
+      required:
+        - token
+        - nombres
+        - apellidos
+        - tipoDocumento
+        - numeroDocumento
+        - fechaNacimiento
+        - celular
+        - contrasena
+      properties:
+        token: { type: string }
+        nombres: { type: string, maxLength: 80 }
+        apellidos: { type: string, maxLength: 80 }
+        tipoDocumento: { $ref: '#/components/schemas/TipoDocumento' }
+        numeroDocumento: { type: string, maxLength: 20 }
+        fechaNacimiento: { type: string, format: date }
+        celular: { type: string, maxLength: 20 }
+        nombreResponsable:
+          type: [string, 'null']
+          maxLength: 160
+          description: |
+            Solo con una invitación de JUGADOR: obligatorio si la persona es menor de 18 años el
+            día del registro, opcional si es adulta. Con cualquier otro rol se ignora.
+        contrasena: { type: string, minLength: 8, maxLength: 128 }

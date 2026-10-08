@@ -160,6 +160,20 @@ invitación.
 - Pendientes: siguen abiertas las siete decisiones de la §28. El código de la spec 002 (sala de
   espera, aprobación y rechazo de ingresos) y el de invitaciones quedan por adaptar en una spec
   nueva
+
+Enmienda 4.0.0 → 4.1.0 (2026-10-08), decidida por el propietario del proyecto durante el plan de
+la spec 004:
+- §8, §12.1 y §12.2: dentro del club solo el PRESIDENTE envía invitaciones; el DIRECTIVO ya no
+  invita
+- §8 y §12.1.1: solo el PRESIDENTE aprueba o rechaza al jugador agregado desde la ficha de un
+  hermano; el DIRECTIVO ya no aprueba ni rechaza
+- §8 y §12.5: el DESARROLLADOR solo invita al primer PRESIDENTE, al crear el club; ya no invita
+  presidentes adicionales. Conserva reenviar esa invitación o corregir su correo mientras no se use
+- §20: pruebas ajustadas
+- Principios modificados: ninguno renombrado. Secciones añadidas o eliminadas: ninguna
+- Pendientes: siguen abiertas las siete decisiones de la §28. La spec 004 adapta el código a esta
+  versión. Hasta que exista la elección de un presidente por otro PRESIDENTE (§12.5), cada club
+  tiene un solo presidente
 -->
 
 # Constitución del Proyecto — La Pecosa, plataforma multiclub de escuelas de fútbol
@@ -618,7 +632,8 @@ Tiene su propio panel de administración de la plataforma. Desde allí puede:
 - Modificar el escudo y los colores de cada club.
 - Suspender un club, levantar su suspensión, darlo de baja, revertir la baja y eliminarlo (ver
   §7.4). Solo se puede eliminar un club que ya está dado de baja.
-- Invitar a un presidente adicional a un club que ya existe.
+- Reenviar la invitación del PRESIDENTE o corregir su correo, mientras no se haya usado. No invita
+  a nadie más: ni presidentes adicionales ni ningún otro rol.
 - Quitarle el rol a un PRESIDENTE, siempre que el club conserve al menos otro ya registrado. Al
   hacerlo elige entre asignarle otro rol en ese club o eliminarlo del club por completo.
 
@@ -652,12 +667,12 @@ Puede:
 - Buscar usuarios registrados por su documento de identidad y asignarles o retirarles los roles
   ENTRENADOR o DIRECTIVO.
 
-Cambiar el rol de alguien ya registrado es exclusivo del PRESIDENTE (ver §12.2). Un DIRECTIVO solo
-decide un rol al invitar, y solo entre JUGADOR y ENTRENADOR (ver §12.1). Ningún otro rol puede
-asignar, cambiar ni retirar roles, ni siquiera el suyo propio.
+Invitar al club, aprobar o rechazar un ingreso y cambiar el rol de alguien ya registrado son
+exclusivos del PRESIDENTE (ver §12.1, §12.1.1 y §12.2). Ningún otro rol puede invitar, aprobar,
+rechazar, ni asignar, cambiar o retirar roles, ni siquiera el suyo propio.
 
-El rol PRESIDENTE solamente lo otorgan el DESARROLLADOR, desde su panel de administración, u otro
-PRESIDENTE del mismo club (ver §12.5). Un club puede tener varios presidentes.
+El rol PRESIDENTE solamente lo otorgan el DESARROLLADOR, al crear el club, u otro PRESIDENTE del
+mismo club (ver §12.5). Un club puede tener varios presidentes.
 
 Cada club debe conservar siempre al menos un PRESIDENTE activo; no se permite revocar el último.
 
@@ -676,19 +691,16 @@ Puede:
 - Consultar la seguridad social de cada jugador: su entidad de salud y dónde lo atienden.
 - Consultar las categorías del club, con sus equipos, sus entrenadores y sus jugadores, y la lista
   de jugadores retirados.
-- Enviar invitaciones de registro a su club con el rol JUGADOR o ENTRENADOR (ver §12.1).
-- Aprobar o rechazar a los jugadores agregados desde la ficha de un hermano (ver §12.1.2).
 
 Su acceso a finanzas y fichas es de consulta. No puede registrar ni anular pagos, modificar el
-valor de la mensualidad del club ni la de un jugador, invitar con el rol DIRECTIVO, asignar ni
-retirar roles, ni buscar usuarios por documento.
+valor de la mensualidad del club ni la de un jugador, enviar invitaciones, aprobar ni rechazar
+ingresos, asignar ni retirar roles, ni buscar usuarios por documento.
 Tampoco puede gestionar categorías ni equipos, asignar entrenadores, cambiar a un jugador de
 categoría o de equipo, ni retirar o reincorporar jugadores.
 
 ### Entrenador
 
-El rol llega con la invitación del PRESIDENTE o de un DIRECTIVO, o lo asigna después el
-PRESIDENTE.
+El rol llega con la invitación del PRESIDENTE, o lo asigna él después.
 
 Está asignado a una o varias categorías mediante:
 
@@ -871,16 +883,14 @@ club; ese enlace la lleva a registrarse en ese club y la cuenta queda ligada a �
 No existe un registro abierto sin invitación, y nadie elige su club al registrarse: lo determina
 el enlace.
 
-Dentro de un club, las invitaciones de registro las envían el PRESIDENTE y los DIRECTIVOS de ese
-club, y nadie más. La invitación de un PRESIDENTE la envía el DESARROLLADOR (ver §12.5).
+Dentro de un club, las invitaciones de registro las envía el PRESIDENTE de ese club, y nadie
+más. La invitación de un PRESIDENTE la envía el DESARROLLADOR (ver §12.5).
 
 Toda invitación sirve una sola vez, caduca y queda ligada al club y al correo al que se envió: la
 persona no puede registrarse con otro correo.
 
-Toda invitación del club indica el rol con el que entra la persona:
-
-- El PRESIDENTE invita con el rol JUGADOR, ENTRENADOR o DIRECTIVO.
-- Un DIRECTIVO invita con el rol JUGADOR o ENTRENADOR.
+Toda invitación del club indica el rol con el que entra la persona: JUGADOR, ENTRENADOR o
+DIRECTIVO. Lo elige el PRESIDENTE al invitar.
 
 Quien se registra con una invitación entra directamente al club con ese rol. No existe sala de
 espera para quien fue invitado: si está dentro de la aplicación es porque alguien del club lo
@@ -944,13 +954,13 @@ Mientras está en espera:
 - No se le asigna categoría.
 - No se le genera mensualidad.
 
-El ingreso lo aprueba el PRESIDENTE o un DIRECTIVO.
+El ingreso lo aprueba el PRESIDENTE, y nadie más.
 
 Al aprobarse su ingreso, el jugador se ubica igual que quien entra con una invitación de JUGADOR:
 recibe la categoría de su año de nacimiento, o queda sin categoría si no existe, y empieza a
 generarse su mensualidad (ver §12.1).
 
-El PRESIDENTE o un DIRECTIVO también pueden rechazarlo. Rechazar borra a ese jugador del club, sin
+El PRESIDENTE también puede rechazarlo. Rechazar borra a ese jugador del club, sin
 dejar datos suyos en él. La cuenta y sus demás jugadores quedan intactos.
 
 Solo se rechaza a quien está en espera; a un jugador ya aprobado no se le rechaza: se le retira
@@ -982,8 +992,7 @@ Cuando una cuenta nueva pasa de JUGADOR a ENTRENADOR o DIRECTIVO, la ficha de Ju
 con su registro desaparece: se elimina. Es una eliminación física justificada (ver §14), porque
 esa ficha nunca correspondió a un jugador real.
 
-Un DIRECTIVO no asigna, cambia ni retira roles: solo elige entre JUGADOR y ENTRENADOR al invitar
-(ver §12.1).
+Un DIRECTIVO no invita ni asigna, cambia o retira roles.
 
 Un rol solamente puede asignarse a un usuario que ya se registró. No se asignan roles a documentos
 que aún no tienen cuenta.
@@ -1071,9 +1080,11 @@ Quien se registra con esa invitación:
 - Completa el registro con sus propios datos y crea su propia contraseña (ver §12.1).
 - Queda como PRESIDENTE de ese club, sin pasar por la sala de espera.
 
-Un club puede tener más de un PRESIDENTE. A un presidente adicional lo elige el DESARROLLADOR,
-desde su panel de administración, u otro PRESIDENTE de ese mismo club. Un PRESIDENTE lo hace
-dándole el rol a alguien que ya está registrado en el club.
+El DESARROLLADOR solo invita a ese primer PRESIDENTE. Mientras la invitación no se haya usado
+puede reenviarla o corregir su correo; no invita presidentes adicionales.
+
+Un club puede tener más de un PRESIDENTE. A un presidente adicional lo elige otro PRESIDENTE de
+ese mismo club, dándole el rol a alguien que ya está registrado en el club.
 
 ## 13. Histórico operativo y financiero
 
@@ -1394,7 +1405,7 @@ Las pruebas deben validar principalmente:
 - Autorización por rol.
 - Que solamente el PRESIDENTE puede buscar usuarios por documento, asignar el rol DIRECTIVO y
   retirar roles.
-- Que un DIRECTIVO solamente puede invitar con el rol JUGADOR o ENTRENADOR y no asigna, cambia ni
+- Que un DIRECTIVO no envía invitaciones, no aprueba ni rechaza ingresos y no asigna, cambia ni
   retira roles.
 - Que quien entra como ENTRENADOR o DIRECTIVO no tiene ficha de Jugador, categoría ni mensualidad.
 - Que solamente el PRESIDENTE modifica el valor de la mensualidad de un jugador, y que el cambio
@@ -1404,6 +1415,7 @@ Las pruebas deben validar principalmente:
   club elegido.
 - Que no se puede crear un club sin asignarle un PRESIDENTE, y que quien se registra con esa
   invitación queda como PRESIDENTE de ese club.
+- Que el DESARROLLADOR no puede invitar a un presidente a un club que ya existe.
 - Que en un club suspendido solo entra su PRESIDENTE y los demás ven el aviso; que en un club dado
   de baja no entra nadie.
 - Que eliminar un club borra toda su información y no afecta a ningún otro club.
@@ -1421,9 +1433,9 @@ Las pruebas deben validar principalmente:
 - Que la ficha de Jugador se elimina cuando la cuenta pasa a ENTRENADOR o DIRECTIVO.
 - Recuperación de contraseña.
 - Que un jugador en espera no accede a ninguna información del club ni genera mensualidad.
-- Que solamente el PRESIDENTE o un DIRECTIVO pueden aprobar o rechazar a un jugador agregado desde
-  la ficha de un hermano.
-- Que solamente el PRESIDENTE o un DIRECTIVO pueden enviar invitaciones de registro a su club.
+- Que solamente el PRESIDENTE puede aprobar o rechazar a un jugador agregado desde la ficha de un
+  hermano.
+- Que solamente el PRESIDENTE puede enviar invitaciones de registro a su club.
 - Que una invitación no sirve dos veces, no sirve vencida y no admite otro correo.
 - Que quien se registra con una invitación del club entra directamente con el rol de la
   invitación, sin sala de espera.
@@ -1624,4 +1636,4 @@ Escalabilidad
 La solución más sencilla que cumpla correctamente las reglas de negocio será preferible a una
 solución más compleja.
 
-**Versión**: 4.0.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-08
+**Versión**: 4.1.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-08
