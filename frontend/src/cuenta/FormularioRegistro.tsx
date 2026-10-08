@@ -11,9 +11,10 @@ import type {
 import { Aviso } from '../compartido/componentes/Aviso';
 import { Boton } from '../compartido/componentes/Boton';
 import { Campo } from '../compartido/componentes/Campo';
+import { esMenorDeEdad } from '../compartido/edad';
 import { useSesion } from '../compartido/sesion/useSesion';
 
-type Datos = Omit<RegistrarConInvitacionDto, 'token'>;
+type Datos = Omit<RegistrarConInvitacionDto, 'token' | 'nombreResponsable'> & { nombreResponsable: string };
 
 const TIPOS_DOCUMENTO: { valor: TipoDocumento; texto: string }[] = [
   { valor: 'CEDULA_CIUDADANIA', texto: 'Cédula de ciudadanía' },
@@ -29,6 +30,7 @@ const VACIO: Datos = {
   numeroDocumento: '',
   fechaNacimiento: '',
   celular: '',
+  nombreResponsable: '',
   contrasena: '',
 };
 
@@ -42,7 +44,8 @@ interface Props {
 
 /**
  * Registro con invitación. El correo, el club y el rol vienen de la invitación y no se pueden
- * cambiar; la persona escribe sus datos y crea su propia contraseña.
+ * cambiar; la persona escribe sus datos y crea su propia contraseña. El responsable es obligatorio
+ * si, por su fecha de nacimiento, quien ingresa es menor de 18 años; lo comprueba la API.
  */
 export function FormularioRegistro({ token, invitacion }: Props) {
   const { iniciar } = useSesion();
@@ -54,6 +57,7 @@ export function FormularioRegistro({ token, invitacion }: Props) {
 
   const cambiar = (campo: keyof Datos) => (valor: string) => setDatos((previos) => ({ ...previos, [campo]: valor }));
   const errorDe = (campo: keyof Datos) => errores[campo]?.[0];
+  const esMenor = esMenorDeEdad(datos.fechaNacimiento);
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
@@ -61,8 +65,13 @@ export function FormularioRegistro({ token, invitacion }: Props) {
     setErrores({});
     setEnviando(true);
     try {
-      const cuerpo: RegistrarConInvitacionDto = { token, ...datos };
+      const cuerpo: RegistrarConInvitacionDto = {
+        token,
+        ...datos,
+        nombreResponsable: datos.nombreResponsable.trim() || null,
+      };
       const sesion = await iniciar(await api.post<TokenSesionDto>('/api/invitaciones/registro', cuerpo));
+      // Con una invitación del club entra a la sala de espera de ese club.
       navegar(sesion.clubes.length > 0 ? `/club/${sesion.clubes[0].clubId}` : '/', { replace: true });
     } catch (fallo) {
       if (fallo instanceof ErrorApi && fallo.codigo === 'datos_invalidos') {
@@ -80,6 +89,12 @@ export function FormularioRegistro({ token, invitacion }: Props) {
   return (
     <form className="columna" onSubmit={enviar} noValidate>
       {error && <Aviso tono="error">{error}</Aviso>}
+      {invitacion.pasaPorSalaDeEspera && (
+        <Aviso tono="info">
+          Si quien ingresa es un jugador, escribe los datos y el documento del jugador; el correo es el de su
+          acudiente. Un entrenador o un directivo se registra con sus propios datos y su propio documento.
+        </Aviso>
+      )}
       <Campo etiqueta="Correo" valor={invitacion.correo} readOnly ayuda="Es el correo de la invitación." />
       <div className="rejilla">
         <Campo
@@ -135,6 +150,20 @@ export function FormularioRegistro({ token, invitacion }: Props) {
           maxLength={20}
         />
       </div>
+      <Campo
+        etiqueta={`Nombre del padre, madre o responsable (${esMenor ? 'obligatorio' : 'opcional'})`}
+        valor={datos.nombreResponsable}
+        alCambiar={cambiar('nombreResponsable')}
+        error={errorDe('nombreResponsable')}
+        ayuda={
+          esMenor
+            ? 'Es obligatorio porque quien ingresa es menor de 18 años.'
+            : 'Es obligatorio si quien ingresa es menor de 18 años.'
+        }
+        required={esMenor}
+        autoComplete="off"
+        maxLength={160}
+      />
       <Campo
         etiqueta="Contraseña"
         type="password"

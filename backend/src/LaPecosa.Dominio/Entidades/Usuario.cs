@@ -3,8 +3,9 @@ namespace LaPecosa.Dominio.Entidades;
 /// <summary>
 /// Representa la cuenta con la que una persona inicia sesión. Es una sola aunque la persona
 /// pertenezca a varios clubes.
-/// Su responsabilidad es guardar el correo, el hash de la contraseña, el bloqueo por intentos
-/// fallidos y el sello que invalida las sesiones anteriores.
+/// Su responsabilidad es guardar el correo, el hash de la contraseña, los datos de contacto
+/// (celular y responsable), el bloqueo por intentos fallidos y el sello que invalida las sesiones
+/// anteriores.
 /// No guarda el club, el rol, el nombre ni el documento: eso vive en <see cref="UsuarioRol"/>.
 /// </summary>
 public class Usuario
@@ -29,6 +30,13 @@ public class Usuario
 
     /// <summary>Celular de contacto. Obligatorio al registrarse.</summary>
     public string? Celular { get; set; }
+
+    /// <summary>
+    /// Opcional. Nombre del padre, madre o responsable. Obligatorio al registrarse si la persona
+    /// es menor de 18 años ese día (RF-010). Es un dato de contacto de la cuenta, como el celular,
+    /// y solo sale por la API en la sala de espera del club.
+    /// </summary>
+    public string? NombreResponsable { get; set; }
 
     /// <summary>Marca la única cuenta DESARROLLADOR de la plataforma (RF-001).</summary>
     public bool EsDesarrollador { get; set; }

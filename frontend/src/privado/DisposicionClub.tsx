@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../compartido/api/cliente';
 import { ErrorApi } from '../compartido/api/errores';
-import type { ClubDto } from '../compartido/api/tipos';
+import type { ClubDeSesionDto, ClubDto } from '../compartido/api/tipos';
 import { useCarga } from '../compartido/api/useCarga';
 import { Aviso } from '../compartido/componentes/Aviso';
 import { Avatar, inicialesDe } from '../compartido/componentes/Avatar';
@@ -15,6 +15,37 @@ import { Escudo, IdentidadClub } from '../compartido/tema/IdentidadClub';
 import { AvisoClubNoDisponible, esClubNoDisponible } from './AvisoClubNoDisponible';
 import type { ContextoDelClub } from './contextoClub';
 import { DesplegableClubes } from './DesplegableClubes';
+import { SalaDeEspera } from './SalaDeEspera';
+
+/** Códigos con los que la API dice que la sesión guardada ya no refleja la relación con el club. */
+const SESION_DESACTUALIZADA = ['ingreso_en_espera', 'no_encontrado'];
+
+/**
+ * Entrada al club elegido. Antes de pedir nada al club mira el estado de ingreso que trae la
+ * sesión: quien está en espera ve solo la sala de espera (RF-015) y no se llama a la API del club,
+ * que se lo negaría. Los demás ven la aplicación del club.
+ */
+export function DisposicionClub() {
+  const { clubId = '' } = useParams();
+  const { sesion } = useSesion();
+  const deSesion = sesion?.clubes.find((candidato) => candidato.clubId === clubId);
+
+  useEffect(() => {
+    guardarUltimoClub(clubId);
+  }, [clubId]);
+
+  if (deSesion?.estadoIngreso === 'EN_ESPERA') {
+    return <SalaDeEspera club={deSesion} />;
+  }
+
+  return <AplicacionDelClub clubId={clubId} deSesion={deSesion} />;
+}
+
+interface Props {
+  clubId: string;
+  /** El club tal como lo trae la sesión, para que su nombre nunca falte mientras llega de la API. */
+  deSesion: ClubDeSesionDto | undefined;
+}
 
 /**
  * Armazón de la aplicación del club elegido: menú lateral, cabecera con el escudo, los colores y el
@@ -22,19 +53,23 @@ import { DesplegableClubes } from './DesplegableClubes';
  * desplegable cambia la identidad. Pide el club a la API en cada entrada: es la API
  * la que decide si la persona pertenece a él y si el club está disponible.
  */
-export function DisposicionClub() {
-  const { clubId = '' } = useParams();
-  const { sesion, cerrar } = useSesion();
+function AplicacionDelClub({ clubId, deSesion }: Props) {
+  const { sesion, cerrar, recargar } = useSesion();
   const navegar = useNavigate();
   const { datos: club, error, fallo, cargando, fijar } = useCarga(clubId, () => api.get<ClubDto>(`/api/clubes/${clubId}`));
   const codigo = fallo instanceof ErrorApi ? fallo.codigo : undefined;
+  const sesionDesactualizada = codigo !== undefined && SESION_DESACTUALIZADA.includes(codigo);
 
+  // La API manda: si dice que la persona está en espera o que el club ya no es suyo (la
+  // rechazaron con la pantalla abierta), se recarga la sesión. Con ella al día, quien sigue en
+  // espera ve la sala de espera y quien ya no está en el club pasa a uno de los suyos, o a
+  // iniciar sesión si su cuenta ya no existe.
   useEffect(() => {
-    guardarUltimoClub(clubId);
-  }, [clubId]);
+    if (sesionDesactualizada) {
+      void recargar();
+    }
+  }, [sesionDesactualizada, recargar]);
 
-  // Mientras llega el club se muestra lo que ya trae la sesión, para que su nombre nunca falte.
-  const deSesion = sesion?.clubes.find((candidato) => candidato.clubId === clubId);
   const nombre = club?.nombre ?? deSesion?.nombre ?? '';
   const rol = club?.miRol ?? deSesion?.rol;
   const identidad = club?.identidad ?? deSesion?.identidad;
@@ -58,6 +93,7 @@ export function DisposicionClub() {
           <NavLink to={`/club/${clubId}`} end>
             Inicio
           </NavLink>
+          {(rol === 'PRESIDENTE' || rol === 'DIRECTIVO') && <NavLink to={`/club/${clubId}/ingresos`}>Ingresos</NavLink>}
           {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/configuracion`}>Datos del club</NavLink>}
         </nav>
         {deSesion && rol && (
@@ -78,9 +114,9 @@ export function DisposicionClub() {
         {esClubNoDisponible(codigo) ? (
           <AvisoClubNoDisponible codigo={codigo} tieneOtrosClubes={(sesion?.clubes.length ?? 0) > 1} />
         ) : (
-          error && <Aviso tono="error">{error}</Aviso>
+          error && !sesionDesactualizada && <Aviso tono="error">{error}</Aviso>
         )}
-        {!contexto && cargando && <p className="texto-suave">Cargando…</p>}
+        {!contexto && (cargando || sesionDesactualizada) && <p className="texto-suave">Cargando…</p>}
         {club?.estado === 'SUSPENDIDO' && (
           <Aviso tono="aviso">
             <strong>Club suspendido.</strong> Solo tú, como presidente, puedes entrar; los demás integrantes ven

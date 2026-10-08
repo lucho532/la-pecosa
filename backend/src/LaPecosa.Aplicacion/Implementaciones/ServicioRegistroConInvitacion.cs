@@ -5,7 +5,7 @@ using LaPecosa.Aplicacion.Servicios;
 using LaPecosa.Aplicacion.Utilidades;
 using LaPecosa.Aplicacion.Validadores;
 using LaPecosa.Dominio.Entidades;
-using LaPecosa.Dominio.Enumeraciones;
+using LaPecosa.Dominio.Reglas;
 
 namespace LaPecosa.Aplicacion.Implementaciones;
 
@@ -14,9 +14,11 @@ namespace LaPecosa.Aplicacion.Implementaciones;
 /// Su responsabilidad es comprobar que la invitación está vigente, que el correo no tiene cuenta y
 /// que el documento no se repite en el club ni pertenece a otra cuenta (una persona tiene un único
 /// inicio de sesión), y crear la cuenta y el integrante en la misma transacción en que la
-/// invitación queda usada.
+/// invitación queda usada. Quien usa una invitación de presidente entra aprobado; quien usa una
+/// del club queda como JUGADOR en la sala de espera.
 /// No acepta un correo, un club ni un rol enviados por quien se registra, y no puede crear una
-/// cuenta DESARROLLADOR. No accede al contexto de Entity Framework ni conoce HTTP.
+/// cuenta DESARROLLADOR. No decide por su cuenta el estado de ingreso: lo deriva la regla de
+/// ingreso por invitación. No accede al contexto de Entity Framework ni conoce HTTP.
 /// </summary>
 public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
 {
@@ -58,6 +60,7 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
             invitacion.Rol,
             invitacion.Correo,
             tieneCuenta,
+            ReglaIngresoPorInvitacion.PasaPorSalaDeEspera(invitacion.Rol),
             MapperIdentidadClub.AIdentidad(invitacion.Club));
     }
 
@@ -87,13 +90,16 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
                 "Ese documento ya está registrado con otra cuenta. Inicia sesión con esa cuenta para aceptar la invitación.");
         }
 
-        // El correo es siempre el de la invitación (RF-013); el club y el rol, también.
+        // El correo es siempre el de la invitación (RF-013); el club y el rol, también. Con una
+        // invitación del club el rol es JUGADOR y la persona queda en espera (RF-014).
+        var responsable = NormalizadorTexto.SinEspaciosSobrantes(datos.NombreResponsable);
         var usuario = new Usuario
         {
             Correo = invitacion.Correo,
             CorreoNormalizado = invitacion.Correo,
             ContrasenaHash = _hash.Calcular(datos.Contrasena!),
             Celular = datos.Celular!.Trim(),
+            NombreResponsable = responsable.Length == 0 ? null : responsable,
             EsDesarrollador = false,
             CreadoEn = ahora,
         };
@@ -102,7 +108,7 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
             ClubId = invitacion.ClubId,
             UsuarioId = usuario.Id,
             Rol = invitacion.Rol,
-            EstadoIngreso = EstadoIngreso.APROBADO,
+            EstadoIngreso = ReglaIngresoPorInvitacion.EstadoDeIngreso(invitacion.Rol),
             Nombres = NormalizadorTexto.SinEspaciosSobrantes(datos.Nombres),
             Apellidos = NormalizadorTexto.SinEspaciosSobrantes(datos.Apellidos),
             TipoDocumento = datos.TipoDocumento!.Value,
@@ -145,7 +151,9 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
         }
 
         var invitacion = await _invitaciones.ObtenerPorHashAsync(GeneradorTokens.Hash(token), cancelacion);
-        if (invitacion?.Club is null || !invitacion.EstaVigente(_reloj.AhoraUtc))
+        if (invitacion?.Club is null
+            || !invitacion.EstaVigente(_reloj.AhoraUtc)
+            || !ReglaIngresoPorInvitacion.ElClubPermiteUsarla(invitacion.Rol, invitacion.Club.Estado))
         {
             throw ErroresDeInvitacion.NoValida();
         }

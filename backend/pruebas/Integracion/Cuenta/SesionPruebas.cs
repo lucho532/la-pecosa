@@ -122,6 +122,31 @@ public class SesionPruebas
     }
 
     [Fact]
+    public async Task La_sesion_de_quien_esta_aprobado_en_un_club_y_en_espera_en_otro_trae_los_dos_con_su_estado_de_ingreso()
+    {
+        var aprobado = await _fabrica.Sembrador.CrearClubAsync();
+        var enEspera = await _fabrica.Sembrador.CrearClubAsync();
+        var usuario = await _fabrica.Sembrador.CrearCuentaAsync();
+        var documento = Sembrador.Unico("doc");
+        await _fabrica.Sembrador.CrearIntegranteAsync(aprobado, usuario, Rol.ENTRENADOR, documento);
+        await _fabrica.Sembrador.CrearIntegranteAsync(
+            enEspera, usuario, Rol.JUGADOR, documento, estadoIngreso: EstadoIngreso.EN_ESPERA);
+        var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(usuario);
+
+        var sesion = await ClienteDePrueba.LeerAsync<JsonElement>(await cliente.GetAsync("/api/sesion"));
+
+        var clubes = sesion.GetProperty("clubes").EnumerateArray().ToDictionary(c => c.GetProperty("clubId").GetGuid());
+        Assert.Equal(2, clubes.Count);
+        Assert.Equal("APROBADO", clubes[aprobado.Id].GetProperty("estadoIngreso").GetString());
+        Assert.Equal("EN_ESPERA", clubes[enEspera.Id].GetProperty("estadoIngreso").GetString());
+        // El club en espera trae su nombre y su identidad: con eso se pinta la sala de espera (RF-018).
+        Assert.Equal(enEspera.Nombre, clubes[enEspera.Id].GetProperty("nombre").GetString());
+        Assert.Equal(JsonValueKind.Object, clubes[enEspera.Id].GetProperty("identidad").ValueKind);
+        Assert.Equal(aprobado.Nombre, clubes[aprobado.Id].GetProperty("nombre").GetString());
+        Assert.Equal(JsonValueKind.Object, clubes[aprobado.Id].GetProperty("identidad").ValueKind);
+    }
+
+    [Fact]
     public async Task La_sesion_del_desarrollador_no_tiene_clubes()
     {
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();

@@ -15,7 +15,10 @@ interface Props<Fila> {
   vacio: ReactNode;
 }
 
-/** Tabla de datos. Si no cabe, se desplaza dentro de su caja y no la página. */
+/**
+ * Tabla de datos. En pantallas estrechas cada fila se apila como una ficha, con el título de la
+ * columna junto a cada dato; en las demás, si no cabe, se desplaza dentro de su caja y no la página.
+ */
 export function Tabla<Fila>({ descripcion, columnas, filas, clave, vacio }: Props<Fila>) {
   if (filas.length === 0) {
     return <p className="texto-suave">{vacio}</p>;
@@ -38,7 +41,9 @@ export function Tabla<Fila>({ descripcion, columnas, filas, clave, vacio }: Prop
           {filas.map((fila) => (
             <tr key={clave(fila)}>
               {columnas.map((columna) => (
-                <td key={columna.titulo}>{columna.celda(fila)}</td>
+                <td key={columna.titulo} data-titulo={columna.titulo}>
+                  {columna.celda(fila)}
+                </td>
               ))}
             </tr>
           ))}

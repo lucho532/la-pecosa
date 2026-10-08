@@ -1,4 +1,4 @@
-import type { EstadoClub, EstadoEnvio } from '../api/tipos';
+import type { EstadoClub, EstadoEnvio, EstadoInvitacion } from '../api/tipos';
 import type { Tono } from './Aviso';
 
 interface Props {
@@ -31,4 +31,16 @@ const ESTADOS_ENVIO: Record<EstadoEnvio, Props> = {
 /** Etiqueta con el resultado del envío de una invitación. */
 export function EtiquetaEstadoEnvio({ estado }: { estado: EstadoEnvio }) {
   return <EtiquetaEstado {...ESTADOS_ENVIO[estado]} />;
+}
+
+const ESTADOS_INVITACION: Record<EstadoInvitacion, Props> = {
+  PENDIENTE: { tono: 'info', texto: 'Pendiente' },
+  USADA: { tono: 'exito', texto: 'Usada' },
+  VENCIDA: { tono: 'aviso', texto: 'Vencida' },
+  CANCELADA: { tono: 'neutro', texto: 'Cancelada' },
+};
+
+/** Etiqueta con el estado de una invitación del club. */
+export function EtiquetaEstadoInvitacion({ estado }: { estado: EstadoInvitacion }) {
+  return <EtiquetaEstado {...ESTADOS_INVITACION[estado]} />;
 }

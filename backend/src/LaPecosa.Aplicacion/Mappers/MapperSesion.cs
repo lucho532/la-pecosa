@@ -30,6 +30,7 @@ public static class MapperSesion
             club.Nombre,
             integrante.Rol,
             club.Estado,
+            integrante.EstadoIngreso,
             MapperIdentidadClub.AIdentidad(club),
             integrante.Nombres,
             integrante.Apellidos);

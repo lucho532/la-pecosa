@@ -191,6 +191,33 @@ public class InvitacionesPruebas
         Assert.Equal(HttpStatusCode.Unauthorized, (await sinSesion.PostAsync(reenviar)).StatusCode);
     }
 
+    [Fact]
+    public async Task Las_invitaciones_que_envia_el_club_no_se_ven_ni_se_tocan_desde_el_panel()
+    {
+        var club = await _fabrica.Sembrador.CrearClubAsync();
+        var correo = Sembrador.CorreoUnico();
+        var (delClub, tokenDelClub) = await _fabrica.Sembrador.CrearInvitacionAsync(club, correo, rol: Rol.JUGADOR);
+        var (dePresidente, _) = await _fabrica.Sembrador.CrearInvitacionAsync(club);
+        var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
+
+        // El detalle del panel solo muestra las de presidente (RF-029).
+        var detalle = await cliente.GetAsync($"/api/plataforma/clubes/{club.Id}");
+        var unica = Assert.Single((await ClienteDePrueba.LeerAsync<JsonElement>(detalle)).GetProperty("invitaciones").EnumerateArray());
+        Assert.Equal(dePresidente.Id, unica.GetProperty("invitacionId").GetGuid());
+        Assert.DoesNotContain(correo, await detalle.Content.ReadAsStringAsync());
+
+        // El reenvío del panel no alcanza la invitación del club.
+        var reenviar = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones/{delClub.Id}/reenvio");
+        Assert.Equal(HttpStatusCode.NotFound, reenviar.StatusCode);
+        Assert.Equal("no_encontrado", await ClienteDePrueba.CodigoAsync(reenviar));
+
+        // Invitar a un presidente al mismo correo no anula la invitación del club.
+        var invitar = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones", new { correo });
+        Assert.Equal(HttpStatusCode.Created, invitar.StatusCode);
+        Assert.True(await EstaVigenteAsync(tokenDelClub));
+        Assert.True(await EstaVigenteAsync(_fabrica.Correo.UltimoToken("invitacion", correo)));
+    }
+
     private static async Task<JsonElement> DetalleAsync(ClienteDePrueba cliente, Guid clubId) =>
         await ClienteDePrueba.LeerAsync<JsonElement>(await cliente.GetAsync($"/api/plataforma/clubes/{clubId}"));
 

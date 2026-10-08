@@ -1,5 +1,6 @@
 using LaPecosa.Aplicacion.Interfaces;
 using LaPecosa.Dominio.Entidades;
+using LaPecosa.Dominio.Enumeraciones;
 using LaPecosa.Infraestructura.Datos;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,10 +9,11 @@ namespace LaPecosa.Infraestructura.Repositorios.Plataforma;
 /// <summary>
 /// Representa el acceso a las invitaciones desde el panel del DESARROLLADOR (constitución §7.1,
 /// primera excepción).
-/// Su responsabilidad es guardar, listar y anular las invitaciones de un club. Se salta el filtro
-/// de aislamiento porque el panel no tiene un club en el contexto; cada consulta va acotada al
-/// club indicado.
-/// No busca invitaciones por token ni contiene reglas de negocio.
+/// Su responsabilidad es guardar, listar y anular las invitaciones de presidente de un club. Se
+/// salta el filtro de aislamiento porque el panel no tiene un club en el contexto; cada consulta
+/// va acotada al club indicado y al rol PRESIDENTE.
+/// No busca invitaciones por token ni contiene reglas de negocio, y no ve, lista ni anula las
+/// invitaciones que envía el propio club (RF-029).
 /// </summary>
 public class RepositorioInvitacionesPlataforma : IRepositorioInvitacionesPlataforma
 {
@@ -23,9 +25,13 @@ public class RepositorioInvitacionesPlataforma : IRepositorioInvitacionesPlatafo
         _contexto = contexto;
     }
 
-    private IQueryable<Invitacion> Pendientes(Guid clubId) => _contexto.Invitaciones
+    // Solo las de presidente: las que envía el club no son del panel (RF-029).
+    private IQueryable<Invitacion> DePresidente(Guid clubId) => _contexto.Invitaciones
         .IgnoreQueryFilters()
-        .Where(invitacion => invitacion.ClubId == clubId && invitacion.UsadaEn == null && invitacion.AnuladaEn == null);
+        .Where(invitacion => invitacion.ClubId == clubId && invitacion.Rol == Rol.PRESIDENTE);
+
+    private IQueryable<Invitacion> Pendientes(Guid clubId) => DePresidente(clubId)
+        .Where(invitacion => invitacion.UsadaEn == null && invitacion.AnuladaEn == null);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Invitacion>> ListarPendientesAsync(
@@ -34,10 +40,7 @@ public class RepositorioInvitacionesPlataforma : IRepositorioInvitacionesPlatafo
 
     /// <inheritdoc />
     public Task<Invitacion?> ObtenerAsync(Guid clubId, Guid invitacionId, CancellationToken cancelacion = default) =>
-        _contexto.Invitaciones
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(
-                invitacion => invitacion.ClubId == clubId && invitacion.Id == invitacionId, cancelacion);
+        DePresidente(clubId).FirstOrDefaultAsync(invitacion => invitacion.Id == invitacionId, cancelacion);
 
     /// <inheritdoc />
     public Task AnularPendientesAsync(

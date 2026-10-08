@@ -1,11 +1,13 @@
 using LaPecosa.Aplicacion.Implementaciones;
 using LaPecosa.Aplicacion.Servicios;
+using LaPecosa.Aplicacion.Utilidades;
 
 namespace LaPecosa.Api.Configuracion;
 
 /// <summary>
 /// Representa el registro de los casos de uso de Aplicacion.
-/// Su responsabilidad es conectar cada <c>IServicio</c> con su implementación.
+/// Su responsabilidad es conectar cada <c>IServicio</c> con su implementación y registrar los
+/// colaboradores que comparten varios casos de uso.
 /// No registra infraestructura ni contiene lógica.
 /// </summary>
 public static class RegistroDeCasosDeUso
@@ -30,6 +32,12 @@ public static class RegistroDeCasosDeUso
         servicios.AddScoped<IServicioConfiguracionClub, ServicioConfiguracionClub>();
         servicios.AddScoped<IServicioRegistroConInvitacion, ServicioRegistroConInvitacion>();
         servicios.AddScoped<IServicioAceptacionInvitacion, ServicioAceptacionInvitacion>();
+
+        servicios.AddScoped<IServicioInvitacionesClub, ServicioInvitacionesClub>();
+        servicios.AddScoped<IServicioConsultaIngresos, ServicioConsultaIngresos>();
+        servicios.AddScoped<IServicioAprobacionIngreso, ServicioAprobacionIngreso>();
+        servicios.AddScoped<IServicioRechazoIngreso, ServicioRechazoIngreso>();
+        servicios.AddScoped<EliminadorDeCuentaSinClub>();
 
         return servicios;
     }

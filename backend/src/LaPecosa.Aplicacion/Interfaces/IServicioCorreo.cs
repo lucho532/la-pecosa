@@ -9,7 +9,11 @@ namespace LaPecosa.Aplicacion.Interfaces;
 /// </summary>
 public interface IServicioCorreo
 {
-    /// <summary>Envía la invitación; devuelve si se pudo enviar.</summary>
+    /// <summary>
+    /// Envía la invitación; devuelve si se pudo enviar. Con el rol PRESIDENTE el correo nombra ese
+    /// rol; con cualquier otro es una invitación del club y el correo no nombra ningún rol, porque
+    /// se decide al aprobar el ingreso (RF-003).
+    /// </summary>
     Task<bool> EnviarInvitacionAsync(
         string correo, string nombreClub, Rol rol, string token, CancellationToken cancelacion = default);
 

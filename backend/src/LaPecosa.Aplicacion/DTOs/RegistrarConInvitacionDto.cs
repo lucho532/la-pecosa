@@ -4,7 +4,8 @@ namespace LaPecosa.Aplicacion.DTOs;
 
 /// <summary>
 /// Representa los datos del registro con una invitación (constitución §12.1).
-/// Su responsabilidad es llevar la identidad de la persona y la contraseña que ella misma crea.
+/// Su responsabilidad es llevar la identidad de la persona, sus datos de contacto y la contraseña
+/// que ella misma crea.
 /// No lleva correo, club ni rol: los tres salen siempre de la invitación.
 /// </summary>
 /// <param name="Token">Token del enlace de invitación.</param>
@@ -14,6 +15,10 @@ namespace LaPecosa.Aplicacion.DTOs;
 /// <param name="NumeroDocumento">Número de documento, hasta 20 caracteres.</param>
 /// <param name="FechaNacimiento">Fecha de nacimiento; no puede ser futura.</param>
 /// <param name="Celular">Celular de contacto, hasta 20 caracteres.</param>
+/// <param name="NombreResponsable">
+/// Nombre del padre, madre o responsable, hasta 160 caracteres. Obligatorio si la persona es menor
+/// de 18 años el día del registro; opcional para un adulto.
+/// </param>
 /// <param name="Contrasena">Contraseña, de 8 a 128 caracteres.</param>
 public record RegistrarConInvitacionDto(
     string? Token,
@@ -23,4 +28,5 @@ public record RegistrarConInvitacionDto(
     string? NumeroDocumento,
     DateOnly? FechaNacimiento,
     string? Celular,
+    string? NombreResponsable,
     string? Contrasena);

@@ -33,10 +33,17 @@ public static partial class EndpointsDeLaApi
         .ToList();
 
     /// <summary>
-    /// Los endpoints de <c>contracts/api.yaml</c>, con la indicación de si el contrato los marca
-    /// como anónimos (<c>security: []</c>).
+    /// Los endpoints de los contratos de todas las specs (<c>specs/*/contracts/api.yaml</c>), sin
+    /// repetir los que una spec posterior vuelve a describir, con la indicación de si algún
+    /// contrato los marca como anónimos (<c>security: []</c>).
     /// </summary>
-    public static List<(Endpoint Endpoint, bool Anonimo)> DelContrato()
+    public static List<(Endpoint Endpoint, bool Anonimo)> DelContrato() => RutasDeLosContratos()
+        .SelectMany(DeUnContrato)
+        .GroupBy(par => par.Endpoint)
+        .Select(grupo => (grupo.Key, grupo.Any(par => par.Anonimo)))
+        .ToList();
+
+    private static List<(Endpoint Endpoint, bool Anonimo)> DeUnContrato(string rutaDelContrato)
     {
         var resultado = new List<(Endpoint, bool)>();
         string? ruta = null;
@@ -54,7 +61,7 @@ public static partial class EndpointsDeLaApi
             anonimo = false;
         }
 
-        foreach (var linea in File.ReadLines(RutaDelContrato()))
+        foreach (var linea in File.ReadLines(rutaDelContrato))
         {
             if (linea.StartsWith("components:", StringComparison.Ordinal))
             {
@@ -81,7 +88,7 @@ public static partial class EndpointsDeLaApi
         return resultado;
     }
 
-    private static string RutaDelContrato()
+    private static List<string> RutasDeLosContratos()
     {
         var carpeta = new DirectoryInfo(AppContext.BaseDirectory);
         while (carpeta is not null && !Directory.Exists(Path.Combine(carpeta.FullName, "specs")))
@@ -89,9 +96,14 @@ public static partial class EndpointsDeLaApi
             carpeta = carpeta.Parent;
         }
 
-        return Path.Combine(
-            carpeta?.FullName ?? throw new InvalidOperationException("No se encontró la carpeta specs."),
-            "specs", "001-base-multiclub", "contracts", "api.yaml");
+        var specs = Path.Combine(
+            carpeta?.FullName ?? throw new InvalidOperationException("No se encontró la carpeta specs."), "specs");
+
+        return Directory.EnumerateDirectories(specs)
+            .Select(spec => Path.Combine(spec, "contracts", "api.yaml"))
+            .Where(File.Exists)
+            .Order(StringComparer.Ordinal)
+            .ToList();
     }
 
     [GeneratedRegex(@"\{(\w+)(:\w+)?\}")]

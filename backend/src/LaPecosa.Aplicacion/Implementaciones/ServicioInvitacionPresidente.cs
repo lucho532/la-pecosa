@@ -48,9 +48,7 @@ public class ServicioInvitacionPresidente : IServicioInvitacionPresidente
         var desarrollador = await _usuarios.ObtenerDesarrolladorAsync(cancelacion);
         if (desarrollador?.CorreoNormalizado == correoNormalizado)
         {
-            throw ExcepcionDeAplicacion.Conflicto(
-                "correo_del_desarrollador",
-                "Ese correo es el de la administración de la plataforma y no puede pertenecer a ningún club.");
+            throw ErroresDeInvitacion.CorreoDelDesarrollador();
         }
     }
 
@@ -59,21 +57,11 @@ public class ServicioInvitacionPresidente : IServicioInvitacionPresidente
         Club club, string correoNormalizado, Guid creadaPorUsuarioId, CancellationToken cancelacion = default)
     {
         var ahora = _reloj.AhoraUtc;
-        var (token, hash) = GeneradorTokens.Nuevo();
 
         await _invitaciones.AnularPendientesAsync(club.Id, correoNormalizado, ahora, cancelacion);
 
-        var invitacion = new Invitacion
-        {
-            ClubId = club.Id,
-            Rol = Rol.PRESIDENTE,
-            Correo = correoNormalizado,
-            TokenHash = hash,
-            EstadoEnvio = EstadoEnvio.PENDIENTE,
-            CreadaPorUsuarioId = creadaPorUsuarioId,
-            CreadaEn = ahora,
-            VenceEn = ahora.AddDays(Invitacion.DiasDeVigencia),
-        };
+        var (invitacion, token) = ConstructorInvitaciones.Nueva(
+            club.Id, Rol.PRESIDENTE, correoNormalizado, creadaPorUsuarioId, ahora);
         _invitaciones.Agregar(invitacion);
 
         return (invitacion, token);

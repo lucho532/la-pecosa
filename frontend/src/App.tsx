@@ -13,6 +13,7 @@ import { DisposicionPlataforma } from './plataforma/DisposicionPlataforma';
 import { ListaClubes } from './plataforma/ListaClubes';
 import { ConfiguracionClub } from './privado/ConfiguracionClub';
 import { DisposicionClub } from './privado/DisposicionClub';
+import { Ingresos } from './privado/ingresos/Ingresos';
 import { InicioClub } from './privado/InicioClub';
 
 /** Rutas de la aplicación: las de la tabla "Pantallas" del plan. */
@@ -43,6 +44,7 @@ export function App() {
               <Route path="/club/:clubId" element={<DisposicionClub />}>
                 <Route index element={<InicioClub />} />
                 <Route path="configuracion" element={<ConfiguracionClub />} />
+                <Route path="ingresos" element={<Ingresos />} />
               </Route>
             </Route>
 
