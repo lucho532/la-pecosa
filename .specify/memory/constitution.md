@@ -120,6 +120,46 @@ de la spec 002:
 - §28: se cierran tres decisiones
 - Principios modificados: ninguno renombrado. Secciones añadidas o eliminadas: ninguna
 - Pendientes: ninguno nuevo; siguen abiertas las siete decisiones restantes de la §28
+
+Enmienda 3.7.0 → 3.8.0 (2026-10-08), decidida por el propietario del proyecto en las aclaraciones
+de la spec 003:
+- §2.2 y §11.3 (nueva): una categoría puede dividirse en equipos; un jugador puede estar en varios
+- §11: una categoría corresponde a un único año de nacimiento
+- §12.1.1: si no existe la categoría del año, el jugador aprobado queda sin categoría hasta que se
+  crea
+- §8 y §12.3: un PRESIDENTE o un DIRECTIVO puede quedar asignado como entrenador de una categoría
+  sin cambiar de rol
+- §7.5 y §8: el entrenador ve toda su categoría, de cualquier equipo; la familia ve el nombre de
+  los entrenadores de su jugador
+- §8 y §14.1 (nueva): el PRESIDENTE retira del club a un jugador y lo reincorpora
+- §14: borrar una categoría o un equipo que nunca se usó es una eliminación física justificada
+- §20: pruebas nuevas
+- Principios modificados: ninguno renombrado. Secciones añadidas: §11.3 y §14.1. Secciones
+  eliminadas: ninguna
+- Pendientes: ninguno nuevo; siguen abiertas las siete decisiones de la §28
+
+Enmienda 3.8.0 → 4.0.0 (2026-10-08), decidida por el propietario del proyecto. Cambio mayor: se
+elimina la sala de espera para quien se registra con una invitación y el rol pasa a venir en la
+invitación.
+- §8, §12.1 y §12.2: la invitación del club indica el rol; el PRESIDENTE invita JUGADOR,
+  ENTRENADOR o DIRECTIVO y el DIRECTIVO solo JUGADOR o ENTRENADOR; quien se registra entra directo
+  con ese rol
+- §8 y §12.2: el DIRECTIVO ya no asigna el rol ENTRENADOR tras aprobar un ingreso; cambiar el rol
+  de alguien ya registrado es exclusivo del PRESIDENTE
+- §12.1 y §12.1.1: la sala de espera, la aprobación y el rechazo quedan solo para el hermano
+  agregado desde la ficha (§12.1.2); la regla de ubicación en la categoría del año pasa a la §12.1
+- §12.3: una cuenta puede tener varios jugadores (se quita "uno a uno"); solo tiene ficha de
+  Jugador quien entra como JUGADOR
+- §1 y §2.2: el DESARROLLADOR no crea usuarios, invita al PRESIDENTE
+- §8, §16.1, §16.7 y §28: no existen becas ni descuentos generales; el PRESIDENTE puede modificar
+  el valor de la mensualidad de jugadores concretos
+- §14 y §14.1: referencias ajustadas
+- §20: pruebas ajustadas y nuevas
+- §28: se cierra la parte de descuentos y becas; queda pendiente solo la matrícula
+- Principios modificados: ninguno renombrado. Secciones añadidas o eliminadas: ninguna
+- Pendientes: siguen abiertas las siete decisiones de la §28. El código de la spec 002 (sala de
+  espera, aprobación y rechazo de ingresos) y el de invitaciones quedan por adaptar en una spec
+  nueva
 -->
 
 # Constitución del Proyecto — La Pecosa, plataforma multiclub de escuelas de fútbol
@@ -147,7 +187,7 @@ en la Cancha de Minitas. Atiende jugadores desde los 6 años; su categoría mayo
 La plataforma tiene tres partes:
 
 - Panel de administración de la plataforma, exclusivo del DESARROLLADOR, desde donde se crean los
-  clubes, se configura su escudo y sus colores y se crean sus usuarios.
+  clubes, se configura su escudo y sus colores y se invita a su PRESIDENTE.
 - Sitio público de cada club, sin inicio de sesión, para visitantes.
 - Zona privada, con roles, para el presidente, directivos, entrenadores y jugadores. La cuenta del jugador es
   la que usa su familia.
@@ -236,9 +276,10 @@ Se utilizará siempre el mismo término para cada concepto:
 | Entrenador | profesor a cargo de una o varias categorías |
 | Presidente | presidente y dueño del club |
 | Club | escuela o equipo que usa la plataforma; todos sus datos le pertenecen solo a él |
-| Desarrollador | dueño de la plataforma; crea los clubes y sus usuarios desde su panel |
+| Desarrollador | dueño de la plataforma; crea los clubes e invita a su PRESIDENTE desde su panel |
 | Directivo | miembro de la directiva del club |
-| Categoria | grupo de jugadores definido por año de nacimiento |
+| Categoria | grupo de jugadores definido por un único año de nacimiento |
+| Equipo | división de una categoría, con nombre propio (A, B, Élite) |
 | Mensualidad | cobro mensual por la formación de un jugador |
 | Cargo | valor que un jugador debe (mensualidad, arbitraje, otro) |
 | Pago | dinero recibido y aplicado a uno o varios cargos |
@@ -524,7 +565,8 @@ expresa.
 
 Dentro de un club, el aislamiento es entre personas y categorías:
 
-- Un entrenador solamente accede a las categorías que tiene asignadas.
+- Un entrenador solamente accede a las categorías que tiene asignadas. Dentro de ellas ve a todos
+  los jugadores, de cualquier equipo (ver §11.3).
 - Una cuenta de jugador solamente accede a la información de su propio jugador. Cada familia ve
   únicamente lo de su hijo.
 
@@ -552,15 +594,17 @@ ENTRENADOR
 JUGADOR
 ```
 
-JUGADOR es el rol por defecto de toda cuenta que se registra por sí misma. Esa cuenta no tiene
-acceso a nada hasta que su ingreso es aprobado (ver §12). Quien se registra con una invitación del
-DESARROLLADOR entra directamente con el rol de esa invitación (ver §12.5).
+Toda cuenta entra al club con el rol que indica su invitación, sin sala de espera (ver §12.1 y
+§12.5). La única aprobación que existe es la del hermano agregado desde la ficha (ver §12.1.2).
 
 Dentro de un club, un integrante tiene un único rol. Una persona que pertenece a varios clubes
-tiene un rol en cada uno, y pueden ser distintos. Toda cuenta entra como JUGADOR; cuando se le asigna el rol que le
-corresponde (ENTRENADOR o DIRECTIVO), ese rol reemplaza al anterior y pasa a ser su único rol. Un
+tiene un rol en cada uno, y pueden ser distintos. Si el PRESIDENTE le cambia el rol a alguien ya
+registrado (ver §12.2), el rol nuevo reemplaza al anterior y pasa a ser su único rol. Un
 entrenador que además tiene un hijo en el club usa dos cuentas:
 la suya, con su documento, como ENTRENADOR, y la del niño, con el documento del niño, como JUGADOR.
+
+Un PRESIDENTE o un DIRECTIVO que además entrena no cambia de rol ni recibe un segundo rol: queda
+asignado a la categoría y conserva su único rol (ver "Entrenador" y §12.3).
 
 ### Desarrollador
 
@@ -596,18 +640,21 @@ Puede:
 - Gestionar la configuración del club y el contenido del sitio público.
 - Gestionar categorías, entrenadores y jugadores.
 - Asignar entrenadores a categorías.
-- Definir el valor de la mensualidad, descuentos y becas.
+- Crear equipos dentro de una categoría y decidir en qué equipos juega cada jugador (ver §11.3).
+- Retirar del club a un jugador que se fue y reincorporarlo (ver §14.1).
+- Definir el valor de la mensualidad del club y modificar el de jugadores concretos (ver §16.7).
 - Consultar las finanzas completas del club.
 - Registrar, anular y corregir pagos.
 - Gestionar torneos, partidos, arbitrajes y comunicados.
-- Enviar invitaciones de registro a su club (ver §12.1).
-- Aprobar o rechazar el ingreso de las cuentas que están en espera.
+- Enviar invitaciones de registro a su club con el rol JUGADOR, ENTRENADOR o DIRECTIVO (ver
+  §12.1).
+- Aprobar o rechazar a los jugadores agregados desde la ficha de un hermano (ver §12.1.2).
 - Buscar usuarios registrados por su documento de identidad y asignarles o retirarles los roles
   ENTRENADOR o DIRECTIVO.
 
-La asignación de roles es del PRESIDENTE, con una única excepción: un DIRECTIVO puede asignar el
-rol ENTRENADOR a una cuenta cuyo ingreso acaba de aprobar (ver §12.2). Fuera de esa excepción,
-ningún otro rol puede asignar, cambiar ni retirar roles, ni siquiera el suyo propio.
+Cambiar el rol de alguien ya registrado es exclusivo del PRESIDENTE (ver §12.2). Un DIRECTIVO solo
+decide un rol al invitar, y solo entre JUGADOR y ENTRENADOR (ver §12.1). Ningún otro rol puede
+asignar, cambiar ni retirar roles, ni siquiera el suyo propio.
 
 El rol PRESIDENTE solamente lo otorgan el DESARROLLADOR, desde su panel de administración, u otro
 PRESIDENTE del mismo club (ver §12.5). Un club puede tener varios presidentes.
@@ -619,29 +666,42 @@ PRESIDENTE en ese club.
 
 ### Directivo
 
-Es un miembro de la directiva del club. El rol lo asigna el PRESIDENTE.
+Es un miembro de la directiva del club. El rol lo da el PRESIDENTE, al invitarlo o al asignárselo
+después.
 
 Puede:
 
 - Consultar las finanzas del club: recaudo, quién debe y quién está al día.
 - Consultar la documentación de cada jugador.
 - Consultar la seguridad social de cada jugador: su entidad de salud y dónde lo atienden.
-- Enviar invitaciones de registro a su club (ver §12.1).
-- Aprobar o rechazar el ingreso de cualquier cuenta que está en espera.
-- Asignar el rol ENTRENADOR a una cuenta cuyo ingreso acaba de aprobar.
+- Consultar las categorías del club, con sus equipos, sus entrenadores y sus jugadores, y la lista
+  de jugadores retirados.
+- Enviar invitaciones de registro a su club con el rol JUGADOR o ENTRENADOR (ver §12.1).
+- Aprobar o rechazar a los jugadores agregados desde la ficha de un hermano (ver §12.1.2).
 
 Su acceso a finanzas y fichas es de consulta. No puede registrar ni anular pagos, modificar el
-valor de la mensualidad, asignar el rol DIRECTIVO, retirar roles ni buscar usuarios por documento.
+valor de la mensualidad del club ni la de un jugador, invitar con el rol DIRECTIVO, asignar ni
+retirar roles, ni buscar usuarios por documento.
+Tampoco puede gestionar categorías ni equipos, asignar entrenadores, cambiar a un jugador de
+categoría o de equipo, ni retirar o reincorporar jugadores.
 
 ### Entrenador
 
-El rol lo asigna el PRESIDENTE.
+El rol llega con la invitación del PRESIDENTE o de un DIRECTIVO, o lo asigna después el
+PRESIDENTE.
 
 Está asignado a una o varias categorías mediante:
 
 ```text
 AsignacionEntrenadorCategoria
 ```
+
+También puede quedar asignado a una categoría un PRESIDENTE o un DIRECTIVO que además entrena.
+Conserva su rol como único rol en el club, con el mismo alcance: la asignación ni le da ni le
+quita nada, solo lo muestra como entrenador de esa categoría. Lo que un DIRECTIVO asignado pueda
+hacer como entrenador se decidirá con las funcionalidades de entrenamientos y convocatorias.
+
+Cuando la categoría tiene equipos, la asignación indica cuáles dirige (ver §11.3).
 
 Dentro de sus categorías puede:
 
@@ -658,8 +718,9 @@ Dentro de sus categorías puede:
 Además dispone de un apartado de finanzas generales del club, de solo lectura: recaudo del mes,
 cartera pendiente y totales por categoría.
 
-No puede modificar el valor de la mensualidad, definir descuentos o becas, anular o corregir
-pagos, ni gestionar jugadores de categorías que no tenga asignadas.
+No puede modificar el valor de la mensualidad del club ni la de un jugador, anular o corregir
+pagos, ni gestionar jugadores de categorías que no tenga asignadas. Tampoco decide en qué equipo
+juega cada jugador: eso es del PRESIDENTE (ver §11.3).
 
 ### Jugador
 
@@ -677,6 +738,8 @@ momento se ve la información de un único jugador.
 Puede, únicamente sobre su propio jugador:
 
 - Consultar la ficha, el calendario, las convocatorias, las estadísticas y las evaluaciones.
+- Consultar su categoría, los equipos en los que está y quiénes son los entrenadores de su
+  categoría. De un entrenador solamente ve el nombre y los apellidos.
 - Consultar el estado de cuenta y los recibos.
 - Pagar mensualidades y arbitrajes.
 - Confirmar asistencia a entrenamientos y partidos.
@@ -741,6 +804,12 @@ Las relaciones entre entidades utilizarán IDs internos.
 Las categorías se definen por año de nacimiento: cada año es una categoría (2012, 2013, 2014,
 2015, etc.). Actualmente el club cubre de la 2012 a la 2020.
 
+Una categoría corresponde a un único año de nacimiento; no cubre varios. Cuando dos años trabajan
+juntos son dos categorías, que pueden tener los mismos entrenadores (ver §11.1).
+
+Las categorías las crea el PRESIDENTE de cada club. En un club no hay dos categorías del mismo
+año.
+
 ### 11.1. Actividades conjuntas
 
 En ocasiones varias categorías se juntan para un entrenamiento, un partido o una convocatoria.
@@ -772,6 +841,24 @@ Al cambiar de categoría:
 
 No se implementará inicialmente una entidad independiente de historial de categorías del jugador.
 
+El PRESIDENTE puede ubicar a un jugador en una categoría que no es la de su año de nacimiento.
+
+### 11.3. Equipos de una categoría
+
+Una categoría puede dividirse en equipos (A y B, élite y B). Es opcional: una categoría sin
+equipos funciona igual.
+
+- Cada equipo tiene un nombre, único dentro de su categoría, y pertenece a una sola categoría.
+- Los equipos los crea, renombra y desactiva el PRESIDENTE.
+- Un jugador puede estar en varios equipos de su categoría a la vez, o en ninguno. Nunca está en
+  un equipo de otra categoría, y al cambiar de categoría sale de los equipos de la anterior.
+- Solo el PRESIDENTE decide en qué equipos juega cada jugador.
+- El entrenador se asigna a la categoría, no al equipo. La asignación indica qué equipos dirige,
+  pero ve a todos los jugadores de la categoría: el aislamiento sigue siendo por categoría (ver
+  §7.5).
+
+No se guarda historial de los equipos por los que pasó un jugador.
+
 ## 12. Usuario, registro y roles
 
 La entidad Usuario representa la cuenta de acceso.
@@ -790,7 +877,22 @@ club, y nadie más. La invitación de un PRESIDENTE la envía el DESARROLLADOR (
 Toda invitación sirve una sola vez, caduca y queda ligada al club y al correo al que se envió: la
 persona no puede registrarse con otro correo.
 
-Quien se registra con una invitación del club pasa siempre por la sala de espera (ver §12.1.1).
+Toda invitación del club indica el rol con el que entra la persona:
+
+- El PRESIDENTE invita con el rol JUGADOR, ENTRENADOR o DIRECTIVO.
+- Un DIRECTIVO invita con el rol JUGADOR o ENTRENADOR.
+
+Quien se registra con una invitación entra directamente al club con ese rol. No existe sala de
+espera para quien fue invitado: si está dentro de la aplicación es porque alguien del club lo
+invitó.
+
+Quien entra como JUGADOR recibe al registrarse la categoría que corresponde a su año de nacimiento
+y empieza a generarse su mensualidad. Si el club todavía no tiene activa la categoría de ese año,
+el jugador queda sin categoría. Cuando el PRESIDENTE crea o reactiva la categoría de ese año, los
+jugadores sin categoría nacidos ese año entran en ella automáticamente. Esta ubicación automática
+nunca mueve a un jugador que ya tiene categoría. No se asigna ningún equipo automáticamente.
+
+Quien entra como ENTRENADOR o DIRECTIVO no recibe ficha de Jugador, categoría ni mensualidad.
 
 - La cuenta de un jugador se registra con el documento del jugador (el niño), no con el de su
   familia.
@@ -823,15 +925,17 @@ El jugador agregado:
 - Tiene sus propios datos de jugador, que los padres completan: nombre, apellidos, tipo y número
   de documento, fecha de nacimiento y el resto de su ficha.
 - Es un jugador independiente, con su propia ficha, categoría, cargos y pagos.
-- Pasa por la sala de espera como cualquier ingreso nuevo: no tiene categoría ni genera
-  mensualidad hasta que el club lo aprueba (ver §12.1.1).
-
-Toda cuenta que se registra por sí misma recibe el rol JUGADOR y queda en espera.
+- Pasa por la sala de espera, porque nadie del club lo invitó: no tiene categoría ni genera
+  mensualidad hasta que el club lo aprueba (ver §12.1.1). Es el único ingreso que necesita
+  aprobación.
 
 #### 12.1.1. Sala de espera
 
-Una cuenta en espera solamente ve una pantalla que le indica que su ingreso está pendiente de
-aprobación.
+La sala de espera existe solamente para el jugador agregado desde la ficha de un hermano (ver
+§12.1.2). Quien se registra con una invitación no pasa por ella (ver §12.1).
+
+Mientras ese jugador está en espera, quien lo elige solamente ve una pantalla que le indica que su
+ingreso está pendiente de aprobación. Los demás jugadores de la cuenta siguen con normalidad.
 
 Mientras está en espera:
 
@@ -842,19 +946,19 @@ Mientras está en espera:
 
 El ingreso lo aprueba el PRESIDENTE o un DIRECTIVO.
 
-Al aprobarse el ingreso de un jugador, se le asigna la categoría que corresponde a su año de
-nacimiento y empieza a generarse su mensualidad.
+Al aprobarse su ingreso, el jugador se ubica igual que quien entra con una invitación de JUGADOR:
+recibe la categoría de su año de nacimiento, o queda sin categoría si no existe, y empieza a
+generarse su mensualidad (ver §12.1).
 
-El PRESIDENTE o un DIRECTIVO también pueden rechazar un ingreso en espera. Rechazar borra a esa
-persona del club, sin dejar datos suyos en él:
+El PRESIDENTE o un DIRECTIVO también pueden rechazarlo. Rechazar borra a ese jugador del club, sin
+dejar datos suyos en él. La cuenta y sus demás jugadores quedan intactos.
 
-- Si pertenece a otros clubes, los conserva intactos.
-- Si ese era su único club, su cuenta se elimina.
-- Solo puede volver a registrarse en ese club si recibe una invitación nueva.
+Solo se rechaza a quien está en espera; a un jugador ya aprobado no se le rechaza: se le retira
+(ver §14.1).
 
-Solo se rechaza a quien está en espera; a un integrante ya aprobado no se le rechaza.
+Quien entra con una invitación queda APROBADO desde su registro.
 
-El estado de ingreso de una cuenta es:
+El estado de ingreso de un integrante es:
 
 ```text
 EN_ESPERA
@@ -865,20 +969,21 @@ El rechazo no es un estado: no queda registro del ingreso rechazado.
 
 ### 12.2. Asignación de roles
 
-El PRESIDENTE busca a un usuario ya registrado por su documento de identidad y decide:
+Cada persona entra al club con el rol de su invitación (ver §12.1). Después, el PRESIDENTE puede
+cambiarlo: busca a un usuario ya registrado por su documento de identidad y decide:
 
 - Asignarle el rol ENTRENADOR.
 - Asignarle el rol DIRECTIVO.
-- Dejarlo como está, es decir, como JUGADOR.
+- Dejarlo como está.
 
-El rol asignado reemplaza al rol JUGADOR con el que entró la cuenta y pasa a ser su único rol.
+El rol asignado reemplaza al que tenía y pasa a ser su único rol.
 
 Cuando una cuenta nueva pasa de JUGADOR a ENTRENADOR o DIRECTIVO, la ficha de Jugador que se creó
 con su registro desaparece: se elimina. Es una eliminación física justificada (ver §14), porque
 esa ficha nunca correspondió a un jugador real.
 
-Un DIRECTIVO, después de aprobar un ingreso, puede asignar a esa cuenta el rol ENTRENADOR. No
-puede asignar el rol DIRECTIVO ni retirar roles.
+Un DIRECTIVO no asigna, cambia ni retira roles: solo elige entre JUGADOR y ENTRENADOR al invitar
+(ver §12.1).
 
 Un rol solamente puede asignarse a un usuario que ya se registró. No se asignan roles a documentos
 que aún no tienen cuenta.
@@ -904,12 +1009,14 @@ El alcance de cada rol se resuelve exclusivamente así:
 - PRESIDENTE: todo su club.
 - DIRECTIVO: consulta de todo su club, con los límites definidos en §8.
 - ENTRENADOR: mediante AsignacionEntrenadorCategoria. No se crea un UsuarioRol ENTRENADOR por cada
-  categoría.
-- JUGADOR: mediante Jugador.UsuarioId. La relación es uno a uno: una cuenta corresponde a un único
-  jugador. Los hermanos tienen registros separados, aunque su acudiente entre con un mismo correo
-  (ver §12.4).
+  categoría. Un PRESIDENTE o un DIRECTIVO también puede tener una AsignacionEntrenadorCategoria;
+  su alcance sigue siendo el de su rol.
+- JUGADOR: mediante Jugador.UsuarioId. Una cuenta puede tener varios jugadores (ver §12.1.2 y
+  §12.4). Cada jugador pertenece a una única cuenta y tiene su propio registro, y la cuenta
+  solamente accede a los suyos.
 
-La ficha de Jugador se crea a partir del registro de la cuenta.
+La ficha de Jugador se crea al registrarse con una invitación de JUGADOR o al agregar un hermano
+(ver §12.1.2). Quien entra como ENTRENADOR o DIRECTIVO no tiene ficha de Jugador.
 
 ### 12.4. Inicio de sesión y contraseñas
 
@@ -1024,13 +1131,41 @@ Esto aplica, entre otras, a:
 - Torneos.
 - Sedes o canchas.
 - Asignaciones entre entrenador y categoría.
+- Equipos de una categoría.
 
-Un jugador retirado se desactiva; su historial deportivo y financiero se conserva.
+Un jugador retirado se desactiva; su historial deportivo y financiero se conserva (ver §14.1).
+
+Una categoría no se desactiva mientras tenga jugadores: antes hay que pasarlos a otra o retirarlos.
+Al desactivarla, sus entrenadores dejan de estar asignados a ella.
 
 La eliminación física deberá justificarse explícitamente.
 
-El rechazo de un ingreso en espera (ver §12.1.1) es una eliminación física justificada: esa
-persona nunca llegó a entrar al club y no tiene historial en él.
+El rechazo de un jugador en espera (ver §12.1.1) es una eliminación física justificada: ese
+jugador nunca llegó a entrar al club y no tiene historial en él.
+
+Borrar una categoría o un equipo que nunca ha tenido jugadores ni entrenadores también es una
+eliminación física justificada: se creó por error y no tiene historial. Si alguna vez los tuvo,
+solo se desactiva.
+
+### 14.1. Retiro de un jugador
+
+Cuando un jugador se va del club, el PRESIDENTE lo retira. Nadie más puede hacerlo, y solo se
+retira a un jugador aprobado.
+
+El jugador retirado:
+
+- Sale de su categoría y de sus equipos y deja de aparecer en las listas de jugadores.
+- No accede a ninguna información de ese club: al entrar solo ve un aviso de que ya no está en él.
+  En sus otros clubes sigue con normalidad.
+- Conserva todos sus datos y su historial. Su correo y su documento siguen ocupados en ese club.
+- No genera mensualidad (ver §16.7).
+
+El PRESIDENTE puede reincorporarlo: vuelve a entrar con su misma cuenta y se le ubica como a un
+jugador que acaba de entrar (ver §12.1). No recupera los equipos que tenía.
+
+El PRESIDENTE y los DIRECTIVOS ven la lista de jugadores retirados de su club.
+
+El retiro no es un estado de ingreso (ver §12.1.1): se expresa con Activo.
 
 ## 15. Reglas de negocio en backend
 
@@ -1074,7 +1209,8 @@ El estado de cuenta ("al día", "pago parcial", "debe") se deriva de ese cálcul
 
 Se permiten abonos parciales.
 
-Los descuentos y becas se aplican al generar el cargo y quedan registrados en él con su motivo.
+No existen becas ni descuentos generales. La única diferencia de valor entre jugadores es la
+mensualidad que el PRESIDENTE le modifica a un jugador concreto (ver §16.7).
 
 ### 16.2. Dinero
 
@@ -1131,6 +1267,11 @@ puede actualizar; no debe quedar escrito de forma fija en el código.
 
 Un cambio de valor aplica a los cargos que se generen después del cambio. Los cargos ya generados
 conservan su valor (ver §13).
+
+Todos los jugadores de un club pagan el mismo valor. La única excepción la decide el PRESIDENTE:
+puede seleccionar a uno o a varios jugadores y modificar el valor de la mensualidad de cada uno.
+Nadie más puede hacerlo. Los cargos de ese jugador se generan con su valor propio en lugar del
+valor del club y, como con este, el cambio no altera los cargos ya generados.
 
 Cada mes se genera un cargo de tipo MENSUALIDAD por cada jugador activo.
 
@@ -1253,8 +1394,11 @@ Las pruebas deben validar principalmente:
 - Autorización por rol.
 - Que solamente el PRESIDENTE puede buscar usuarios por documento, asignar el rol DIRECTIVO y
   retirar roles.
-- Que un DIRECTIVO solamente puede asignar el rol ENTRENADOR, y solo a una cuenta cuyo ingreso
-  aprobó.
+- Que un DIRECTIVO solamente puede invitar con el rol JUGADOR o ENTRENADOR y no asigna, cambia ni
+  retira roles.
+- Que quien entra como ENTRENADOR o DIRECTIVO no tiene ficha de Jugador, categoría ni mensualidad.
+- Que solamente el PRESIDENTE modifica el valor de la mensualidad de un jugador, y que el cambio
+  no altera los cargos ya generados.
 - Que un integrante nunca tiene más de un rol dentro de un mismo club.
 - Que una persona de varios clubes solo puede elegir entre sus clubes y solo ve los datos del
   club elegido.
@@ -1276,14 +1420,29 @@ Las pruebas deben validar principalmente:
 - Que el DESARROLLADOR no accede a fichas, datos médicos, finanzas ni pagos de ningún club.
 - Que la ficha de Jugador se elimina cuando la cuenta pasa a ENTRENADOR o DIRECTIVO.
 - Recuperación de contraseña.
-- Que una cuenta en espera no accede a ninguna información del club ni genera mensualidad.
-- Que solamente el PRESIDENTE o un DIRECTIVO pueden aprobar o rechazar un ingreso.
+- Que un jugador en espera no accede a ninguna información del club ni genera mensualidad.
+- Que solamente el PRESIDENTE o un DIRECTIVO pueden aprobar o rechazar a un jugador agregado desde
+  la ficha de un hermano.
 - Que solamente el PRESIDENTE o un DIRECTIVO pueden enviar invitaciones de registro a su club.
 - Que una invitación no sirve dos veces, no sirve vencida y no admite otro correo.
-- Que quien se registra con una invitación del club queda en espera.
-- Que rechazar un ingreso borra a la persona de ese club, no afecta a sus otros clubes y le
-  permite volver solo con una invitación nueva.
+- Que quien se registra con una invitación del club entra directamente con el rol de la
+  invitación, sin sala de espera.
+- Que el jugador agregado desde la ficha de un hermano queda en espera hasta que el club lo
+  aprueba.
+- Que rechazar a un jugador en espera borra solo a ese jugador y no afecta a la cuenta ni a sus
+  demás jugadores.
 - Aislamiento entre categorías y entre cuentas de jugador.
+- Que solamente el PRESIDENTE crea, desactiva, reactiva y borra categorías y equipos, asigna
+  entrenadores, cambia a un jugador de categoría o de equipo y retira o reincorpora jugadores.
+- Que un jugador que entra al club queda en la categoría de su año, o sin categoría si no existe,
+  y que entra en ella al crearse.
+- Que un jugador nunca está en dos categorías ni en un equipo de otra categoría.
+- Que un PRESIDENTE o un DIRECTIVO asignado como entrenador conserva su único rol y su alcance.
+- Que un entrenador no accede a una categoría que no tiene asignada y sí ve todos los equipos de
+  las suyas.
+- Que una cuenta de jugador solo ve su categoría, sus equipos y el nombre de sus entrenadores.
+- Que solo se borra una categoría o un equipo que nunca tuvo jugadores ni entrenadores.
+- Que un jugador retirado no accede a ninguna información del club y conserva todos sus datos.
 - Que una cuenta no convocada no puede ver ni consultar un partido próximo, y que sí ve todos los
   entrenamientos de su categoría.
 - Que los endpoints públicos no exponen documento, contacto, datos médicos ni pagos.
@@ -1438,8 +1597,7 @@ implementación.
   del club.
 - **Sitio público de un club suspendido.** Si el sitio público de un club suspendido o dado de
   baja sigue visible.
-- **Matrícula, descuentos y becas.** Si existe un cobro de inscripción y si hay descuentos (por
-  ejemplo, por hermanos) o becas.
+- **Matrícula.** Si existe un cobro de inscripción.
 - **Fuente automática de posiciones.** Todavía no se conoce ningún enlace o servicio de las ligas
   del que se puedan leer las tablas. Mientras no exista, se mantienen manuales (ver §17.1).
 - **Recordatorios de pago.** Quedan fuera de esta versión (ver §16.8). Si más adelante se quieren,
@@ -1466,4 +1624,4 @@ Escalabilidad
 La solución más sencilla que cumpla correctamente las reglas de negocio será preferible a una
 solución más compleja.
 
-**Versión**: 3.7.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-07
+**Versión**: 4.0.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-08
