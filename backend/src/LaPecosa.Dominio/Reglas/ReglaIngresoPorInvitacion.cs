@@ -6,7 +6,8 @@ namespace LaPecosa.Dominio.Reglas;
 /// Representa la regla de lo que depende del rol de una invitación al usarla (constitución §12.1 y
 /// §12.5; RF-013 y RF-021).
 /// Su responsabilidad es distinguir la invitación del club de la de presidente, decir si el
-/// registro pide el nombre del responsable y si el estado del club deja usarla.
+/// registro pide el nombre del responsable, si quien entra debe tenerlo y si el estado del club
+/// deja usarla.
 /// No decide el estado de ingreso: quien usa una invitación, del rol que sea, entra siempre
 /// aprobado y sin sala de espera (RF-008). No comprueba que la invitación esté vigente ni conoce
 /// HTTP ni la base de datos.
@@ -24,6 +25,14 @@ public static class ReglaIngresoPorInvitacion
     /// responsable: solo la de JUGADOR (RF-013).
     /// </summary>
     public static bool PideResponsable(Rol rolDeLaInvitacion) => rolDeLaInvitacion == Rol.JUGADOR;
+
+    /// <summary>
+    /// Indica si quien entra con una invitación de ese rol debe tener responsable: solo el JUGADOR
+    /// menor de 18 años ese día. Vale igual al registrarse que al aceptar con una cuenta que ya
+    /// existe (RF-013 y RF-026).
+    /// </summary>
+    public static bool ExigeResponsable(Rol rolDeLaInvitacion, DateOnly fechaNacimiento, DateOnly hoy) =>
+        PideResponsable(rolDeLaInvitacion) && ReglaMayoriaDeEdad.EsMenorDeEdad(fechaNacimiento, hoy);
 
     /// <summary>
     /// Indica si el estado del club deja usar una invitación de ese rol (RF-021). Una invitación

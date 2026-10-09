@@ -69,7 +69,7 @@ si el propietario cambia alguno, solo afecta a la tarea indicada.
 | --- | --- | --- |
 | 1 | El responsable deja de pedirse también en el registro de un PRESIDENTE | T007 |
 | 2 | Un `nombreResponsable` enviado con una invitación de ENTRENADOR o DIRECTIVO se ignora, sin error | T007 |
-| 3 | Quien ya tiene cuenta y acepta una invitación de JUGADOR no ve ningún formulario | T008 |
+| 3 | Quien ya tiene cuenta y acepta una invitación de JUGADOR no ve ningún formulario. Sustituido el 2026-10-09 por RF-026: se le pide el responsable si es menor de 18 años y su cuenta no lo tiene | T008, T016 |
 | 4 | La aprobación admite `rol: JUGADOR` o ningún rol; cualquier otro responde `403 rol_no_asignable` | T010 |
 
 ---
@@ -178,6 +178,8 @@ su invitación se puede reenviar y corregir.
   - Resultado (2026-10-08): bloques 1 a 5 recorridos por la API contra un proyecto de Compose aparte (31 comprobaciones) y bloque 6 con Chrome a 360 px en los dos temas (17 pantallas); todo da lo esperado. Batería: 165 unitarias, 375 de integración, 91 de frontend, `tsc` y tamaño correctos.
   - Paso 1.4: sin llave de Brevo el registro de la API solo escribe destinatario, asunto y enlace, no el texto del correo, así que el rol no se puede leer ahí. Se ajustó la redacción del paso; el texto lo comprueba `PlantillasCorreoPruebas`.
   - Paso 1.7: redacción ajustada (la pantalla devuelve al directivo al inicio del club).
+- [X] T016 [US2] Un JUGADOR menor de 18 años no entra sin responsable al aceptar con una cuenta que ya existe (RF-026, escenario 2.12; `POST /api/invitaciones/consulta` y `POST /api/invitaciones/aceptacion`; añadida el 2026-10-09 tras la revisión del código, sustituye al supuesto 3). Backend: `backend/src/LaPecosa.Dominio/Reglas/ReglaIngresoPorInvitacion.cs` gana `ExigeResponsable(rol, fechaNacimiento, hoy)`, verdadero solo para un JUGADOR menor de edad, y `ValidadorRegistro` pasa a usarla; se crea `backend/src/LaPecosa.Aplicacion/DTOs/AceptarInvitacionDto.cs` (`Token` y `NombreResponsable` opcional), que la aceptación recibe en lugar de `TokenDto`; `InvitacionVigenteDto` gana `FaltaResponsable`, que `ServicioRegistroConInvitacion.ConsultarAsync` rellena con la cuenta del correo invitado y la fecha de nacimiento de su integrante más reciente; `ServicioAceptacionInvitacion` exige el responsable cuando el integrante nuevo es un JUGADOR menor y la cuenta no lo tiene (`400 datos_invalidos` en `nombreResponsable`, máximo 160, sin gastar la invitación), lo guarda en la cuenta dentro de la misma transacción e ignora el que llegue en cualquier otro caso. Frontend: `tipos.ts` gana `faltaResponsable` y `AceptarInvitacionDto`; `frontend/src/cuenta/AceptarInvitacion.tsx` muestra el campo del responsable solo con `faltaResponsable`, lo envía y pinta su error junto al campo. Pruebas: `ExigeResponsable` en `ReglaIngresoPorInvitacionPruebas.cs`; crear `backend/pruebas/Integracion/Cuenta/AceptacionResponsablePruebas.cs`: un menor sin responsable recibe 400, no entra y la invitación no se gasta, y con el nombre entra y queda guardado; más de 160 caracteres se rechaza; a un adulto, a quien entra como ENTRENADOR o DIRECTIVO y a un menor cuya cuenta ya tiene responsable no se les pide, lo enviado se ignora y la consulta trae `faltaResponsable` falso. Se actualizan spec.md, research.md (decisión 5), data-model.md, contracts/api.yaml y quickstart.md (paso 2.12)
+  - Resultado (2026-10-09): 170 unitarias, 382 de integración y 91 de frontend en verde; `tsc`, `eslint` y tamaño correctos. El paso 2.12 del quickstart no se recorrió en el navegador.
 
 ---
 

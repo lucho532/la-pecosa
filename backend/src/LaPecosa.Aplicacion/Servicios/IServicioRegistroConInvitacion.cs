@@ -14,7 +14,8 @@ namespace LaPecosa.Aplicacion.Servicios;
 public interface IServicioRegistroConInvitacion
 {
     /// <summary>
-    /// Devuelve los datos de la invitación. Usada, vencida, anulada o inexistente: 410
+    /// Devuelve los datos de la invitación, y si la cuenta que ya existe tendrá que dar el nombre
+    /// del responsable al aceptarla (RF-026). Usada, vencida, anulada o inexistente: 410
     /// <c>invitacion_no_valida</c>.
     /// </summary>
     Task<InvitacionVigenteDto> ConsultarAsync(TokenDto datos, CancellationToken cancelacion = default);

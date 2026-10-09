@@ -22,6 +22,16 @@ public class ReglaIngresoPorInvitacionPruebas
         Assert.Equal(esperado, ReglaIngresoPorInvitacion.PideResponsable(rol));
 
     [Theory]
+    [InlineData(Rol.JUGADOR, 2010, true)]
+    [InlineData(Rol.JUGADOR, 2000, false)]
+    [InlineData(Rol.ENTRENADOR, 2010, false)]
+    [InlineData(Rol.DIRECTIVO, 2010, false)]
+    [InlineData(Rol.PRESIDENTE, 2010, false)]
+    public void Solo_el_jugador_menor_de_edad_debe_tener_responsable(Rol rol, int anioNacimiento, bool esperado) =>
+        Assert.Equal(esperado, ReglaIngresoPorInvitacion.ExigeResponsable(
+            rol, new DateOnly(anioNacimiento, 6, 1), new DateOnly(2026, 10, 9)));
+
+    [Theory]
     [InlineData(Rol.JUGADOR)]
     [InlineData(Rol.ENTRENADOR)]
     [InlineData(Rol.DIRECTIVO)]

@@ -247,8 +247,8 @@ paths:
       tags: [Invitaciones]
       summary: Devuelve los datos fijos de una invitación para mostrar el registro
       description: |
-        CAMBIO: desaparece `pasaPorSalaDeEspera` y llega `pideResponsable`. La pantalla muestra
-        siempre el rol, también en las invitaciones del club.
+        CAMBIO: desaparece `pasaPorSalaDeEspera` y llegan `pideResponsable` y `faltaResponsable`.
+        La pantalla muestra siempre el rol, también en las invitaciones del club.
       security: []
       requestBody:
         required: true
@@ -299,18 +299,23 @@ paths:
         CAMBIO: con una invitación del club, la pertenencia se crea con el rol de la invitación y
         `APROBADO`; si es de JUGADOR, queda ubicada en su categoría como en el registro. No se
         crea otra cuenta ni cambia nada en los demás clubes de la persona. Si la cuenta ya es
-        integrante de ese club sigue respondiendo 409, como en la 002 y la 003.
+        integrante de ese club sigue respondiendo 409, como en la 002 y la 003. El cuerpo pasa de
+        `TokenDto` a `AceptarInvitacionDto`: `nombreResponsable` es obligatorio solo cuando la
+        invitación es de JUGADOR, la persona es menor de 18 años y su cuenta no tiene responsable
+        (RF-026); entonces se guarda en la cuenta, y sin él responde 400 con el error en
+        `nombreResponsable` y la invitación no se gasta. En cualquier otro caso se ignora.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/TokenDto' }
+            schema: { $ref: '#/components/schemas/AceptarInvitacionDto' }
       responses:
         '201':
           description: Pertenencia al club creada; `estadoIngreso` es `APROBADO`
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ClubDeSesionDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
         '401': { $ref: '#/components/responses/SinSesion' }
         '403':
           description: '`invitacion_de_otro_correo`'
@@ -481,8 +486,8 @@ components:
 
     InvitacionVigenteDto:
       type: object
-      description: 'CAMBIO: `pideResponsable` sustituye a `pasaPorSalaDeEspera`'
-      required: [nombreClub, rol, correo, tieneCuenta, pideResponsable, identidad]
+      description: 'CAMBIO: `pideResponsable` sustituye a `pasaPorSalaDeEspera` y llega `faltaResponsable`'
+      required: [nombreClub, rol, correo, tieneCuenta, pideResponsable, faltaResponsable, identidad]
       properties:
         nombreClub: { type: string }
         rol:
@@ -493,7 +498,26 @@ components:
         pideResponsable:
           type: boolean
           description: Verdadero solo en las invitaciones de JUGADOR; el registro pide entonces el nombre del responsable
+        faltaResponsable:
+          type: boolean
+          description: |
+            Verdadero solo cuando el correo ya tiene cuenta, la invitación es de JUGADOR, la persona
+            es menor de 18 años y su cuenta no tiene responsable; la aceptación pide entonces ese
+            nombre (RF-026)
         identidad: { type: object, description: '`IdentidadClubDto` de la 001' }
+
+    AceptarInvitacionDto:
+      type: object
+      description: 'NUEVO: sustituye a `TokenDto` en la aceptación. No lleva correo, club ni rol'
+      required: [token]
+      properties:
+        token: { type: string }
+        nombreResponsable:
+          type: [string, 'null']
+          maxLength: 160
+          description: |
+            Obligatorio solo cuando la invitación es de JUGADOR, la persona es menor de 18 años el
+            día de la aceptación y su cuenta no tiene responsable. En cualquier otro caso se ignora.
 
     RegistrarConInvitacionDto:
       type: object

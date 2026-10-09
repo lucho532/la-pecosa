@@ -288,5 +288,7 @@ Detallados al final de [research.md](research.md). Conviene confirmarlos antes d
 
 1. El responsable deja de pedirse también en el registro de un PRESIDENTE.
 2. Un responsable enviado con una invitación de ENTRENADOR o DIRECTIVO se ignora, sin error.
-3. Quien ya tiene cuenta y acepta una invitación de JUGADOR no ve ningún formulario.
+3. Quien ya tiene cuenta y acepta una invitación de JUGADOR no ve ningún formulario. Sustituido
+   el 2026-10-09 por RF-026: se le pide el responsable si es menor de 18 años y su cuenta no lo
+   tiene.
 4. La aprobación admite `rol: JUGADOR` o ningún rol; cualquier otro responde `403`.

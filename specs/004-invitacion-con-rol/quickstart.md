@@ -97,6 +97,12 @@ Cada paso indica qué historia de la spec valida.
     explica que la invitación ya no sirve y no hay formulario.
 11. Con Swagger, repetir un registro enviando además `"rol": "PRESIDENTE"` en el cuerpo, con una
     invitación de Jugador. **Esperado**: entra como Jugador.
+12. Preparar un menor con cuenta y sin responsable: invitar un correo nuevo como Entrenador al
+    Club A y registrarlo con fecha de nacimiento en 2014. Como presidente B, invitar ese correo
+    como Jugador al Club B y abrir el enlace con su sesión. **Esperado**: además de "Aceptar", la
+    pantalla pide el nombre del padre, madre o responsable; vacío no deja entrar y muestra el
+    error junto al campo; con el nombre entra al Club B como Jugador. Repetirlo invitándolo como
+    Directivo, o con una cuenta de adulto: solo aparece "Aceptar".
 
 ### 3. La sala de espera, solo para jugadores y sin elegir rol (historia 3)
 

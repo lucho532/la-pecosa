@@ -75,7 +75,7 @@ sigue existiendo, pero ningún camino de esta funcionalidad lo produce.
 
 | Campo | Antes | Ahora |
 | --- | --- | --- |
-| NombreResponsable | Se pedía en todo registro: obligatorio para un menor, opcional para un adulto | Solo se pide y se guarda cuando la invitación es de JUGADOR, con la misma regla de edad. En los demás roles queda nulo aunque llegue en el cuerpo (RF-013) |
+| NombreResponsable | Se pedía en todo registro: obligatorio para un menor, opcional para un adulto | Solo se pide y se guarda cuando la invitación es de JUGADOR, con la misma regla de edad. En los demás roles queda nulo aunque llegue en el cuerpo (RF-013). También se pide y se guarda al aceptar una invitación de JUGADOR con una cuenta que ya existe, si la persona es menor de 18 años y la cuenta no lo tiene (RF-026) |
 
 ## Lo que no se guarda
 

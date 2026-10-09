@@ -79,7 +79,18 @@ export interface InvitacionVigenteDto {
   tieneCuenta: boolean;
   /** Verdadero solo en las invitaciones de jugador: el registro pide el nombre del responsable. */
   pideResponsable: boolean;
+  /**
+   * Verdadero solo si el correo ya tiene cuenta, la invitación es de jugador, la persona es menor
+   * de 18 años y su cuenta no tiene responsable: la aceptación pide entonces ese nombre.
+   */
+  faltaResponsable: boolean;
   identidad: IdentidadClubDto;
+}
+
+export interface AceptarInvitacionDto {
+  token: string;
+  /** Solo se envía cuando la invitación trae `faltaResponsable`; en otro caso la API lo ignora. */
+  nombreResponsable?: string | null;
 }
 
 export interface RegistrarConInvitacionDto {

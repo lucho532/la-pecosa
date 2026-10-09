@@ -59,9 +59,8 @@ public static class ValidadorRegistro
         {
             errores.Agregar("fechaNacimiento", "La fecha de nacimiento no puede ser futura.");
         }
-        else if (pideResponsable
-            && string.IsNullOrWhiteSpace(datos.NombreResponsable)
-            && ReglaMayoriaDeEdad.EsMenorDeEdad(datos.FechaNacimiento.Value, hoy))
+        else if (string.IsNullOrWhiteSpace(datos.NombreResponsable)
+            && ReglaIngresoPorInvitacion.ExigeResponsable(rolDeLaInvitacion, datos.FechaNacimiento.Value, hoy))
         {
             errores.Agregar(
                 "nombreResponsable",

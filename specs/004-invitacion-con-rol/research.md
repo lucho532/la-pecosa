@@ -109,8 +109,22 @@ invita y solo él aprueba o rechaza ingresos**, que el DIRECTIVO tampoco ve el a
   eso se pide confirmación.
 - **La pantalla** no decide por su cuenta: `InvitacionVigenteDto` lleva `pideResponsable`, que
   sustituye a `pasaPorSalaDeEspera`.
-- **Cuenta que ya existe y acepta una invitación de JUGADOR** **(supuesto 3)**: la aceptación no
-  pide ningún dato, como hasta ahora; la cuenta conserva el responsable que tenga.
+- **Cuenta que ya existe y acepta una invitación de JUGADOR** (RF-026, decidido el 2026-10-09;
+  sustituye al supuesto 3): la aceptación no pide ningún dato y la cuenta conserva el responsable
+  que tenga, salvo en un caso. Si la persona es menor de 18 años ese día y su cuenta no tiene
+  responsable, la aceptación lo exige y lo guarda en la cuenta; sin él responde
+  `400 datos_invalidos` en `nombreResponsable` y no gasta la invitación. Puede pasar porque la
+  cuenta se creó con una invitación de ENTRENADOR o DIRECTIVO, que no lo piden.
+  - La edad sale de la fecha de nacimiento del integrante más reciente de la cuenta, la misma
+    identidad que se copia al club nuevo (decisión 7).
+  - `ReglaIngresoPorInvitacion.ExigeResponsable(rol, fechaNacimiento, hoy)` reúne la regla
+    "JUGADOR y menor"; la usan el registro y la aceptación.
+  - La pantalla no decide por su cuenta: `InvitacionVigenteDto` gana `faltaResponsable`, y la
+    aceptación recibe `AceptarInvitacionDto` (`token` y `nombreResponsable` opcional) en lugar de
+    `TokenDto`. Un responsable enviado cuando no hace falta se ignora, como en el supuesto 2.
+  - **Alternativas descartadas**: rechazar la aceptación y mandar a la persona a completar su
+    perfil (no existe dónde editar el responsable); dejarlo como estaba (la regla del responsable
+    quedaría con una excepción que nadie ve, porque ya no hay sala de espera).
 
 ## 6. Sala de espera, aprobación y rechazo
 
@@ -242,5 +256,5 @@ al caso no previsto la regla más cercana de la spec o de la constitución (§25
 | --- | --- | --- |
 | 1 | El nombre del responsable deja de pedirse también en el registro de un PRESIDENTE, porque RF-013 y §12.1 lo limitan al JUGADOR | Decisión 5 |
 | 2 | Un `nombreResponsable` enviado con una invitación de ENTRENADOR o DIRECTIVO se ignora y no se guarda; no es un error | Decisión 5 |
-| 3 | Quien ya tiene cuenta y acepta una invitación de JUGADOR no ve ningún formulario: no se le pide el responsable | Decisión 5 |
+| 3 | Sustituido el 2026-10-09 por RF-026: quien ya tiene cuenta y acepta una invitación de JUGADOR no ve ningún formulario, salvo el nombre del responsable si es menor de 18 años y su cuenta no lo tiene | Decisión 5 |
 | 4 | La aprobación acepta que el cuerpo indique `rol: JUGADOR` o no indique nada; cualquier otro rol responde `403 rol_no_asignable` | Decisión 6 |

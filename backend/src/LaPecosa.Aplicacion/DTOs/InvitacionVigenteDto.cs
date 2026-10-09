@@ -5,8 +5,8 @@ namespace LaPecosa.Aplicacion.DTOs;
 /// <summary>
 /// Representa los datos fijos de una invitación vigente, para mostrar el registro.
 /// Su responsabilidad es decir a qué club, con qué rol y a qué correo invita, si ese correo ya
-/// tiene cuenta y si el registro debe pedir el nombre del responsable. La pantalla muestra siempre
-/// el rol, que no se puede cambiar (RF-006).
+/// tiene cuenta y si el registro, o la aceptación, debe pedir el nombre del responsable. La
+/// pantalla muestra siempre el rol, que no se puede cambiar (RF-006).
 /// No contiene el token ni ningún dato interno del club.
 /// </summary>
 /// <param name="NombreClub">Nombre del club que invita.</param>
@@ -17,6 +17,11 @@ namespace LaPecosa.Aplicacion.DTOs;
 /// Verdadero solo en las invitaciones de JUGADOR: el registro pide entonces el nombre del padre,
 /// madre o responsable (RF-013).
 /// </param>
+/// <param name="FaltaResponsable">
+/// Verdadero solo cuando el correo ya tiene cuenta, la invitación es de JUGADOR, la persona es
+/// menor de 18 años y su cuenta no tiene responsable: la aceptación pide entonces ese nombre
+/// (RF-026).
+/// </param>
 /// <param name="Identidad">Identidad visual del club.</param>
 public record InvitacionVigenteDto(
     string NombreClub,
@@ -24,4 +29,5 @@ public record InvitacionVigenteDto(
     string Correo,
     bool TieneCuenta,
     bool PideResponsable,
+    bool FaltaResponsable,
     IdentidadClubDto Identidad);

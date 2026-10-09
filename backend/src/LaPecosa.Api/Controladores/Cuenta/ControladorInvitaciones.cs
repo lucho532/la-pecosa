@@ -56,10 +56,11 @@ public class ControladorInvitaciones : ControladorBase
     [HttpPost("aceptacion")]
     [ProducesResponseType<ClubDeSesionDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ClubDeSesionDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<Problema>(StatusCodes.Status400BadRequest, Problema.TipoContenido)]
     [ProducesResponseType<Problema>(StatusCodes.Status401Unauthorized, Problema.TipoContenido)]
     [ProducesResponseType<Problema>(StatusCodes.Status403Forbidden, Problema.TipoContenido)]
     [ProducesResponseType<Problema>(StatusCodes.Status409Conflict, Problema.TipoContenido)]
-    public async Task<IActionResult> Aceptar(TokenDto datos, CancellationToken cancelacion)
+    public async Task<IActionResult> Aceptar(AceptarInvitacionDto datos, CancellationToken cancelacion)
     {
         var (club, creada) = await _aceptacion.AceptarAsync(datos, UsuarioId, cancelacion);
         return StatusCode(creada ? StatusCodes.Status201Created : StatusCodes.Status200OK, club);

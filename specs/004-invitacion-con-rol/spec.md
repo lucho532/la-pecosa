@@ -50,6 +50,14 @@ lo que construyeron la 002 y la 003 para que cumpla la constitución 4.0.0.
   R: No. Solo invita al primer PRESIDENTE, al crear el club. Entra en el alcance de esta
   funcionalidad.
 
+### Sesión 2026-10-09, tras la revisión del código
+
+- P: Una cuenta que ya existe sin responsable (se creó como entrenador o directivo) y es de una
+  persona menor de 18 años acepta una invitación de JUGADOR: ¿entra sin responsable? → R: No. La
+  pantalla de aceptación le pide el nombre del padre, madre o responsable antes de dejarla entrar,
+  y lo guarda en su cuenta. En los demás casos la aceptación sigue sin pedir ningún dato.
+  Sustituye al supuesto 3 del plan.
+
 ## Escenarios de usuario y pruebas *(obligatorio)*
 
 ### Historia de usuario 1 - El club invita indicando el rol (Prioridad: P1)
@@ -138,6 +146,11 @@ y no aparece en ninguna categoría ni en "Sin categoría".
     enlace, **entonces** el sistema le explica que ya no sirve y no permite registrarse.
 11. **Dado** una persona que acaba de entrar con una invitación, **cuando** el PRESIDENTE abre la
     sala de espera, **entonces** esa persona no aparece en ella.
+12. **Dado** una persona menor de 18 años que ya tiene cuenta y cuya cuenta no tiene responsable,
+    **cuando** va a aceptar una invitación de JUGADOR, **entonces** la pantalla le pide el nombre
+    del padre, madre o responsable y no la deja entrar sin él; al indicarlo entra y el nombre
+    queda guardado en su cuenta. Si es adulta, si su cuenta ya tiene responsable o si la
+    invitación es de ENTRENADOR o DIRECTIVO, la aceptación no le pide nada.
 
 ---
 
@@ -217,6 +230,9 @@ su invitación se puede reenviar y corregir.
   que envió otro.
 - Se invita como JUGADOR a un adulto: entra como JUGADOR y queda en "Sin categoría" si no existe
   la categoría de su año.
+- Un menor que ya tiene cuenta sin responsable, porque se registró como entrenador o directivo
+  en otro club, acepta una invitación de JUGADOR: no entra hasta indicar el nombre de su padre,
+  madre o responsable; la invitación no se gasta mientras tanto.
 - Se invita por error como JUGADOR a quien debía ser entrenador y ya se registró: cambiarle el rol
   es del PRESIDENTE y pertenece a la funcionalidad de asignación de roles, todavía sin construir.
 - Se registra un jugador en el mismo momento en que se crea la categoría de su año: termina en esa
@@ -285,6 +301,12 @@ su invitación se puede reenviar y corregir.
 - **RF-014**: Las demás reglas de la invitación y del registro NO cambian: un solo uso, caducidad,
   correo fijo, documento único en el club, y rechazo de correos que ya son integrantes, de
   jugadores retirados y del correo del DESARROLLADOR.
+- **RF-026**: Añadido el 2026-10-09. Un JUGADOR menor de 18 años NO DEBE entrar a un club sin
+  responsable, tampoco al aceptar una invitación con una cuenta que ya existe. Cuando la
+  invitación es de JUGADOR, la persona es menor de 18 años el día de la aceptación y su cuenta no
+  tiene responsable, la aceptación DEBE pedir ese nombre, exigirlo en el servidor y guardarlo en
+  la cuenta; sin él no entra y la invitación no se gasta. En cualquier otro caso la aceptación NO
+  DEBE pedir ningún dato, y un responsable enviado de más se ignora.
 
 **Sala de espera y aprobación**
 
@@ -381,6 +403,8 @@ su invitación se puede reenviar y corregir.
   texto se lee bien en ambos temas.
 - **CE-010**: En el 100 % de los intentos probados, el DESARROLLADOR no consigue invitar a un
   presidente a un club que ya existe.
+- **CE-011**: En el 100 % de las aceptaciones probadas, un menor de 18 años no queda como JUGADOR
+  de un club sin que su cuenta tenga responsable.
 
 ## Supuestos
 

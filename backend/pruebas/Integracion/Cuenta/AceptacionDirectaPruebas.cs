@@ -45,7 +45,7 @@ public class AceptacionDirectaPruebas
         var sinCategoria = (await e.Presidente.ListaAsync(e.SinCategoria)).Ids("usuarioRolId");
         Assert.Equal(!existeLaCategoria, sinCategoria.Contains(nuevo.Id));
 
-        // No pasa por la sala de espera, no se le pide ningún dato y en su otro club no cambia nada.
+        // No pasa por la sala de espera, conserva el responsable que ya tenía y en su otro club no cambia nada.
         Assert.Empty(await e.Presidente.ListaAsync($"/api/clubes/{e.Club.Id}/ingresos/en-espera"));
         Assert.Empty(await e.Presidente.ListaAsync($"/api/clubes/{e.Club.Id}/ingresos/aprobados"));
         Assert.Equal("Marta Gómez", await _fabrica.ConContextoAsync(contexto =>

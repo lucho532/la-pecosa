@@ -3,6 +3,7 @@ using LaPecosa.Aplicacion.Interfaces;
 using LaPecosa.Aplicacion.Mappers;
 using LaPecosa.Aplicacion.Servicios;
 using LaPecosa.Aplicacion.Utilidades;
+using LaPecosa.Aplicacion.Validadores;
 using LaPecosa.Dominio.Entidades;
 using LaPecosa.Dominio.Enumeraciones;
 using LaPecosa.Dominio.Reglas;
@@ -20,9 +21,10 @@ namespace LaPecosa.Aplicacion.Implementaciones;
 /// (409). Solo una invitación de presidente reemplaza el rol de quien ya era integrante; si era
 /// jugador, sale de su categoría y de sus equipos y deja de estar retirado. A un jugador retirado
 /// no lo devuelve al club una invitación del club (409): se le reincorpora.
-/// No crea cuentas ni pide de nuevo los datos de la persona, tampoco el responsable: la cuenta
-/// conserva el que tenga. No cambia nada en los otros clubes de la persona ni registra ninguna
-/// aprobación. Para leer las categorías fija en el contexto el club de la invitación válida
+/// No crea cuentas ni pide de nuevo los datos de la persona. El responsable es la única excepción:
+/// lo exige, y lo guarda en la cuenta, cuando entra como JUGADOR una persona menor de 18 años cuya
+/// cuenta no lo tiene (RF-026); en cualquier otro caso la cuenta conserva el que tenga. No cambia
+/// nada en los otros clubes de la persona ni registra ninguna aprobación. Para leer las categorías fija en el contexto el club de la invitación válida
 /// (constitución §7.1, tercera excepción). No accede al contexto de Entity Framework ni conoce HTTP.
 /// </summary>
 public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
@@ -59,7 +61,7 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
 
     /// <inheritdoc />
     public async Task<(ClubDeSesionDto Club, bool Creada)> AceptarAsync(
-        TokenDto datos, Guid usuarioId, CancellationToken cancelacion = default)
+        AceptarInvitacionDto datos, Guid usuarioId, CancellationToken cancelacion = default)
     {
         var ahora = _reloj.AhoraUtc;
         var invitacion = string.IsNullOrWhiteSpace(datos.Token)
@@ -93,6 +95,7 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
         }
 
         var integrante = existente ?? await NuevoIntegranteAsync(usuario, invitacion, ahora, cancelacion);
+        var responsable = existente is null ? ResponsableQueFaltaba(datos, usuario, integrante, ahora) : null;
 
         try
         {
@@ -111,6 +114,7 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
                     if (existente is null)
                     {
                         _pertenencias.Agregar(integrante);
+                        usuario.NombreResponsable = responsable ?? usuario.NombreResponsable;
                     }
                     else
                     {
@@ -147,6 +151,36 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
 
         integrante.Club = invitacion.Club;
         return (MapperSesion.AClubDeSesion(integrante), existente is null);
+    }
+
+    /// <summary>
+    /// El nombre del responsable que hay que guardar en la cuenta, o nulo si no hace falta. Un
+    /// JUGADOR menor de 18 años no entra sin responsable, igual que al registrarse: si su cuenta no
+    /// lo tiene, se exige aquí (RF-026). En cualquier otro caso lo que llegue se ignora.
+    /// </summary>
+    private static string? ResponsableQueFaltaba(
+        AceptarInvitacionDto datos, Usuario usuario, UsuarioRol integrante, DateTime ahora)
+    {
+        if (!string.IsNullOrWhiteSpace(usuario.NombreResponsable)
+            || !ReglaIngresoPorInvitacion.ExigeResponsable(
+                integrante.Rol, integrante.FechaNacimiento, DateOnly.FromDateTime(ahora)))
+        {
+            return null;
+        }
+
+        var errores = new ErroresDeValidacion();
+        if (string.IsNullOrWhiteSpace(datos.NombreResponsable))
+        {
+            errores.Agregar(
+                "nombreResponsable",
+                "El nombre del padre, madre o responsable es obligatorio para una persona menor de 18 años.");
+        }
+
+        errores.Maximo(
+            "nombreResponsable", datos.NombreResponsable, ValidadorRegistro.MaximoResponsable, "El nombre del responsable");
+        errores.LanzarSiHayErrores();
+
+        return NormalizadorTexto.SinEspaciosSobrantes(datos.NombreResponsable);
     }
 
     private async Task<UsuarioRol> NuevoIntegranteAsync(

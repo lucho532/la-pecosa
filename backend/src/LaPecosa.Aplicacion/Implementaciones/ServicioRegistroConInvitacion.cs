@@ -67,15 +67,35 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
     public async Task<InvitacionVigenteDto> ConsultarAsync(TokenDto datos, CancellationToken cancelacion = default)
     {
         var invitacion = await VigenteAsync(datos.Token, cancelacion);
-        var tieneCuenta = await _usuarios.ObtenerPorCorreoAsync(invitacion.Correo, cancelacion) is not null;
+        var cuenta = await _usuarios.ObtenerPorCorreoAsync(invitacion.Correo, cancelacion);
 
         return new InvitacionVigenteDto(
             invitacion.Club!.Nombre,
             invitacion.Rol,
             invitacion.Correo,
-            tieneCuenta,
+            cuenta is not null,
             ReglaIngresoPorInvitacion.PideResponsable(invitacion.Rol),
+            cuenta is not null && await FaltaResponsableAsync(cuenta, invitacion.Rol, cancelacion),
             MapperIdentidadClub.AIdentidad(invitacion.Club));
+    }
+
+    /// <summary>
+    /// Indica si la aceptación va a pedir el responsable a esa cuenta: no lo tiene y, por la fecha
+    /// de nacimiento de su integrante más reciente, entra como JUGADOR menor de edad (RF-026).
+    /// </summary>
+    private async Task<bool> FaltaResponsableAsync(Usuario cuenta, Rol rolDeLaInvitacion, CancellationToken cancelacion)
+    {
+        if (!string.IsNullOrWhiteSpace(cuenta.NombreResponsable)
+            || !ReglaIngresoPorInvitacion.PideResponsable(rolDeLaInvitacion))
+        {
+            return false;
+        }
+
+        var identidad = (await _pertenencias.ListarDeUsuarioAsync(cuenta.Id, cancelacion))
+            .OrderByDescending(integrante => integrante.CreadoEn)
+            .FirstOrDefault();
+        return identidad is not null && ReglaIngresoPorInvitacion.ExigeResponsable(
+            rolDeLaInvitacion, identidad.FechaNacimiento, DateOnly.FromDateTime(_reloj.AhoraUtc));
     }
 
     /// <inheritdoc />
