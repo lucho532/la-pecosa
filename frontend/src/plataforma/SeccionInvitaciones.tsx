@@ -107,7 +107,6 @@ export function SeccionInvitaciones({ club, recargar }: PropsSeccion) {
           )}
         </div>
       ))}
-
     </Tarjeta>
   );
 }

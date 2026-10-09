@@ -77,6 +77,10 @@ export function SeccionInvitacionesClub({ clubId, invitaciones }: Props) {
   async function invitar(evento: FormEvent) {
     evento.preventDefault();
     if (rol === '') {
+      // No se envía nada: se retiran los avisos del intento anterior para que no acompañen a este error.
+      setError(null);
+      setErrorCorreo(undefined);
+      setHecho(null);
       setErrorRol('El rol es obligatorio: elige jugador, entrenador o directivo.');
       return;
     }
