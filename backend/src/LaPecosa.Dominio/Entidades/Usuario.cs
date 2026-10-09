@@ -32,9 +32,11 @@ public class Usuario
     public string? Celular { get; set; }
 
     /// <summary>
-    /// Opcional. Nombre del padre, madre o responsable. Obligatorio al registrarse si la persona
-    /// es menor de 18 años ese día (RF-010). Es un dato de contacto de la cuenta, como el celular,
-    /// y solo sale por la API en la sala de espera del club.
+    /// Opcional. Nombre del padre, madre o responsable. Solo se pide y se guarda al registrarse
+    /// con una invitación de JUGADOR: obligatorio si la persona es menor de 18 años ese día y
+    /// opcional si es adulta; con cualquier otro rol queda nulo (RF-013). Una cuenta que ya existe
+    /// sin él lo recibe al aceptar una invitación de JUGADOR siendo menor (RF-026). Es un dato de contacto
+    /// de la cuenta, como el celular, y solo sale por la API en la sala de espera del club.
     /// </summary>
     public string? NombreResponsable { get; set; }
 

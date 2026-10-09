@@ -4,11 +4,12 @@ namespace LaPecosa.Dominio.Entidades;
 
 /// <summary>
 /// Representa el enlace enviado por correo para registrarse en un club (constitución §12.1 y
-/// §12.5). La envía el DESARROLLADOR a un presidente, o el PRESIDENTE o un DIRECTIVO desde su club.
+/// §12.5). La envía el DESARROLLADOR al presidente al crear el club, o el PRESIDENTE desde su club.
 /// Su responsabilidad es ligar un club, un rol y un correo a un token de un solo uso, del que solo
-/// se guarda el hash, y saber si sigue vigente y en qué estado está.
-/// No guarda el token en claro ni crea la cuenta: eso lo hace el registro. Tampoco decide si quien
-/// la usa pasa por la sala de espera: eso lo deriva del rol la regla de ingreso por invitación.
+/// se guarda el hash, y saber si sigue vigente y en qué estado está. Una vez usada, es el único
+/// rastro de cómo entró esa persona: con qué rol y quién la invitó (RF-019).
+/// No guarda el token en claro ni crea la cuenta: eso lo hace el registro. Su rol no cambia después
+/// de crearla: reenviarla crea otra con el mismo rol.
 /// </summary>
 public class Invitacion : IPerteneceAClub
 {
@@ -25,8 +26,9 @@ public class Invitacion : IPerteneceAClub
     public Club? Club { get; set; }
 
     /// <summary>
-    /// Rol con el que entra quien la usa. Ya no es siempre <c>PRESIDENTE</c>. Una invitación
-    /// enviada desde el club lleva <c>JUGADOR</c> (RF-003).
+    /// Rol con el que entra quien la usa. <c>PRESIDENTE</c> en la que envía el DESARROLLADOR al
+    /// crear el club; en una enviada desde el club, el que eligió su PRESIDENTE: <c>JUGADOR</c>,
+    /// <c>ENTRENADOR</c> o <c>DIRECTIVO</c> (RF-001). Nunca <c>DESARROLLADOR</c>.
     /// </summary>
     public Rol Rol { get; set; }
 

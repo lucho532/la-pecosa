@@ -6,7 +6,7 @@ namespace LaPecosa.Aplicacion.Mappers;
 /// <summary>
 /// Representa la conversión de invitaciones e integrantes en los DTO del apartado "Ingresos".
 /// Su responsabilidad es que ninguna entidad salga por la API (constitución §5) y que cada DTO
-/// lleve solo lo que el PRESIDENTE y los DIRECTIVOS pueden ver.
+/// lleve solo lo que el PRESIDENTE puede ver.
 /// No incluye el token de las invitaciones ni su hash, y no consulta la base de datos.
 /// </summary>
 public static class MapperIngresos
@@ -15,6 +15,7 @@ public static class MapperIngresos
     public static InvitacionClubDto AInvitacionClub(Invitacion invitacion, string? enviadaPor, DateTime ahoraUtc) => new(
         invitacion.Id,
         invitacion.Correo,
+        invitacion.Rol,
         invitacion.EstadoEn(ahoraUtc),
         invitacion.EstadoEnvio,
         enviadaPor,

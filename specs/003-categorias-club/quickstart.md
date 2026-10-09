@@ -164,9 +164,3 @@ Cada paso indica qué historia de la spec valida.
 Repetir los pasos 1, 3, 5 y 7 con el navegador a 360 px de ancho, en tema claro y en oscuro.
 **Esperado**: sin desplazamiento horizontal, con el texto legible en los dos temas y con
 "inactiva" y "fuera de su año" indicados con texto, no solo con color.
-
-### 10. Tiempos (CE-001, CE-005, CE-010, CE-013)
-
-Con un cronómetro: crear una categoría (menos de 15 s desde abrir "Categorías"), pasar a un
-jugador de categoría (menos de 30 s), retirar a un jugador (menos de 30 s) y repartir 20 jugadores
-entre dos equipos (menos de 5 min).

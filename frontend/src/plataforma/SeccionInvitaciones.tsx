@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { api } from '../compartido/api/cliente';
 import { ErrorApi, mensajeDe } from '../compartido/api/errores';
-import type { InvitacionDto, InvitarPresidenteDto, ReenviarInvitacionDto } from '../compartido/api/tipos';
+import type { InvitacionDto, ReenviarInvitacionDto } from '../compartido/api/tipos';
 import { Aviso } from '../compartido/componentes/Aviso';
 import { Boton } from '../compartido/componentes/Boton';
 import { Campo } from '../compartido/componentes/Campo';
@@ -11,12 +11,12 @@ import { fecha } from '../compartido/formato';
 import type { PropsSeccion } from './DetalleClub';
 
 /**
- * Invitaciones de presidente sin usar de un club: reenviar, corregir el correo e invitar a otro
- * presidente. Reenviar o corregir anula el enlace anterior.
+ * Invitación del presidente de un club mientras no se haya usado: reenviarla o corregir su
+ * correo, lo que anula el enlace anterior. No se invita a otro presidente a un club que ya existe:
+ * el desarrollador solo invita al crear el club.
  */
 export function SeccionInvitaciones({ club, recargar }: PropsSeccion) {
   const base = `/api/plataforma/clubes/${club.clubId}/invitaciones`;
-  const [correoNuevo, setCorreoNuevo] = useState('');
   const [corrigiendo, setCorrigiendo] = useState<string | null>(null);
   const [correoCorregido, setCorreoCorregido] = useState('');
   const [ocupado, setOcupado] = useState(false);
@@ -35,7 +35,6 @@ export function SeccionInvitaciones({ club, recargar }: PropsSeccion) {
           : `Invitación enviada a ${invitacion.correo}.`,
       );
       setCorrigiendo(null);
-      setCorreoNuevo('');
       recargar();
     } catch (fallo) {
       setError(fallo instanceof ErrorApi ? (fallo.errorDe('correo') ?? fallo.title) : mensajeDe(fallo));
@@ -47,12 +46,6 @@ export function SeccionInvitaciones({ club, recargar }: PropsSeccion) {
   function reenviar(invitacion: InvitacionDto, correo?: string) {
     const datos: ReenviarInvitacionDto = correo ? { correo } : {};
     return ejecutar(() => api.post<InvitacionDto>(`${base}/${invitacion.invitacionId}/reenvio`, datos));
-  }
-
-  function invitar(evento: FormEvent) {
-    evento.preventDefault();
-    const datos: InvitarPresidenteDto = { correo: correoNuevo };
-    void ejecutar(() => api.post<InvitacionDto>(base, datos));
   }
 
   return (
@@ -114,20 +107,6 @@ export function SeccionInvitaciones({ club, recargar }: PropsSeccion) {
           )}
         </div>
       ))}
-
-      <form className="fila" onSubmit={invitar}>
-        <Campo
-          etiqueta="Invitar a otro presidente"
-          type="email"
-          valor={correoNuevo}
-          alCambiar={setCorreoNuevo}
-          placeholder="correo@ejemplo.com"
-          required
-        />
-        <Boton type="submit" disabled={ocupado}>
-          Enviar invitación
-        </Boton>
-      </form>
     </Tarjeta>
   );
 }

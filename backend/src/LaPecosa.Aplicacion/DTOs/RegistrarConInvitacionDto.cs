@@ -16,8 +16,9 @@ namespace LaPecosa.Aplicacion.DTOs;
 /// <param name="FechaNacimiento">Fecha de nacimiento; no puede ser futura.</param>
 /// <param name="Celular">Celular de contacto, hasta 20 caracteres.</param>
 /// <param name="NombreResponsable">
-/// Nombre del padre, madre o responsable, hasta 160 caracteres. Obligatorio si la persona es menor
-/// de 18 años el día del registro; opcional para un adulto.
+/// Nombre del padre, madre o responsable, hasta 160 caracteres. Solo se usa con una invitación de
+/// JUGADOR: obligatorio si la persona es menor de 18 años el día del registro y opcional si es
+/// adulta. Con cualquier otro rol se ignora y no se guarda (RF-013).
 /// </param>
 /// <param name="Contrasena">Contraseña, de 8 a 128 caracteres.</param>
 public record RegistrarConInvitacionDto(

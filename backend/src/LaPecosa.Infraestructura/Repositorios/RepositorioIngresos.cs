@@ -52,7 +52,6 @@ public class RepositorioIngresos : IRepositorioIngresos
     /// <inheritdoc />
     public async Task<bool> AprobarAsync(
         Guid usuarioRolId,
-        Rol rol,
         DateTime ahoraUtc,
         Guid aprobadoPorUsuarioId,
         string aprobadoPorNombre,
@@ -62,8 +61,8 @@ public class RepositorioIngresos : IRepositorioIngresos
             .ExecuteUpdateAsync(
                 cambios => cambios
                     .SetProperty(integrante => integrante.EstadoIngreso, EstadoIngreso.APROBADO)
-                    .SetProperty(integrante => integrante.Rol, rol)
-                    .SetProperty(integrante => integrante.RolDeIngreso, rol)
+                    .SetProperty(integrante => integrante.Rol, Rol.JUGADOR)
+                    .SetProperty(integrante => integrante.RolDeIngreso, Rol.JUGADOR)
                     .SetProperty(integrante => integrante.AprobadoEn, ahoraUtc)
                     .SetProperty(integrante => integrante.AprobadoPorUsuarioId, aprobadoPorUsuarioId)
                     .SetProperty(integrante => integrante.AprobadoPorNombre, aprobadoPorNombre),

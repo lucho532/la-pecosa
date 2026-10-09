@@ -5,9 +5,10 @@ using LaPecosa.Pruebas.Integracion.Base;
 namespace LaPecosa.Pruebas.Integracion.Categorias;
 
 /// <summary>
-/// Un jugador aprobado queda en la categoría de su año, o sin categoría si el club no la tiene
-/// activa, y entra en ella al crearse o reactivarse (constitución §12.1.1 y §20; RF-008 a RF-013;
-/// historia 2; CE-003 y CE-004).
+/// Un jugador aprobado desde la sala de espera queda en la categoría de su año, o sin categoría si
+/// el club no la tiene activa, y entra en ella al crearse o reactivarse (constitución §12.1.1 y
+/// §20; RF-008 a RF-013 de la 003). Aprueba el PRESIDENTE y sin elegir rol. La ubicación de quien
+/// entra con una invitación está en <c>RegistroDirectoUbicacionPruebas</c>.
 /// </summary>
 [Collection(ColeccionApi.Nombre)]
 public class UbicacionAutomaticaPruebas
@@ -83,17 +84,14 @@ public class UbicacionAutomaticaPruebas
         }
     }
 
-    [Theory]
-    [InlineData(Rol.PRESIDENTE)]
-    [InlineData(Rol.DIRECTIVO)]
-    public async Task Aprobar_como_jugador_lo_deja_en_la_categoria_activa_de_su_anio(Rol quienAprueba)
+    [Fact]
+    public async Task Aprobar_sin_elegir_rol_lo_deja_como_jugador_en_la_categoria_activa_de_su_anio()
     {
         var e = await EscenarioCategorias.CrearAsync(_fabrica);
         var categoriaId = await e.CrearCategoriaPorApiAsync(2016);
         var (_, enEspera) = await e.Sembrar.CrearJugadorEnEsperaAsync(e.Club, 2016);
-        var cliente = quienAprueba == Rol.PRESIDENTE ? e.Presidente : e.Directivo;
 
-        var respuesta = await cliente.PostAsync(Aprobacion(e, enEspera.Id), new { rol = "JUGADOR" });
+        var respuesta = await e.Presidente.PostAsync(Aprobacion(e, enEspera.Id));
 
         Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
         Assert.Equal(categoriaId, (await e.IntegranteGuardadoAsync(enEspera.Id))!.CategoriaId);
@@ -116,29 +114,14 @@ public class UbicacionAutomaticaPruebas
 
         var (_, enEspera) = await e.Sembrar.CrearJugadorEnEsperaAsync(e.Club, 2016);
 
-        var respuesta = await e.Presidente.PostAsync(Aprobacion(e, enEspera.Id), new { rol = "JUGADOR" });
+        var respuesta = await e.Presidente.PostAsync(Aprobacion(e, enEspera.Id));
 
         Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
         var guardado = (await e.IntegranteGuardadoAsync(enEspera.Id))!;
         Assert.Equal(EstadoIngreso.APROBADO, guardado.EstadoIngreso);
+        Assert.Equal(Rol.JUGADOR, guardado.Rol);
         Assert.Null(guardado.CategoriaId);
         Assert.Contains(enEspera.Id, (await e.Presidente.ListaAsync(e.SinCategoria)).Ids("usuarioRolId"));
-    }
-
-    [Theory]
-    [InlineData("ENTRENADOR")]
-    [InlineData("DIRECTIVO")]
-    public async Task Aprobar_con_otro_rol_no_asigna_categoria_ni_lo_muestra_en_sin_categoria(string rol)
-    {
-        var e = await EscenarioCategorias.CrearAsync(_fabrica);
-        var categoriaId = await e.CrearCategoriaPorApiAsync(2016);
-        var (_, enEspera) = await e.Sembrar.CrearJugadorEnEsperaAsync(e.Club, 2016);
-
-        await e.Presidente.PostAsync(Aprobacion(e, enEspera.Id), new { rol });
-
-        Assert.Null((await e.IntegranteGuardadoAsync(enEspera.Id))!.CategoriaId);
-        Assert.DoesNotContain(enEspera.Id, (await e.Presidente.ListaAsync(e.SinCategoria)).Ids("usuarioRolId"));
-        Assert.Empty((await e.DetalleAsync(categoriaId)).Lista("jugadores"));
     }
 
     [Theory]
@@ -184,7 +167,7 @@ public class UbicacionAutomaticaPruebas
             var (_, enEspera) = await e.Sembrar.CrearJugadorEnEsperaAsync(e.Club, anio);
 
             var respuestas = await Task.WhenAll(
-                e.Directivo.PostAsync(Aprobacion(e, enEspera.Id), new { rol = "JUGADOR" }),
+                e.Presidente.PostAsync(Aprobacion(e, enEspera.Id)),
                 e.Presidente.PostAsync(e.Categorias, new { anio }));
 
             Assert.All(respuestas, respuesta => Assert.True(respuesta.IsSuccessStatusCode, $"{anio}: {(int)respuesta.StatusCode}"));

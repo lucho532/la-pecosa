@@ -2,7 +2,7 @@ namespace LaPecosa.Aplicacion.Utilidades;
 
 /// <summary>
 /// Representa los errores del contrato que comparten los casos de uso de las invitaciones:
-/// enviarlas (desde el panel o desde el club), registrarse con una y aceptarla.
+/// enviarlas (al crear un club desde el panel, o desde el club), registrarse con una y aceptarla.
 /// Su responsabilidad es que todos respondan con el mismo código y el mismo texto.
 /// No decide cuándo se produce cada error.
 /// </summary>
@@ -53,6 +53,15 @@ public static class ErroresDeInvitacion
     public static ExcepcionDeAplicacion CorreoDelDesarrollador() => ExcepcionDeAplicacion.Conflicto(
         "correo_del_desarrollador",
         "Ese correo es el de la administración de la plataforma y no puede pertenecer a ningún club.");
+
+    /// <summary>
+    /// 403: el rol indicado al invitar desde el club es PRESIDENTE o DESARROLLADOR. No se crea ni
+    /// se envía nada (RF-002).
+    /// </summary>
+    public static ExcepcionDeAplicacion RolNoInvitable() => new(
+        "rol_no_invitable",
+        403,
+        "Desde el club solo se puede invitar como jugador, entrenador o directivo.");
 
     /// <summary>409: el correo de la invitación ya tiene cuenta.</summary>
     public static ExcepcionDeAplicacion CorreoYaRegistrado() => ExcepcionDeAplicacion.Conflicto(

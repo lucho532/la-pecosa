@@ -39,8 +39,8 @@ en el frontend.
 **Tipo de proyecto**: aplicación web con `backend/` y `frontend/` separados (§4).
 
 **Objetivos de rendimiento**: respuestas de la API por debajo de 300 ms en el percentil 95. Crear
-una categoría en una pantalla y una acción (CE-001); repartir 20 jugadores entre dos equipos con
-un toque por jugador (CE-010).
+una categoría en una pantalla y una acción; repartir 20 jugadores entre dos equipos con un toque
+por jugador.
 
 **Restricciones**: código y documentación en español (§2.1, §3); ningún archivo escrito a mano por
 encima de 250 líneas (§2.3); toda autorización y todo aislamiento en el servidor (§15); backend y

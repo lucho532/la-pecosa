@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { api } from '../../compartido/api/cliente';
-import type { IngresoAprobadoDto, IngresoEnEsperaDto, InvitacionClubDto, Rol } from '../../compartido/api/tipos';
+import type { IngresoAprobadoDto, IngresoEnEsperaDto, InvitacionClubDto } from '../../compartido/api/tipos';
 import { useCarga } from '../../compartido/api/useCarga';
 import { useClub } from '../contextoClub';
 import { SeccionIngresosAprobados } from './SeccionIngresosAprobados';
@@ -8,22 +8,22 @@ import { SeccionInvitacionesClub } from './SeccionInvitacionesClub';
 import { SeccionSalaDeEspera } from './SeccionSalaDeEspera';
 
 /**
- * Apartado "Ingresos" del club, para su presidente y sus directivos: la sala de espera, las
- * invitaciones enviadas y los ingresos aprobados. La API rechaza a cualquier otro rol; aquí
- * simplemente no se le muestra la pantalla.
+ * Apartado "Ingresos" del club, exclusivo de su presidente: la sala de espera, las invitaciones
+ * enviadas y los ingresos aprobados. La API rechaza a cualquier otro rol, también al directivo;
+ * aquí se le devuelve al inicio del club sin pedir ninguna lista.
  */
 export function Ingresos() {
   const { club } = useClub();
 
-  if (club.miRol !== 'PRESIDENTE' && club.miRol !== 'DIRECTIVO') {
+  if (club.miRol !== 'PRESIDENTE') {
     return <Navigate to={`/club/${club.clubId}`} replace />;
   }
 
-  return <SeccionesDeIngresos clubId={club.clubId} miRol={club.miRol} />;
+  return <SeccionesDeIngresos clubId={club.clubId} />;
 }
 
 /** Carga los datos del apartado y compone sus secciones; cada una recarga las que le afectan. */
-function SeccionesDeIngresos({ clubId, miRol }: { clubId: string; miRol: Rol }) {
+function SeccionesDeIngresos({ clubId }: { clubId: string }) {
   const base = `/api/clubes/${clubId}`;
   const enEspera = useCarga(`${clubId}/en-espera`, () =>
     api.get<IngresoEnEsperaDto[]>(`${base}/ingresos/en-espera`),
@@ -42,7 +42,6 @@ function SeccionesDeIngresos({ clubId, miRol }: { clubId: string; miRol: Rol }) 
       </div>
       <SeccionSalaDeEspera
         clubId={clubId}
-        miRol={miRol}
         enEspera={enEspera}
         alCambiar={() => {
           aprobados.recargar();

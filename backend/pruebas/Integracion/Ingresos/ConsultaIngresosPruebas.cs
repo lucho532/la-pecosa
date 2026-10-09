@@ -8,8 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace LaPecosa.Pruebas.Integracion.Ingresos;
 
 /// <summary>
-/// La sala de espera del club y su lista de ingresos aprobados, que solo ven el PRESIDENTE y los
-/// DIRECTIVOS (RF-020 y RF-025a). Acompaña a <see cref="AprobacionPruebas"/>.
+/// La sala de espera del club y su lista de ingresos aprobados, que solo ve el PRESIDENTE (RF-017
+/// y RF-019). Acompaña a <see cref="AprobacionPruebas"/>.
 /// </summary>
 [Collection(ColeccionApi.Nombre)]
 public class ConsultaIngresosPruebas
@@ -21,13 +21,11 @@ public class ConsultaIngresosPruebas
         _fabrica = fabrica;
     }
 
-    [Theory]
-    [InlineData(Rol.PRESIDENTE)]
-    [InlineData(Rol.DIRECTIVO)]
-    public async Task La_sala_de_espera_muestra_a_todos_los_que_esperan_con_sus_datos_del_mas_antiguo_al_mas_reciente(Rol rol)
+    [Fact]
+    public async Task La_sala_de_espera_muestra_a_todos_los_que_esperan_con_sus_datos_del_mas_antiguo_al_mas_reciente()
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
-        var cliente = await _fabrica.ClienteDeAsync(club, rol);
+        var cliente = await _fabrica.ClienteDeAsync(club, Rol.PRESIDENTE);
         await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.JUGADOR);
         var (primera, suIngreso) = await _fabrica.Sembrador.CrearIntegranteEnEsperaAsync(club);
         var (_, segundo) = await _fabrica.Sembrador.CrearIntegranteEnEsperaAsync(club);
@@ -60,6 +58,7 @@ public class ConsultaIngresosPruebas
         var deQuienEspera = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(enEspera);
         var casos = new (ClienteDePrueba Cliente, HttpStatusCode Estado, string Codigo)[]
         {
+            (await _fabrica.ClienteDeAsync(club, Rol.DIRECTIVO), HttpStatusCode.Forbidden, "rol_no_autorizado"),
             (await _fabrica.ClienteDeAsync(club, Rol.ENTRENADOR), HttpStatusCode.Forbidden, "rol_no_autorizado"),
             (await _fabrica.ClienteDeAsync(club, Rol.JUGADOR), HttpStatusCode.Forbidden, "rol_no_autorizado"),
             (deQuienEspera, HttpStatusCode.Forbidden, "ingreso_en_espera"),
@@ -80,7 +79,7 @@ public class ConsultaIngresosPruebas
     }
 
     [Fact]
-    public async Task La_lista_de_aprobados_dice_el_rol_de_ingreso_quien_aprobo_y_cuando_del_mas_reciente_al_mas_antiguo()
+    public async Task La_lista_de_aprobados_dice_quien_aprobo_y_cuando_y_no_incluye_a_quien_entro_con_una_invitacion()
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
         var (presidente, integrantePresidente) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
@@ -91,13 +90,15 @@ public class ConsultaIngresosPruebas
         Assert.Empty(await cliente.ListaAsync(EscenarioIngresos.Aprobados(club)));
 
         await cliente.PostAsync(EscenarioIngresos.Aprobacion(club, primero.Id), new { rol = "JUGADOR" });
-        await cliente.PostAsync(EscenarioIngresos.Aprobacion(club, segundo.Id), new { rol = "DIRECTIVO" });
+        await cliente.PostAsync(EscenarioIngresos.Aprobacion(club, segundo.Id));
+        // Quien entra con una invitación no genera una aprobación (RF-019).
+        var (_, conInvitacion) = await _fabrica.RegistrarConInvitacionAsync(club, Rol.ENTRENADOR);
 
-        // Ni el presidente que entró con invitación del DESARROLLADOR ni quien sigue en espera.
+        // Ni el presidente, ni quien entró con una invitación del club, ni quien sigue en espera.
         var filas = await cliente.ListaAsync(EscenarioIngresos.Aprobados(club));
         Assert.Equal([segundo.Id, primero.Id], filas.Select(fila => fila.GetProperty("usuarioRolId").GetGuid()).ToList());
-        Assert.Equal("DIRECTIVO", filas[0].GetProperty("rolDeIngreso").GetString());
-        Assert.Equal("JUGADOR", filas[1].GetProperty("rolDeIngreso").GetString());
+        Assert.All(filas, fila => Assert.Equal("JUGADOR", fila.GetProperty("rolDeIngreso").GetString()));
+        Assert.DoesNotContain(conInvitacion.Id, filas.Select(fila => fila.GetProperty("usuarioRolId").GetGuid()));
         Assert.Equal(segundo.Nombres, filas[0].GetProperty("nombres").GetString());
         Assert.Equal(segundo.Apellidos, filas[0].GetProperty("apellidos").GetString());
         Assert.Equal(
@@ -106,30 +107,42 @@ public class ConsultaIngresosPruebas
         Assert.DoesNotContain(integrantePresidente.Id, filas.Select(fila => fila.GetProperty("usuarioRolId").GetGuid()));
     }
 
-    [Fact]
-    public async Task La_lista_conserva_el_rol_de_ingreso_y_el_nombre_de_quien_aprobo_aunque_despues_cambien()
+    [Theory]
+    [InlineData(Rol.ENTRENADOR)]
+    [InlineData(Rol.DIRECTIVO)]
+    public async Task Las_aprobaciones_anteriores_conservan_su_rol_de_ingreso_y_quien_aprobo_aunque_fuera_un_directivo(Rol rolDeIngreso)
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
         var presidente = await _fabrica.ClienteDeAsync(club, Rol.PRESIDENTE);
         var (directivo, integranteDirectivo) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.DIRECTIVO);
-        var delDirectivo = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(directivo);
-        var (_, enEspera) = await _fabrica.Sembrador.CrearIntegranteEnEsperaAsync(club);
-        await delDirectivo.PostAsync(EscenarioIngresos.Aprobacion(club, enEspera.Id), new { rol = "ENTRENADOR" });
+        var nombreDelDirectivo = $"{integranteDirectivo.Nombres} {integranteDirectivo.Apellidos}";
+
+        // Una aprobación de antes del cambio: la hizo un directivo y eligió otro rol. Ya no hay
+        // forma de producirla por la API, así que se siembra tal como quedó guardada.
+        var (_, anterior) = await _fabrica.Sembrador.CrearIntegranteAsync(club, rolDeIngreso);
+        var aprobadoEn = DateTime.UtcNow.AddDays(-30);
+        await _fabrica.ConContextoAsync(contexto => IntegrantesDe(contexto.UsuariosRol, anterior.Id)
+            .ExecuteUpdateAsync(cambios => cambios
+                .SetProperty(i => i.RolDeIngreso, rolDeIngreso)
+                .SetProperty(i => i.AprobadoEn, aprobadoEn)
+                .SetProperty(i => i.AprobadoPorUsuarioId, directivo.Id)
+                .SetProperty(i => i.AprobadoPorNombre, nombreDelDirectivo)));
 
         // Después cambia el rol actual de la persona y se elimina la cuenta de quien aprobó (§13).
         await _fabrica.ConContextoAsync(async contexto =>
         {
-            await IntegrantesDe(contexto.UsuariosRol, enEspera.Id)
-                .ExecuteUpdateAsync(cambios => cambios.SetProperty(i => i.Rol, Rol.DIRECTIVO));
+            await IntegrantesDe(contexto.UsuariosRol, anterior.Id)
+                .ExecuteUpdateAsync(cambios => cambios.SetProperty(i => i.Rol, Rol.JUGADOR));
             await IntegrantesDe(contexto.UsuariosRol, integranteDirectivo.Id).ExecuteDeleteAsync();
             return await contexto.Usuarios.Where(u => u.Id == directivo.Id).ExecuteDeleteAsync();
         });
 
         var fila = Assert.Single(await presidente.ListaAsync(EscenarioIngresos.Aprobados(club)));
-        Assert.Equal("ENTRENADOR", fila.GetProperty("rolDeIngreso").GetString());
-        Assert.Equal(
-            $"{integranteDirectivo.Nombres} {integranteDirectivo.Apellidos}", fila.GetProperty("aprobadoPor").GetString());
-        Assert.Null((await _fabrica.IntegranteAsync(enEspera.Id))!.AprobadoPorUsuarioId);
+        Assert.Equal(anterior.Id, fila.GetProperty("usuarioRolId").GetGuid());
+        Assert.Equal(rolDeIngreso.ToString(), fila.GetProperty("rolDeIngreso").GetString());
+        Assert.Equal(nombreDelDirectivo, fila.GetProperty("aprobadoPor").GetString());
+        Assert.Equal(aprobadoEn, fila.GetProperty("aprobadoEn").GetDateTime(), TimeSpan.FromMilliseconds(1));
+        Assert.Null((await _fabrica.IntegranteAsync(anterior.Id))!.AprobadoPorUsuarioId);
     }
 
     private static IQueryable<UsuarioRol> IntegrantesDe(DbSet<UsuarioRol> integrantes, Guid usuarioRolId) =>

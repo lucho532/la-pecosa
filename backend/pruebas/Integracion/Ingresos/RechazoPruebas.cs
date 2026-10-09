@@ -9,13 +9,13 @@ namespace LaPecosa.Pruebas.Integracion.Ingresos;
 
 /// <summary>
 /// Rechazar un ingreso borra a la persona de ese club, no afecta a sus otros clubes y le permite
-/// volver solo con una invitación nueva (constitución §20, RF-027, RF-027a y RF-027b).
+/// volver solo con una invitación nueva; solo rechaza el PRESIDENTE (constitución §20; RF-018).
+/// Quien está en espera se siembra: ningún registro con invitación deja ya a nadie en la sala de
+/// espera.
 /// </summary>
 [Collection(ColeccionApi.Nombre)]
 public class RechazoPruebas
 {
-    private const string Contrasena = "mi-contrasena-propia";
-
     private readonly FabricaApi _fabrica;
 
     public RechazoPruebas(FabricaApi fabrica)
@@ -23,41 +23,43 @@ public class RechazoPruebas
         _fabrica = fabrica;
     }
 
-    [Theory]
-    [InlineData(Rol.PRESIDENTE)]
-    [InlineData(Rol.DIRECTIVO)]
-    public async Task Si_era_su_unico_club_no_queda_nada_suyo_y_solo_vuelve_con_una_invitacion_nueva(Rol quienRechaza)
+    [Fact]
+    public async Task Si_era_su_unico_club_no_queda_nada_suyo_y_solo_vuelve_con_una_invitacion_nueva()
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
-        var cliente = await _fabrica.ClienteDeAsync(club, quienRechaza);
-        var correo = Sembrador.CorreoUnico();
-        var documento = Sembrador.Unico("doc");
-        var (suCliente, tokenUsado) = await InvitarYRegistrarAsync(cliente, club, correo, documento);
-        var enEspera = Assert.Single(await cliente.ListaAsync(EscenarioIngresos.EnEspera(club)));
-        var usuarioRolId = enEspera.GetProperty("usuarioRolId").GetGuid();
-        var usuarioId = (await _fabrica.IntegranteAsync(usuarioRolId))!.UsuarioId;
+        var presidente = await _fabrica.ClienteDeAsync(club, Rol.PRESIDENTE);
+        var (cuenta, enEspera) = await _fabrica.Sembrador.CrearIntegranteEnEsperaAsync(club);
+        var (correo, documento, usuarioRolId, usuarioId) = (cuenta.Correo, enEspera.NumeroDocumento, enEspera.Id, cuenta.Id);
+        var (_, tokenUsado) = await _fabrica.Sembrador.CrearInvitacionAsync(club, correo, usadaEn: DateTime.UtcNow, rol: Rol.JUGADOR);
+        var suCliente = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(cuenta);
         var correosAntes = _fabrica.Correo.Enviados.Count;
 
-        var respuesta = await cliente.PostAsync(EscenarioIngresos.Rechazo(club, usuarioRolId));
+        var respuesta = await presidente.PostAsync(EscenarioIngresos.Rechazo(club, usuarioRolId));
 
         Assert.Equal(HttpStatusCode.NoContent, respuesta.StatusCode);
-        Assert.Empty(await cliente.ListaAsync(EscenarioIngresos.EnEspera(club)));
+        Assert.Empty(await presidente.ListaAsync(EscenarioIngresos.EnEspera(club)));
         Assert.Null(await _fabrica.IntegranteAsync(usuarioRolId));
-        Assert.Empty(await cliente.ListaAsync($"/api/clubes/{club.Id}/invitaciones"));
+        Assert.Empty(await presidente.ListaAsync($"/api/clubes/{club.Id}/invitaciones"));
         Assert.False(await _fabrica.ExisteCuentaAsync(usuarioId));
         // No se le avisa: ni correo, ni mensaje distinto al de cualquier inicio de sesión fallido.
         Assert.Equal(correosAntes, _fabrica.Correo.Enviados.Count);
         Assert.Equal(HttpStatusCode.Unauthorized, (await suCliente.GetAsync("/api/sesion")).StatusCode);
-        var entrar = await _fabrica.CrearClienteDePrueba().IniciarSesionAsync(correo, Contrasena);
+        var entrar = await _fabrica.CrearClienteDePrueba().IniciarSesionAsync(correo);
         Assert.Equal("credenciales_invalidas", await ClienteDePrueba.CodigoAsync(entrar));
 
-        // Sin invitación nueva no puede volver; con ella, sí, con el mismo correo y documento (RF-027b).
-        var conLaAnterior = await _fabrica.CrearClienteDePrueba().PostAsync("/api/invitaciones/registro", Datos(tokenUsado, documento));
+        // Sin invitación nueva no puede volver; con ella, sí, con el mismo correo y documento, y
+        // entra ya aprobada, sin pasar otra vez por la sala de espera.
+        var anonimo = _fabrica.CrearClienteDePrueba();
+        var conLaAnterior = await anonimo.PostAsync("/api/invitaciones/registro", EscenarioIngresos.DatosDeRegistro(tokenUsado, documento));
         Assert.Equal(HttpStatusCode.Gone, conLaAnterior.StatusCode);
-        await InvitarYRegistrarAsync(cliente, club, correo, documento);
-        var deNuevo = Assert.Single(await cliente.ListaAsync(EscenarioIngresos.EnEspera(club)));
-        Assert.Equal(documento, deNuevo.GetProperty("numeroDocumento").GetString());
-        Assert.NotEqual(usuarioRolId, deNuevo.GetProperty("usuarioRolId").GetGuid());
+        Assert.Equal(HttpStatusCode.Created, (await presidente.InvitarAsync(club, correo, Rol.JUGADOR)).StatusCode);
+        var tokenNuevo = _fabrica.Correo.UltimoToken("invitacion", correo);
+        var conLaNueva = await anonimo.PostAsync("/api/invitaciones/registro", EscenarioIngresos.DatosDeRegistro(tokenNuevo, documento));
+        Assert.Equal(HttpStatusCode.Created, conLaNueva.StatusCode);
+        var deNuevo = await _fabrica.IntegranteDeDocumentoAsync(club, documento);
+        Assert.NotEqual(usuarioRolId, deNuevo.Id);
+        Assert.Equal(EstadoIngreso.APROBADO, deNuevo.EstadoIngreso);
+        Assert.Empty(await presidente.ListaAsync(EscenarioIngresos.EnEspera(club)));
     }
 
     [Fact]
@@ -105,7 +107,7 @@ public class RechazoPruebas
         var presidente = await _fabrica.ClienteDeAsync(club, Rol.PRESIDENTE);
         var (cuenta, aprobado) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.JUGADOR);
         var (_, reciente) = await _fabrica.Sembrador.CrearIntegranteEnEsperaAsync(club);
-        await presidente.PostAsync(EscenarioIngresos.Aprobacion(club, reciente.Id), new { rol = "DIRECTIVO" });
+        await presidente.PostAsync(EscenarioIngresos.Aprobacion(club, reciente.Id));
 
         foreach (var usuarioRolId in new[] { aprobado.Id, reciente.Id })
         {
@@ -120,7 +122,7 @@ public class RechazoPruebas
     }
 
     [Fact]
-    public async Task Un_entrenador_un_jugador_una_cuenta_en_espera_y_quien_no_tiene_sesion_no_rechazan()
+    public async Task Un_directivo_un_entrenador_un_jugador_una_cuenta_en_espera_y_quien_no_tiene_sesion_no_rechazan()
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
         var (_, enEspera) = await _fabrica.Sembrador.CrearIntegranteEnEsperaAsync(club);
@@ -128,6 +130,7 @@ public class RechazoPruebas
         var ruta = EscenarioIngresos.Rechazo(club, enEspera.Id);
         var casos = new (ClienteDePrueba Cliente, HttpStatusCode Estado, string Codigo)[]
         {
+            (await _fabrica.ClienteDeAsync(club, Rol.DIRECTIVO), HttpStatusCode.Forbidden, "rol_no_autorizado"),
             (await _fabrica.ClienteDeAsync(club, Rol.ENTRENADOR), HttpStatusCode.Forbidden, "rol_no_autorizado"),
             (await _fabrica.ClienteDeAsync(club, Rol.JUGADOR), HttpStatusCode.Forbidden, "rol_no_autorizado"),
             (await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(otra), HttpStatusCode.Forbidden, "ingreso_en_espera"),
@@ -170,12 +173,12 @@ public class RechazoPruebas
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
         var presidente = await _fabrica.ClienteDeAsync(club, Rol.PRESIDENTE);
-        var directivo = await _fabrica.ClienteDeAsync(club, Rol.DIRECTIVO);
+        var otroPresidente = await _fabrica.ClienteDeAsync(club, Rol.PRESIDENTE);
         var (cuenta, enEspera) = await _fabrica.Sembrador.CrearIntegranteEnEsperaAsync(club);
 
         var respuestas = await Task.WhenAll(
-            presidente.PostAsync(EscenarioIngresos.Aprobacion(club, enEspera.Id), new { rol = "JUGADOR" }),
-            directivo.PostAsync(EscenarioIngresos.Rechazo(club, enEspera.Id)));
+            presidente.PostAsync(EscenarioIngresos.Aprobacion(club, enEspera.Id)),
+            otroPresidente.PostAsync(EscenarioIngresos.Rechazo(club, enEspera.Id)));
         var (aprobacion, rechazo) = (respuestas[0].StatusCode, respuestas[1].StatusCode);
 
         var final = await _fabrica.IntegranteAsync(enEspera.Id);
@@ -193,31 +196,6 @@ public class RechazoPruebas
             Assert.False(await _fabrica.ExisteCuentaAsync(cuenta.Id));
         }
     }
-
-    private async Task<(ClienteDePrueba Cliente, string Token)> InvitarYRegistrarAsync(
-        ClienteDePrueba deQuienInvita, Club club, string correo, string documento)
-    {
-        var invitar = await deQuienInvita.PostAsync($"/api/clubes/{club.Id}/invitaciones", new { correo });
-        Assert.Equal(HttpStatusCode.Created, invitar.StatusCode);
-        var token = _fabrica.Correo.UltimoToken("invitacion", correo);
-        var cliente = _fabrica.CrearClienteDePrueba();
-        var registro = await cliente.PostAsync("/api/invitaciones/registro", Datos(token, documento));
-        Assert.Equal(HttpStatusCode.Created, registro.StatusCode);
-        cliente.UsarToken((await ClienteDePrueba.LeerAsync<JsonElement>(registro)).GetProperty("token").GetString()!);
-        return (cliente, token);
-    }
-
-    private static object Datos(string token, string numeroDocumento) => new
-    {
-        token,
-        nombres = "Ana",
-        apellidos = "Pérez",
-        tipoDocumento = "CEDULA_CIUDADANIA",
-        numeroDocumento,
-        fechaNacimiento = "1988-03-15",
-        celular = "3001234567",
-        contrasena = Contrasena,
-    };
 
     private Task<bool> ExisteInvitacionAsync(Guid invitacionId) => _fabrica.ConContextoAsync(contexto =>
         contexto.Invitaciones.IgnoreQueryFilters().AnyAsync(invitacion => invitacion.Id == invitacionId));

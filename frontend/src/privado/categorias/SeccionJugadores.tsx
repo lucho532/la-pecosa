@@ -24,7 +24,7 @@ interface Props {
 /**
  * Jugadores de una categoría: nombre, apellidos, año de nacimiento y equipos, y nada más (RF-032).
  * A quien está en una categoría que no es la de su año se le señala con texto, no solo con color
- * (RF-016). El presidente ve una casilla por equipo en cada fila, que guarda al instante (CE-010),
+ * (RF-016). El presidente ve una casilla por equipo en cada fila, que guarda al instante,
  * y puede pasar a cada jugador a otra categoría.
  */
 export function SeccionJugadores({ clubId, categoria, esPresidente, alCambiar, alRecargar }: Props) {

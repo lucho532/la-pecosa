@@ -3,10 +3,12 @@ using LaPecosa.Aplicacion.DTOs;
 namespace LaPecosa.Aplicacion.Servicios;
 
 /// <summary>
-/// Representa las consultas del apartado "Ingresos" de un club (RF-020 y RF-025a).
+/// Representa las consultas del apartado "Ingresos" de un club (RF-017 y RF-019).
 /// Su responsabilidad es entregar la sala de espera y la lista de ingresos aprobados del club de
-/// la petición.
-/// No modifica nada ni decide quién puede consultarlas: eso lo comprueba la autorización.
+/// la petición. Quien entró con una invitación no aparece en ninguna de las dos: se ve en la lista
+/// de invitaciones, como invitación usada.
+/// No modifica nada ni decide quién puede consultarlas: eso lo comprueba la autorización, que solo
+/// admite al PRESIDENTE.
 /// </summary>
 public interface IServicioConsultaIngresos
 {

@@ -597,15 +597,13 @@ DIRECTIVO y se comprueba que ve las dos y ninguna opción para modificarlas.
 
 ### Resultados medibles
 
-- **CE-001**: El PRESIDENTE crea una categoría en menos de 15 segundos desde que abre el apartado
-  "Categorías".
-- **CE-002**: Un club nuevo deja creadas sus categorías y asignados sus entrenadores en menos de
-  10 minutos, sin ayuda.
+Los criterios de tiempo de uso (CE-001, CE-002, CE-005, CE-010 y CE-013) los retiró el
+propietario el 2026-10-08. Los demás conservan su número.
+
 - **CE-003**: En el 100 % de los ingresos aprobados como jugador cuya categoría de año existe y
   está activa, el jugador queda en ella sin ninguna acción adicional.
 - **CE-004**: En el 100 % de los casos probados, al crear una categoría entran en ella todos los
   jugadores sin categoría nacidos ese año, y ninguno más.
-- **CE-005**: El PRESIDENTE pasa a un jugador de una categoría a otra en menos de 30 segundos.
 - **CE-006**: En el 100 % de los intentos probados, solo el PRESIDENTE del club consigue crear,
   desactivar, reactivar o borrar categorías y equipos, asignar o retirar entrenadores y ubicar
   jugadores.
@@ -614,13 +612,10 @@ DIRECTIVO y se comprueba que ve las dos y ninguna opción para modificarlas.
 - **CE-008**: En el 100 % de los intentos probados, nadie obtiene datos de las categorías de otro
   club.
 - **CE-009**: Ningún jugador aparece en dos categorías a la vez en ninguna de las pruebas.
-- **CE-010**: El PRESIDENTE divide una categoría en dos equipos y reparte a 20 jugadores entre
-  ellos en menos de 5 minutos.
 - **CE-011**: En el 100 % de los casos probados, la familia de un jugador con categoría ve el
   nombre de todos los entrenadores de esa categoría, y ningún otro dato de ellos.
 - **CE-012**: En el 100 % de los intentos probados, un PRESIDENTE o un DIRECTIVO asignado como
   entrenador conserva exactamente lo que podía hacer con su rol.
-- **CE-013**: El PRESIDENTE retira a un jugador en menos de 30 segundos.
 - **CE-014**: En el 100 % de los intentos probados, un jugador retirado no obtiene ningún dato del
   club, ni siquiera usando directamente identificadores, y no se pierde ningún dato suyo.
 - **CE-015**: Todas las pantallas de la funcionalidad se usan sin desplazamiento horizontal en un

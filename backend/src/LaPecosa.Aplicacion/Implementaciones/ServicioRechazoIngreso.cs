@@ -12,7 +12,8 @@ namespace LaPecosa.Aplicacion.Implementaciones;
 /// acción), las invitaciones del club enviadas a su correo y, si se quedó sin ningún club, su
 /// cuenta. Es la eliminación física que justifica la constitución §14.
 /// No rechaza a un integrante aprobado, no modifica los otros clubes de la persona, no envía
-/// correos y no deja registro del rechazo. No accede al contexto de Entity Framework ni conoce HTTP.
+/// correos y no deja registro del rechazo. No comprueba quién rechaza: solo llega aquí el
+/// PRESIDENTE. No accede al contexto de Entity Framework ni conoce HTTP.
 /// </summary>
 public class ServicioRechazoIngreso : IServicioRechazoIngreso
 {

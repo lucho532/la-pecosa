@@ -5,20 +5,20 @@ using LaPecosa.Aplicacion.Servicios;
 using LaPecosa.Aplicacion.Utilidades;
 using LaPecosa.Dominio.Entidades;
 using LaPecosa.Dominio.Enumeraciones;
-using LaPecosa.Dominio.Reglas;
 
 namespace LaPecosa.Aplicacion.Implementaciones;
 
 /// <summary>
 /// Representa el servicio que aprueba un ingreso en espera.
-/// Su responsabilidad es comprobar con las reglas del dominio que quien aprueba puede hacerlo y
-/// puede dejar ese rol, y aprobar con una única sentencia condicionada a que el ingreso siga en
-/// espera: si no cambia ninguna fila, el ingreso ya estaba aprobado (409) o fue rechazado (404), y
-/// nunca hay un segundo efecto (RF-026). Si la persona queda como JUGADOR, en la misma transacción
-/// y con el club bloqueado la ubica en la categoría activa de su año de nacimiento; si el club no
-/// la tiene, el ingreso se aprueba igual y queda sin categoría (RF-008 y RF-009 de la 003).
-/// No asigna equipo, no genera cobros ni envía correos. No accede al contexto de Entity Framework
-/// ni conoce HTTP.
+/// Su responsabilidad es negar la aprobación que indique un rol distinto de JUGADOR y aprobar con
+/// una única sentencia condicionada a que el ingreso siga en espera: si no cambia ninguna fila, el
+/// ingreso ya estaba aprobado (409) o fue rechazado (404), y nunca hay un segundo efecto. La
+/// persona queda siempre como JUGADOR (RF-016) y, en la misma transacción y con el club bloqueado,
+/// en la categoría activa de su año de nacimiento; si el club no la tiene, el ingreso se aprueba
+/// igual y queda sin categoría.
+/// No deja elegir rol ni comprueba quién aprueba: solo llega aquí el PRESIDENTE, que nunca está en
+/// espera. No asigna equipo, no genera cobros ni envía correos. No accede al contexto de Entity
+/// Framework ni conoce HTTP.
 /// </summary>
 public class ServicioAprobacionIngreso : IServicioAprobacionIngreso
 {
@@ -45,26 +45,12 @@ public class ServicioAprobacionIngreso : IServicioAprobacionIngreso
 
     /// <inheritdoc />
     public async Task<IngresoAprobadoDto> AprobarAsync(
-        Guid usuarioRolId, AprobarIngresoDto datos, UsuarioRol quienAprueba, CancellationToken cancelacion = default)
+        Guid usuarioRolId, AprobarIngresoDto? datos, UsuarioRol quienAprueba, CancellationToken cancelacion = default)
     {
-        var errores = new ErroresDeValidacion();
-        if (datos.Rol is null || !Enum.IsDefined(datos.Rol.Value))
+        // Sin cuerpo, sin rol o con JUGADOR se aprueba; cualquier otro rol se niega (RF-016).
+        if (datos?.Rol is { } rolIndicado && rolIndicado != Rol.JUGADOR)
         {
-            errores.Agregar("rol", "Elige cómo entra la persona: jugador, entrenador o directivo.");
-        }
-
-        errores.LanzarSiHayErrores();
-        var rol = datos.Rol!.Value;
-
-        if (!ReglaAprobacionIngreso.PuedeAprobar(quienAprueba.Rol, quienAprueba.Id, usuarioRolId))
-        {
-            throw new ExcepcionDeAplicacion("rol_no_autorizado", 403, "Tu rol en este club no permite hacer esto.");
-        }
-
-        if (!ReglaAprobacionIngreso.PuedeAsignar(quienAprueba.Rol, rol))
-        {
-            throw new ExcepcionDeAplicacion(
-                "rol_no_asignable", 403, "No puedes asignar ese rol al aprobar un ingreso.");
+            throw ErroresDeIngreso.RolNoAsignable();
         }
 
         return await _unidadDeTrabajo.EnTransaccionAsync(
@@ -77,7 +63,6 @@ public class ServicioAprobacionIngreso : IServicioAprobacionIngreso
                 // El nombre de quien aprueba se copia tal como es ahora (§13).
                 var aprobado = await _ingresos.AprobarAsync(
                     usuarioRolId,
-                    rol,
                     _reloj.AhoraUtc,
                     quienAprueba.UsuarioId,
                     $"{quienAprueba.Nombres} {quienAprueba.Apellidos}",
@@ -90,10 +75,7 @@ public class ServicioAprobacionIngreso : IServicioAprobacionIngreso
                     throw ErroresDeIngreso.YaAprobado();
                 }
 
-                if (rol == Rol.JUGADOR)
-                {
-                    await _ubicador.UbicarAUnoAsync(integrante, cancelacion);
-                }
+                await _ubicador.UbicarAUnoAsync(integrante, cancelacion);
 
                 return MapperIngresos.AIngresoAprobado(integrante);
             },

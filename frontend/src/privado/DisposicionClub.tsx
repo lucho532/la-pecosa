@@ -24,9 +24,9 @@ const SESION_DESACTUALIZADA = ['ingreso_en_espera', 'integrante_retirado', 'no_e
 
 /**
  * Entrada al club elegido. Antes de pedir nada al club mira el estado de ingreso que trae la
- * sesión: quien está en espera ve solo la sala de espera (RF-015) y no se llama a la API del club,
- * que se lo negaría. Lo mismo quien fue retirado del club: solo ve el aviso de que ya no está en
- * él. Los demás ven la aplicación del club.
+ * sesión: quien está en espera ve solo la sala de espera y no se llama a la API del club, que se
+ * lo negaría. Lo mismo quien fue retirado del club: solo ve el aviso de que ya no está en él. Los
+ * demás, también quien acaba de registrarse con una invitación, ven la aplicación del club.
  */
 export function DisposicionClub() {
   const { clubId = '' } = useParams();
@@ -101,7 +101,7 @@ function AplicacionDelClub({ clubId, deSesion }: Props) {
           <NavLink to={`/club/${clubId}`} end>
             Inicio
           </NavLink>
-          {(rol === 'PRESIDENTE' || rol === 'DIRECTIVO') && <NavLink to={`/club/${clubId}/ingresos`}>Ingresos</NavLink>}
+          {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/ingresos`}>Ingresos</NavLink>}
           {rol && puedeVerCategorias(rol) && <NavLink to={`/club/${clubId}/categorias`}>Categorías</NavLink>}
           {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/configuracion`}>Datos del club</NavLink>}
         </nav>

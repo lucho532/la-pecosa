@@ -9,8 +9,9 @@ using Microsoft.EntityFrameworkCore;
 namespace LaPecosa.Pruebas.Integracion.Ingresos;
 
 /// <summary>
-/// Ingresos en un club suspendido y en uno dado de baja (RF-030): suspendido, solo su PRESIDENTE
-/// opera y los enlaces siguen sirviendo; dado de baja, nada funciona hasta revertir la baja.
+/// Ingresos en un club suspendido y en uno dado de baja (RF-021): suspendido, solo su PRESIDENTE
+/// opera, con sus tres roles, y los enlaces siguen sirviendo; dado de baja, nada funciona hasta
+/// revertir la baja.
 /// </summary>
 [Collection(ColeccionApi.Nombre)]
 public class IngresosPorEstadoDelClubPruebas
@@ -36,12 +37,19 @@ public class IngresosPorEstadoDelClubPruebas
         var (_, paraRechazar) = await _fabrica.Sembrador.CrearIntegranteEnEsperaAsync(club);
         var invitaciones = $"/api/clubes/{club.Id}/invitaciones";
 
-        var invitar = await presidente.PostAsync(invitaciones, new { correo = Sembrador.CorreoUnico() });
+        // Suspendido, el presidente sigue invitando con cualquiera de sus tres roles (RF-021).
+        foreach (var rol in new[] { Rol.ENTRENADOR, Rol.DIRECTIVO })
+        {
+            var conOtroRol = await presidente.InvitarAsync(club, Sembrador.CorreoUnico(), rol);
+            Assert.Equal(HttpStatusCode.Created, conOtroRol.StatusCode);
+        }
+
+        var invitar = await presidente.PostAsync(invitaciones, new { correo = Sembrador.CorreoUnico(), rol = "JUGADOR" });
         var invitacionId = (await ClienteDePrueba.LeerAsync<JsonElement>(invitar)).GetProperty("invitacionId").GetGuid();
         var reenviar = await presidente.PostAsync($"{invitaciones}/{invitacionId}/reenvio");
         var nuevaId = (await ClienteDePrueba.LeerAsync<JsonElement>(reenviar)).GetProperty("invitacionId").GetGuid();
         var cancelar = await presidente.PostAsync($"{invitaciones}/{nuevaId}/cancelacion");
-        var aprobar = await presidente.PostAsync(EscenarioIngresos.Aprobacion(club, paraAprobar.Id), new { rol = "DIRECTIVO" });
+        var aprobar = await presidente.PostAsync(EscenarioIngresos.Aprobacion(club, paraAprobar.Id));
         var rechazar = await presidente.PostAsync(EscenarioIngresos.Rechazo(club, paraRechazar.Id));
 
         Assert.Equal(HttpStatusCode.Created, invitar.StatusCode);
@@ -79,7 +87,7 @@ public class IngresosPorEstadoDelClubPruebas
         {
             await cliente.PostAsync(EscenarioIngresos.Aprobacion(club, enEspera.Id), new { rol = "JUGADOR" }),
             await cliente.PostAsync(EscenarioIngresos.Rechazo(club, enEspera.Id)),
-            await cliente.PostAsync($"/api/clubes/{club.Id}/invitaciones", new { correo = Sembrador.CorreoUnico() }),
+            await cliente.PostAsync($"/api/clubes/{club.Id}/invitaciones", new { correo = Sembrador.CorreoUnico(), rol = "JUGADOR" }),
         };
         foreach (var respuesta in reales)
         {
@@ -90,11 +98,11 @@ public class IngresosPorEstadoDelClubPruebas
     }
 
     [Fact]
-    public async Task En_un_club_suspendido_el_enlace_sigue_sirviendo_y_quien_se_registra_queda_en_espera()
+    public async Task En_un_club_suspendido_quien_se_registra_queda_aprobado_ve_el_aviso_y_entra_al_levantar_la_suspension()
     {
         var club = await _fabrica.Sembrador.CrearClubAsync(estado: EstadoClub.SUSPENDIDO);
         var venceEn = DateTime.UtcNow.AddDays(2);
-        var (invitacion, token) = await _fabrica.Sembrador.CrearInvitacionAsync(club, venceEn: venceEn, rol: Rol.JUGADOR);
+        var (invitacion, token) = await _fabrica.Sembrador.CrearInvitacionAsync(club, venceEn: venceEn, rol: Rol.ENTRENADOR);
         var cliente = _fabrica.CrearClienteDePrueba();
 
         var consulta = await cliente.PostAsync("/api/invitaciones/consulta", new { token });
@@ -105,11 +113,21 @@ public class IngresosPorEstadoDelClubPruebas
         cliente.UsarToken((await ClienteDePrueba.LeerAsync<JsonElement>(registro)).GetProperty("token").GetString()!);
         var sesion = await ClienteDePrueba.LeerAsync<JsonElement>(await cliente.GetAsync("/api/sesion"));
         var unico = Assert.Single(sesion.GetProperty("clubes").EnumerateArray());
-        Assert.Equal("EN_ESPERA", unico.GetProperty("estadoIngreso").GetString());
-        // La cuenta en espera de un club suspendido recibe el motivo del club (supuesto 2).
-        Assert.Equal("club_suspendido", await ClienteDePrueba.CodigoAsync(await cliente.GetAsync($"/api/clubes/{club.Id}")));
+        Assert.Equal("APROBADO", unico.GetProperty("estadoIngreso").GetString());
+        Assert.Equal("ENTRENADOR", unico.GetProperty("rol").GetString());
+        // Como cualquier integrante que no es el presidente, ve el aviso de incidencia temporal (RF-021).
+        var suspendido = await cliente.GetAsync($"/api/clubes/{club.Id}");
+        Assert.Equal(HttpStatusCode.Forbidden, suspendido.StatusCode);
+        Assert.Equal("club_suspendido", await ClienteDePrueba.CodigoAsync(suspendido));
         // La suspensión no alarga el plazo de la invitación.
         Assert.Equal(invitacion.VenceEn, (await InvitacionAsync(invitacion.Id)).VenceEn, TimeSpan.FromMilliseconds(1));
+
+        // Al levantar la suspensión entra con su rol, sin pasar por ninguna aprobación.
+        var desarrollador = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
+        await desarrollador.PutAsync($"/api/plataforma/clubes/{club.Id}/estado", new { estado = "ACTIVO" });
+        var activo = await cliente.GetAsync($"/api/clubes/{club.Id}");
+        Assert.Equal(HttpStatusCode.OK, activo.StatusCode);
+        Assert.Equal("ENTRENADOR", (await ClienteDePrueba.LeerAsync<JsonElement>(activo)).GetProperty("miRol").GetString());
     }
 
     [Fact]
@@ -150,17 +168,7 @@ public class IngresosPorEstadoDelClubPruebas
         Assert.Equal(HttpStatusCode.Created, (await suCliente.PostAsync("/api/invitaciones/aceptacion", new { token = paraAceptar })).StatusCode);
     }
 
-    private static object Datos(string token) => new
-    {
-        token,
-        nombres = "Ana",
-        apellidos = "Pérez",
-        tipoDocumento = "CEDULA_CIUDADANIA",
-        numeroDocumento = Sembrador.Unico("doc"),
-        fechaNacimiento = "1988-03-15",
-        celular = "3001234567",
-        contrasena = "mi-contrasena-propia",
-    };
+    private static object Datos(string token) => EscenarioIngresos.DatosDeRegistro(token);
 
     private Task<Invitacion> InvitacionAsync(Guid invitacionId) => _fabrica.ConContextoAsync(contexto =>
         contexto.Invitaciones.IgnoreQueryFilters().AsNoTracking().SingleAsync(invitacion => invitacion.Id == invitacionId));

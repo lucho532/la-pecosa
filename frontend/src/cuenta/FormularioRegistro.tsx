@@ -44,8 +44,10 @@ interface Props {
 
 /**
  * Registro con invitación. El correo, el club y el rol vienen de la invitación y no se pueden
- * cambiar; la persona escribe sus datos y crea su propia contraseña. El responsable es obligatorio
- * si, por su fecha de nacimiento, quien ingresa es menor de 18 años; lo comprueba la API.
+ * cambiar; la persona escribe sus datos y crea su propia contraseña, y al terminar entra
+ * directamente al club. El nombre del responsable solo se pide, y solo se envía, cuando la
+ * invitación es de jugador: es obligatorio si, por su fecha de nacimiento, quien ingresa es menor
+ * de 18 años; lo comprueba la API.
  */
 export function FormularioRegistro({ token, invitacion }: Props) {
   const { iniciar } = useSesion();
@@ -68,10 +70,10 @@ export function FormularioRegistro({ token, invitacion }: Props) {
       const cuerpo: RegistrarConInvitacionDto = {
         token,
         ...datos,
-        nombreResponsable: datos.nombreResponsable.trim() || null,
+        nombreResponsable: invitacion.pideResponsable ? datos.nombreResponsable.trim() || null : null,
       };
       const sesion = await iniciar(await api.post<TokenSesionDto>('/api/invitaciones/registro', cuerpo));
-      // Con una invitación del club entra a la sala de espera de ese club.
+      // Entra aprobado: la ruta del club muestra ya su aplicación, sin pantalla de espera.
       navegar(sesion.clubes.length > 0 ? `/club/${sesion.clubes[0].clubId}` : '/', { replace: true });
     } catch (fallo) {
       if (fallo instanceof ErrorApi && fallo.codigo === 'datos_invalidos') {
@@ -89,10 +91,9 @@ export function FormularioRegistro({ token, invitacion }: Props) {
   return (
     <form className="columna" onSubmit={enviar} noValidate>
       {error && <Aviso tono="error">{error}</Aviso>}
-      {invitacion.pasaPorSalaDeEspera && (
+      {invitacion.pideResponsable && (
         <Aviso tono="info">
-          Si quien ingresa es un jugador, escribe los datos y el documento del jugador; el correo es el de su
-          acudiente. Un entrenador o un directivo se registra con sus propios datos y su propio documento.
+          Escribe los datos y el documento del jugador, no los de su familia; el correo es el de su acudiente.
         </Aviso>
       )}
       <Campo etiqueta="Correo" valor={invitacion.correo} readOnly ayuda="Es el correo de la invitación." />
@@ -150,20 +151,22 @@ export function FormularioRegistro({ token, invitacion }: Props) {
           maxLength={20}
         />
       </div>
-      <Campo
-        etiqueta={`Nombre del padre, madre o responsable (${esMenor ? 'obligatorio' : 'opcional'})`}
-        valor={datos.nombreResponsable}
-        alCambiar={cambiar('nombreResponsable')}
-        error={errorDe('nombreResponsable')}
-        ayuda={
-          esMenor
-            ? 'Es obligatorio porque quien ingresa es menor de 18 años.'
-            : 'Es obligatorio si quien ingresa es menor de 18 años.'
-        }
-        required={esMenor}
-        autoComplete="off"
-        maxLength={160}
-      />
+      {invitacion.pideResponsable && (
+        <Campo
+          etiqueta={`Nombre del padre, madre o responsable (${esMenor ? 'obligatorio' : 'opcional'})`}
+          valor={datos.nombreResponsable}
+          alCambiar={cambiar('nombreResponsable')}
+          error={errorDe('nombreResponsable')}
+          ayuda={
+            esMenor
+              ? 'Es obligatorio porque quien ingresa es menor de 18 años.'
+              : 'Es obligatorio si quien ingresa es menor de 18 años.'
+          }
+          required={esMenor}
+          autoComplete="off"
+          maxLength={160}
+        />
+      )}
       <Campo
         etiqueta="Contraseña"
         type="password"

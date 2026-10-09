@@ -7,8 +7,9 @@ using LaPecosa.Pruebas.Integracion.Base;
 namespace LaPecosa.Pruebas.Integracion.Ingresos;
 
 /// <summary>
-/// Solo el PRESIDENTE o un DIRECTIVO envían invitaciones de registro a su club (constitución §20,
-/// RF-001 a RF-008).
+/// Solo el PRESIDENTE envía invitaciones de registro a su club (constitución §20). Los casos del
+/// rol de la invitación están en <see cref="InvitacionConRolPruebas"/> y los de quien no es
+/// presidente, con los cuatro endpoints, en <see cref="SoloPresidenteIngresosPruebas"/>.
 /// </summary>
 [Collection(ColeccionApi.Nombre)]
 public class InvitacionesClubPruebas
@@ -20,17 +21,15 @@ public class InvitacionesClubPruebas
         _fabrica = fabrica;
     }
 
-    [Theory]
-    [InlineData(Rol.PRESIDENTE)]
-    [InlineData(Rol.DIRECTIVO)]
-    public async Task El_presidente_y_un_directivo_invitan_y_la_invitacion_queda_pendiente_a_7_dias(Rol rol)
+    [Fact]
+    public async Task El_presidente_invita_y_la_invitacion_queda_pendiente_a_7_dias()
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
-        var (usuario, integrante) = await _fabrica.Sembrador.CrearIntegranteAsync(club, rol);
+        var (usuario, integrante) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(usuario);
         var correo = Sembrador.CorreoUnico();
 
-        var respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo = $"  {correo.ToUpperInvariant()} " });
+        var respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo = $"  {correo.ToUpperInvariant()} ", rol = "JUGADOR" });
 
         Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
         var creada = await ClienteDePrueba.LeerAsync<JsonElement>(respuesta);
@@ -68,7 +67,7 @@ public class InvitacionesClubPruebas
     {
         var (club, cliente) = await ClubConPresidenteAsync();
 
-        var respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo });
+        var respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo, rol = "JUGADOR" });
         var sinCampo = await cliente.PostAsync(Ruta(club.Id), new { });
 
         foreach (var invalida in new[] { respuesta, sinCampo })
@@ -101,7 +100,7 @@ public class InvitacionesClubPruebas
         var mensajes = new HashSet<string>();
         foreach (var (correo, codigo) in casos)
         {
-            var respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo });
+            var respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo, rol = "JUGADOR" });
 
             Assert.Equal(HttpStatusCode.Conflict, respuesta.StatusCode);
             Assert.Equal(codigo, await ClienteDePrueba.CodigoAsync(respuesta));
@@ -121,7 +120,7 @@ public class InvitacionesClubPruebas
         var otroClub = await _fabrica.Sembrador.CrearClubAsync();
         var (deOtroClub, _) = await _fabrica.Sembrador.CrearIntegranteAsync(otroClub, Rol.DIRECTIVO);
 
-        var respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo = deOtroClub.Correo });
+        var respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo = deOtroClub.Correo, rol = "JUGADOR" });
 
         Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
     }
@@ -133,9 +132,9 @@ public class InvitacionesClubPruebas
         var correo = Sembrador.CorreoUnico();
         var anonimo = _fabrica.CrearClienteDePrueba();
 
-        await cliente.PostAsync(Ruta(club.Id), new { correo });
+        await cliente.PostAsync(Ruta(club.Id), new { correo, rol = "JUGADOR" });
         var tokenAnterior = _fabrica.Correo.UltimoToken("invitacion", correo);
-        var segunda = await ClienteDePrueba.LeerAsync<JsonElement>(await cliente.PostAsync(Ruta(club.Id), new { correo }));
+        var segunda = await ClienteDePrueba.LeerAsync<JsonElement>(await cliente.PostAsync(Ruta(club.Id), new { correo, rol = "JUGADOR" }));
         var tokenNuevo = _fabrica.Correo.UltimoToken("invitacion", correo);
 
         Assert.NotEqual(tokenAnterior, tokenNuevo);
@@ -158,7 +157,7 @@ public class InvitacionesClubPruebas
         _fabrica.Correo.FallarEnvios = true;
         try
         {
-            respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo });
+            respuesta = await cliente.PostAsync(Ruta(club.Id), new { correo, rol = "JUGADOR" });
         }
         finally
         {
@@ -193,9 +192,10 @@ public class InvitacionesClubPruebas
     }
 
     [Theory]
+    [InlineData(Rol.DIRECTIVO)]
     [InlineData(Rol.ENTRENADOR)]
     [InlineData(Rol.JUGADOR)]
-    public async Task Un_entrenador_y_un_jugador_reciben_403_sin_datos_al_listar_y_al_invitar(Rol rol)
+    public async Task Quien_no_es_presidente_recibe_403_sin_datos_al_listar_y_al_invitar(Rol rol)
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
         var (invitada, _) = await _fabrica.Sembrador.CrearInvitacionAsync(club, rol: Rol.JUGADOR);
@@ -205,7 +205,7 @@ public class InvitacionesClubPruebas
         var correo = Sembrador.CorreoUnico();
 
         var listar = await cliente.GetAsync(Ruta(club.Id));
-        var invitar = await cliente.PostAsync(Ruta(club.Id), new { correo });
+        var invitar = await cliente.PostAsync(Ruta(club.Id), new { correo, rol = "JUGADOR" });
 
         foreach (var respuesta in new[] { listar, invitar })
         {
@@ -216,7 +216,7 @@ public class InvitacionesClubPruebas
 
         Assert.Equal(0, _fabrica.Correo.Contar("invitacion", correo));
         Assert.Equal(HttpStatusCode.Unauthorized, (await sinSesion.GetAsync(Ruta(club.Id))).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await sinSesion.PostAsync(Ruta(club.Id), new { correo })).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await sinSesion.PostAsync(Ruta(club.Id), new { correo, rol = "JUGADOR" })).StatusCode);
     }
 
     private static string Ruta(Guid clubId) => $"/api/clubes/{clubId}/invitaciones";

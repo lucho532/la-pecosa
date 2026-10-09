@@ -4,12 +4,13 @@ using LaPecosa.Dominio.Entidades;
 namespace LaPecosa.Aplicacion.Servicios;
 
 /// <summary>
-/// Representa el caso de uso de invitar a un presidente (constitución §12.5, RF-012).
-/// Su responsabilidad es crear la invitación guardando solo el hash de su token, enviarla por
-/// correo después de confirmar la transacción y registrar si el envío salió o falló; además de
-/// invitar a un presidente adicional y reenviar una invitación sin usar.
-/// No crea cuentas ni asigna contraseñas: solo envía invitaciones (§8). Ningún método devuelve el
-/// token a la API.
+/// Representa el caso de uso de la invitación del presidente de un club (constitución §12.5;
+/// RF-024 y RF-025).
+/// Su responsabilidad es preparar esa invitación al crear el club, guardando solo el hash de su
+/// token, enviarla por correo después de confirmar la transacción y registrar si el envío salió o
+/// falló; y reenviarla, al mismo correo o a uno corregido, mientras no se haya usado.
+/// No invita a un presidente a un club que ya existe: esa operación no existe. No crea cuentas ni
+/// asigna contraseñas: solo envía invitaciones (§8). Ningún método devuelve el token a la API.
 /// </summary>
 public interface IServicioInvitacionPresidente
 {
@@ -29,10 +30,6 @@ public interface IServicioInvitacionPresidente
 
     /// <summary>Envía el correo, ya confirmada la transacción, y guarda si salió o falló.</summary>
     Task EnviarAsync(Invitacion invitacion, string nombreClub, string token, CancellationToken cancelacion = default);
-
-    /// <summary>Invita a un presidente a un club que ya existe.</summary>
-    Task<InvitacionDto> InvitarAsync(
-        Guid clubId, InvitarPresidenteDto datos, Guid usuarioId, CancellationToken cancelacion = default);
 
     /// <summary>Anula una invitación sin usar y crea otra, al mismo correo o al corregido.</summary>
     Task<InvitacionDto> ReenviarAsync(

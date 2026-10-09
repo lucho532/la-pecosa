@@ -57,13 +57,6 @@ public class RepositorioClubesPlataforma : IRepositorioClubesPlataforma
             .ToListAsync(cancelacion);
 
     /// <inheritdoc />
-    public Task<bool> EsPresidenteAsync(
-        Guid clubId, string correoNormalizado, CancellationToken cancelacion = default) =>
-        Presidentes.AnyAsync(
-            integrante => integrante.ClubId == clubId && integrante.Usuario!.CorreoNormalizado == correoNormalizado,
-            cancelacion);
-
-    /// <inheritdoc />
     public Task<Club?> ObtenerBloqueandoAsync(Guid clubId, CancellationToken cancelacion = default) =>
         _contexto.Clubes
             .FromSqlInterpolated($"SELECT * FROM \"Clubes\" WHERE \"Id\" = {clubId} FOR UPDATE")

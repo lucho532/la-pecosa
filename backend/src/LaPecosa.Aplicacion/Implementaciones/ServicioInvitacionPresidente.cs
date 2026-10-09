@@ -10,11 +10,12 @@ using LaPecosa.Dominio.Enumeraciones;
 namespace LaPecosa.Aplicacion.Implementaciones;
 
 /// <summary>
-/// Representa el servicio de invitaciones de presidente.
-/// Su responsabilidad es crear, enviar, anular y reenviar invitaciones. El correo se intenta
-/// enviar después de confirmar la transacción, sin colas; si falla, la invitación queda como
-/// fallida y el panel permite reenviarla (research §8).
-/// No guarda el token en claro, no accede al contexto de Entity Framework y no conoce HTTP.
+/// Representa el servicio de la invitación del presidente de un club.
+/// Su responsabilidad es prepararla al crear el club, enviarla y reenviarla mientras no se haya
+/// usado. El correo se intenta enviar después de confirmar la transacción, sin colas; si falla, la
+/// invitación queda como fallida y el panel permite reenviarla (research §8).
+/// No invita a un presidente a un club que ya existe (RF-024). No guarda el token en claro, no
+/// accede al contexto de Entity Framework y no conoce HTTP.
 /// </summary>
 public class ServicioInvitacionPresidente : IServicioInvitacionPresidente
 {
@@ -77,22 +78,6 @@ public class ServicioInvitacionPresidente : IServicioInvitacionPresidente
     }
 
     /// <inheritdoc />
-    public async Task<InvitacionDto> InvitarAsync(
-        Guid clubId, InvitarPresidenteDto datos, Guid usuarioId, CancellationToken cancelacion = default)
-    {
-        var club = await _clubes.ObtenerAsync(clubId, cancelacion) ?? throw ExcepcionDeAplicacion.NoEncontrado();
-        var correo = ValidarCorreo(datos.Correo);
-        await ComprobarCorreoInvitableAsync(correo, cancelacion);
-
-        if (await _clubes.EsPresidenteAsync(clubId, correo, cancelacion))
-        {
-            throw ExcepcionDeAplicacion.Conflicto("ya_es_presidente", "Esa persona ya es presidente de este club.");
-        }
-
-        return await CrearYEnviarAsync(club, correo, usuarioId, null, cancelacion);
-    }
-
-    /// <inheritdoc />
     public async Task<InvitacionDto> ReenviarAsync(
         Guid clubId, Guid invitacionId, ReenviarInvitacionDto? datos, Guid usuarioId, CancellationToken cancelacion = default)
     {
@@ -115,7 +100,7 @@ public class ServicioInvitacionPresidente : IServicioInvitacionPresidente
         var correo = string.IsNullOrWhiteSpace(datos?.Correo) ? anterior.Correo : ValidarCorreo(datos.Correo);
         await ComprobarCorreoInvitableAsync(correo, cancelacion);
 
-        return await CrearYEnviarAsync(club, correo, usuarioId, anterior, cancelacion);
+        return await ReemplazarYEnviarAsync(club, correo, usuarioId, anterior, cancelacion);
     }
 
     private static string ValidarCorreo(string? correo)
@@ -126,16 +111,13 @@ public class ServicioInvitacionPresidente : IServicioInvitacionPresidente
         return NormalizadorTexto.Correo(correo);
     }
 
-    private async Task<InvitacionDto> CrearYEnviarAsync(
-        Club club, string correo, Guid usuarioId, Invitacion? reemplazada, CancellationToken cancelacion)
+    private async Task<InvitacionDto> ReemplazarYEnviarAsync(
+        Club club, string correo, Guid usuarioId, Invitacion reemplazada, CancellationToken cancelacion)
     {
         var (invitacion, token) = await _unidadDeTrabajo.EnTransaccionAsync(
             async () =>
             {
-                if (reemplazada is not null)
-                {
-                    reemplazada.AnuladaEn = _reloj.AhoraUtc;
-                }
+                reemplazada.AnuladaEn = _reloj.AhoraUtc;
 
                 var preparada = await PrepararAsync(club, correo, usuarioId, cancelacion);
                 await _unidadDeTrabajo.GuardarAsync(cancelacion);

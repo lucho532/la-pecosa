@@ -3,12 +3,12 @@ using LaPecosa.Dominio.Enumeraciones;
 namespace LaPecosa.Aplicacion.DTOs;
 
 /// <summary>
-/// Representa a una persona de la sala de espera tal como la ven el PRESIDENTE y los DIRECTIVOS de
-/// su club (RF-020).
-/// Su responsabilidad es llevar los datos con los que se registró y cuándo lo hizo, para que el
-/// club decida si aprueba o rechaza su ingreso.
+/// Representa a una persona de la sala de espera tal como la ve el PRESIDENTE de su club (RF-017).
+/// Su responsabilidad es llevar sus datos y desde cuándo espera, para que el PRESIDENTE decida si
+/// aprueba o rechaza su ingreso.
 /// No sale por ningún otro endpoint: es el único lugar donde la API entrega el nombre del
-/// responsable. No lleva rol: en espera siempre es JUGADOR, y el definitivo se elige al aprobar.
+/// responsable. No lleva rol: quien está en espera es siempre JUGADOR y lo sigue siendo al
+/// aprobarse (RF-016).
 /// </summary>
 /// <param name="UsuarioRolId">Identificador del integrante en este club.</param>
 /// <param name="Nombres">Nombres.</param>

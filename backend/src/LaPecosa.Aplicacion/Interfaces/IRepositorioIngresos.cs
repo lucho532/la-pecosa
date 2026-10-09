@@ -1,5 +1,4 @@
 using LaPecosa.Dominio.Entidades;
-using LaPecosa.Dominio.Enumeraciones;
 
 namespace LaPecosa.Aplicacion.Interfaces;
 
@@ -9,8 +8,8 @@ namespace LaPecosa.Aplicacion.Interfaces;
 /// que fijó la autorización en <see cref="IContextoClub"/>, y aprobar o borrar un ingreso con una
 /// sola sentencia condicionada a que siga en espera, para que entre dos acciones simultáneas valga
 /// la primera (RF-026).
-/// No recibe un identificador de club ni ve integrantes de otro club. No decide quién puede aprobar
-/// ni qué rol puede asignar: eso lo hacen la autorización y las reglas del dominio.
+/// No recibe un identificador de club ni ve integrantes de otro club. No decide quién puede
+/// aprobar: eso lo hace la autorización.
 /// </summary>
 public interface IRepositorioIngresos
 {
@@ -22,7 +21,7 @@ public interface IRepositorioIngresos
 
     /// <summary>
     /// Los ingresos aprobados: los integrantes a los que alguien del club aprobó, del más reciente
-    /// al más antiguo. No incluye a quien entró sin sala de espera.
+    /// al más antiguo, tal como quedaron entonces. No incluye a quien entró con una invitación.
     /// </summary>
     Task<IReadOnlyList<UsuarioRol>> ListarAprobadosAsync(CancellationToken cancelacion = default);
 
@@ -30,12 +29,12 @@ public interface IRepositorioIngresos
     Task<UsuarioRol?> ObtenerAsync(Guid usuarioRolId, CancellationToken cancelacion = default);
 
     /// <summary>
-    /// Aprueba el ingreso solo si sigue en espera: en una única sentencia lo deja aprobado, con su
-    /// rol definitivo y con quién lo aprobó, cuándo y con qué rol. Devuelve si lo aprobó.
+    /// Aprueba el ingreso solo si sigue en espera: en una única sentencia lo deja aprobado, con el
+    /// rol JUGADOR y con quién lo aprobó y cuándo. El rol y el rol de ingreso quedan siempre en
+    /// JUGADOR (RF-016). Devuelve si lo aprobó.
     /// </summary>
     Task<bool> AprobarAsync(
         Guid usuarioRolId,
-        Rol rol,
         DateTime ahoraUtc,
         Guid aprobadoPorUsuarioId,
         string aprobadoPorNombre,

@@ -27,7 +27,7 @@ public class AccesoPlataformaPruebas
     public void El_panel_tiene_todos_los_endpoints_del_contrato()
     {
         // Si esta lista quedara vacía, las dos pruebas siguientes pasarían sin probar nada.
-        Assert.Equal(11, DelPanel.Count);
+        Assert.Equal(10, DelPanel.Count);
     }
 
     [Fact]

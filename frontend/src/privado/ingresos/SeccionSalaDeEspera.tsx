@@ -1,19 +1,16 @@
 import { useState } from 'react';
 import { api } from '../../compartido/api/cliente';
 import { ErrorApi, mensajeDe } from '../../compartido/api/errores';
-import type { AprobarIngresoDto, IngresoAprobadoDto, IngresoEnEsperaDto, Rol, RolDeIngreso } from '../../compartido/api/tipos';
+import type { IngresoAprobadoDto, IngresoEnEsperaDto } from '../../compartido/api/tipos';
 import type { Carga } from '../../compartido/api/useCarga';
 import { Aviso } from '../../compartido/componentes/Aviso';
 import { Boton } from '../../compartido/componentes/Boton';
 import { DialogoConfirmacion } from '../../compartido/componentes/DialogoConfirmacion';
 import { Tarjeta } from '../../compartido/componentes/Tarjeta';
 import { dia, fechaYHora, nombreDeRol, nombreDeTipoDocumento } from '../../compartido/formato';
-import { DialogoAprobarIngreso } from './DialogoAprobarIngreso';
 
 interface Props {
   clubId: string;
-  /** Rol en el club de quien mira la sala de espera: decide qué roles puede asignar. */
-  miRol: Rol;
   enEspera: Carga<IngresoEnEsperaDto[]>;
   /** Se llama tras aprobar o rechazar (o intentarlo), para recargar las otras listas del apartado. */
   alCambiar: () => void;
@@ -24,11 +21,13 @@ const yaNoEstaPendiente = (fallo: unknown): fallo is ErrorApi =>
   fallo instanceof ErrorApi && (fallo.status === 409 || fallo.status === 404);
 
 /**
- * Sala de espera del club: las personas registradas pendientes de aprobación, de la más antigua a
- * la más reciente, cada una como una ficha con los datos con los que se registró. Desde aquí se
- * aprueba (eligiendo cómo entra) o se rechaza un ingreso.
+ * Sala de espera del club, que solo ve su presidente: las personas pendientes de aprobación, de
+ * la más antigua a la más reciente, cada una como una ficha con sus datos. Quien se registra con
+ * una invitación no pasa por aquí; queda para el jugador agregado desde la ficha de un hermano.
+ * Desde aquí se aprueba o se rechaza un ingreso. Al aprobar no se elige rol: la persona entra
+ * siempre como jugador.
  */
-export function SeccionSalaDeEspera({ clubId, miRol, enEspera, alCambiar }: Props) {
+export function SeccionSalaDeEspera({ clubId, enEspera, alCambiar }: Props) {
   const base = `/api/clubes/${clubId}/ingresos`;
   const [porAprobar, setPorAprobar] = useState<IngresoEnEsperaDto | null>(null);
   const [porRechazar, setPorRechazar] = useState<IngresoEnEsperaDto | null>(null);
@@ -65,10 +64,10 @@ export function SeccionSalaDeEspera({ clubId, miRol, enEspera, alCambiar }: Prop
     }
   }
 
-  const aprobar = (persona: IngresoEnEsperaDto, rol: RolDeIngreso) =>
+  const aprobar = (persona: IngresoEnEsperaDto) =>
     ejecutar(async () => {
-      const datos: AprobarIngresoDto = { rol };
-      const aprobado = await api.post<IngresoAprobadoDto>(`${base}/${persona.usuarioRolId}/aprobacion`, datos);
+      // Sin cuerpo: la API deja siempre a la persona como jugador.
+      const aprobado = await api.post<IngresoAprobadoDto>(`${base}/${persona.usuarioRolId}/aprobacion`);
       return `${aprobado.nombres} ${aprobado.apellidos} ya entra al club como ${nombreDeRol(aprobado.rolDeIngreso).toLowerCase()}.`;
     });
 
@@ -107,17 +106,27 @@ export function SeccionSalaDeEspera({ clubId, miRol, enEspera, alCambiar }: Prop
         </article>
       ))}
 
-      {porAprobar && (
-        <DialogoAprobarIngreso
-          key={porAprobar.usuarioRolId}
-          persona={porAprobar}
-          miRol={miRol}
-          cargando={enviando}
-          error={errorDialogo}
-          alConfirmar={(rol) => void aprobar(porAprobar, rol)}
-          alCancelar={() => setPorAprobar(null)}
-        />
-      )}
+      <DialogoConfirmacion
+        abierto={porAprobar !== null}
+        titulo={`Aprobar el ingreso de ${porAprobar?.nombres ?? ''} ${porAprobar?.apellidos ?? ''}`}
+        textoConfirmar="Aprobar ingreso"
+        cargando={enviando}
+        error={errorDialogo}
+        alConfirmar={() => {
+          if (porAprobar) {
+            void aprobar(porAprobar);
+          }
+        }}
+        alCancelar={() => setPorAprobar(null)}
+      >
+        <p>
+          <strong>
+            {porAprobar?.nombres} {porAprobar?.apellidos}
+          </strong>{' '}
+          entrará al club como <strong>jugador</strong> y quedará en la categoría de su año de nacimiento, si el
+          club la tiene.
+        </p>
+      </DialogoConfirmacion>
 
       <DialogoConfirmacion
         abierto={porRechazar !== null}
