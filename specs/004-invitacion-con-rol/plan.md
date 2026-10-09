@@ -74,7 +74,7 @@ al crear el club).
 | §12.1.1 Sala de espera | Se conserva para el hermano; solo el PRESIDENTE aprueba o rechaza; al aprobar entra como JUGADOR y se ubica | Cumple |
 | §12.2 Asignación de roles | Desaparece el único camino por el que un DIRECTIVO fijaba un rol | Cumple |
 | §12.3 Alcance de cada rol | Quien entra de ENTRENADOR o DIRECTIVO no tiene ningún dato de jugador | Cumple, con la nota 2 |
-| §12.5 Invitación del PRESIDENTE | El DESARROLLADOR solo invita al crear el club; se elimina invitar a un club que ya existe y se conserva reenviar y corregir el correo. El registro del presidente no cambia, salvo el supuesto 1 de research.md | Cumple |
+| §12.5 Invitación del PRESIDENTE | El DESARROLLADOR solo invita al crear el club; se elimina invitar a un club que ya existe y se conserva reenviar y corregir el correo. El registro del presidente solo cambia en que deja de pedir el responsable (RF-013) | Cumple |
 | §13 Histórico | Las aprobaciones anteriores conservan su rol de ingreso y quién aprobó | Cumple |
 | §14 Desactivables | No se borra nada nuevo; el rechazo es el de la 002 | Cumple |
 | §15 Reglas en backend | Quién invita y aprueba, rol invitable, rol al aprobar y responsable se validan en la API | Cumple |
@@ -84,7 +84,7 @@ al crear el club).
 | §22 Migraciones | No hay cambio de esquema | Cumple |
 | §23 API | HTTP semántico, DTOs, `problem+json`, Swagger; contrato actualizado | Cumple |
 | §24 Diseño visual | Componentes y temas existentes; el rol se muestra con texto | Cumple |
-| §25 Decisiones no tomadas | Cuatro detalles sin fijar quedan como supuestos por confirmar en research.md; ninguno inventa una regla de negocio | Cumple |
+| §25 Decisiones no tomadas | Los cuatro detalles que la spec no fijaba se registraron como supuestos en research.md y quedaron resueltos el 2026-10-09; ninguno inventa una regla de negocio | Cumple |
 | §27 Definición de terminado | Tareas por historia, cada una con backend, pantalla y pruebas | Cumple |
 | §28 Decisiones pendientes | No se resuelve ninguna | Cumple |
 
@@ -116,7 +116,7 @@ pasando.
 ```text
 specs/004-invitacion-con-rol/
 ├── plan.md              # Este archivo
-├── research.md          # Decisiones técnicas y supuestos por confirmar
+├── research.md          # Decisiones técnicas y supuestos del plan
 ├── data-model.md        # Qué cambia en el uso de las entidades (sin migración)
 ├── quickstart.md        # Guía de validación de extremo a extremo
 ├── contracts/
@@ -144,8 +144,10 @@ backend/src/
 │       └── - ReglaAprobacionIngreso.cs      # ya no decide nada (research §6)
 ├── LaPecosa.Aplicacion/
 │   ├── DTOs/              ~ InvitarAlClubDto (gana Rol), InvitacionClubDto (gana Rol),
-│   │                        InvitacionVigenteDto (PideResponsable por PasaPorSalaDeEspera),
+│   │                        InvitacionVigenteDto (PideResponsable por PasaPorSalaDeEspera; gana
+│   │                        FaltaResponsable, RF-026),
 │   │                        AprobarIngresoDto (Rol opcional), RegistrarConInvitacionDto (documentación)
+│   │                      + AceptarInvitacionDto   # token y responsable opcional (RF-026)
 │   │                      - InvitarPresidenteDto
 │   ├── Interfaces/        ~ IRepositorioIngresos (aprobar sin rol), IServicioCorreo (documentación)
 │   ├── Servicios/         ~ IServicioInvitacionPresidente (pierde InvitarAsync)
@@ -175,12 +177,15 @@ backend/pruebas/
 └── Integracion/
     ├── Ingresos/          + SoloPresidenteIngresosPruebas    # los ocho endpoints con cada rol
     │                      + InvitacionConRolPruebas          # los tres roles, sin rol, rol no invitable
-    │                      + RegistroDirectoPruebas           # entra aprobado, con su rol y ubicado
+    │                      + RegistroDirectoPruebas           # entra aprobado y con su rol
+    │                      + RegistroDirectoUbicacionPruebas  # categoría del jugador al registrarse
     │                      - RegistroEnEsperaPruebas          # lo sustituye la anterior
     │                      ~ InvitacionesClubPruebas, ReenvioYCancelacionPruebas, AprobacionPruebas,
     │                        SalaDeEsperaPruebas, RechazoPruebas, ConsultaIngresosPruebas,
     │                        AislamientoIngresosPruebas, IngresosPorEstadoDelClubPruebas
     ├── Cuenta/            ~ RegistroConInvitacionPruebas, AceptacionInvitacionPruebas
+    │                      + AceptacionDirectaPruebas         # ubicación y club suspendido al aceptar
+    │                      + AceptacionResponsablePruebas     # menor sin responsable (RF-026)
     ├── Categorias/        ~ UbicacionAutomaticaPruebas, PersonaRetiradaPruebas
     ├── Plataforma/        ~ InvitacionesPruebas   # sin invitar a un club que ya existe
     └── Aislamiento/       ~ AccesoClubPruebas     # 54 endpoints en los contratos
@@ -190,7 +195,7 @@ frontend/src/
 ├── cuenta/
 │   ├── ~ Invitacion.tsx                     # el subtítulo nombra siempre el rol
 │   ├── ~ FormularioRegistro.tsx             # responsable solo si pideResponsable; sin aviso de espera
-│   └── ~ AceptarInvitacion.tsx              # nombra el rol; sin aviso de espera
+│   └── ~ AceptarInvitacion.tsx              # nombra el rol; sin aviso de espera; responsable si falta
 ├── plataforma/
 │   └── ~ SeccionInvitaciones.tsx            # sin "Invitar a otro presidente"
 └── privado/
@@ -214,7 +219,7 @@ supere el límite.
 | `/club/:clubId/ingresos` → Invitaciones | Selector de rol obligatorio (Jugador, Entrenador, Directivo) y columna "Rol" | PRESIDENTE |
 | `/club/:clubId/ingresos` → Sala de espera | Aprobar es una confirmación, sin elegir rol | PRESIDENTE |
 | `/invitacion#<token>` | Muestra siempre el rol; pide el responsable solo al JUGADOR; desaparece el aviso de aprobación pendiente | Persona invitada |
-| `/invitacion#<token>` con cuenta existente | Nombra el rol; al aceptar entra directamente | Persona invitada con cuenta |
+| `/invitacion#<token>` con cuenta existente | Nombra el rol; al aceptar entra directamente. Pide el responsable solo al JUGADOR menor de 18 años cuya cuenta no lo tiene (RF-026) | Persona invitada con cuenta |
 | `/club/:clubId` tras registrarse | La aplicación del club en lugar de la pantalla de espera (sin código nuevo) | Persona recién registrada |
 | Detalle de un club en el panel de la plataforma | Desaparece "Invitar a otro presidente"; quedan la lista de invitaciones sin usar, reenviar y corregir el correo | DESARROLLADOR |
 
@@ -222,8 +227,8 @@ supere el límite.
 
 | Historia | Requisitos | Backend | Pantallas | Pruebas clave |
 | --- | --- | --- | --- | --- |
-| 1. El presidente invita con rol | RF-001 a 007 | `ReglaInvitacionDelClub`, `ServicioInvitacionesClub`, `ControladorInvitacionesClub`, `PlantillasCorreo` | Menú, formulario y tabla de invitaciones | Cada uno de los tres roles; sin rol; PRESIDENTE y DESARROLLADOR como rol; DIRECTIVO, ENTRENADOR y JUGADOR reciben `403` en los cuatro endpoints; reenviar conserva el rol; invitar de nuevo lo cambia; el correo nombra el rol |
-| 2. Ingreso directo | RF-008 a 014 | `ReglaIngresoPorInvitacion`, `ServicioRegistroConInvitacion`, `ServicioAceptacionInvitacion`, `ValidadorRegistro`, `UbicadorDeJugadores` | Enlace de invitación, registro y aceptación | Cada rol entra aprobado y con ese único rol; acceso inmediato al club; JUGADOR con y sin categoría; registrarse mientras se crea la categoría; ENTRENADOR y DIRECTIVO sin datos de jugador; responsable por rol y edad; rol del cuerpo ignorado; cuenta existente; enlaces que ya no sirven |
+| 1. El presidente invita con rol | RF-001 a 004 y 006 | `ReglaInvitacionDelClub`, `ServicioInvitacionesClub`, `ControladorInvitacionesClub`, `PlantillasCorreo` | Menú, formulario y tabla de invitaciones | Cada uno de los tres roles; sin rol; PRESIDENTE y DESARROLLADOR como rol; DIRECTIVO, ENTRENADOR y JUGADOR reciben `403` en los cuatro endpoints; reenviar conserva el rol; invitar de nuevo lo cambia; el correo nombra el rol |
+| 2. Ingreso directo | RF-008 a 014 y 026 | `ReglaIngresoPorInvitacion`, `ServicioRegistroConInvitacion`, `ServicioAceptacionInvitacion`, `ValidadorRegistro`, `UbicadorDeJugadores` | Enlace de invitación, registro y aceptación | Cada rol entra aprobado y con ese único rol; acceso inmediato al club; JUGADOR con y sin categoría; registrarse mientras se crea la categoría; ENTRENADOR y DIRECTIVO sin datos de jugador; responsable por rol y edad; rol del cuerpo ignorado; cuenta existente; menor con cuenta sin responsable; enlaces que ya no sirven |
 | 3. Sala de espera del presidente, sin rol | RF-015 a 019 | `ServicioAprobacionIngreso`, `RepositorioIngresos`, `ControladorIngresos` | Sala de espera | DIRECTIVO, ENTRENADOR y JUGADOR reciben `403` en los cuatro endpoints; aprobar deja JUGADOR y ubica; otro rol, `403`; rechazo igual; sala vacía tras los registros; aprobados anteriores intactos; quien entra con invitación no aparece en aprobados |
 | 4. El desarrollador solo invita al crear el club | RF-024, RF-025 | `ControladorInvitacionesClub` de la plataforma, `ServicioInvitacionPresidente` | Detalle del club en el panel | La ruta de invitar ya no existe; crear un club sigue invitando; reenviar y corregir el correo siguen funcionando |
 | Transversal | RF-020 a 023 | Filtro global y estado del club | Todas, a 360 px y en los dos temas | Otro club recibe `404`; suspendido y dado de baja; el contrato pasa a 54 endpoints |
@@ -282,13 +287,16 @@ invita presidentes adicionales y "un PRESIDENTE elige a otro" (§12.5) todavía 
 Hasta que lo esté, cada club tiene un solo presidente, y quitarle el rol a un presidente desde el
 panel queda sin uso, porque exige que el club conserve otro.
 
-## Supuestos por confirmar
+## Supuestos del plan
 
-Detallados al final de [research.md](research.md). Conviene confirmarlos antes de `/speckit-tasks`:
+Detallados al final de [research.md](research.md). Ya no queda ninguno por confirmar:
 
-1. El responsable deja de pedirse también en el registro de un PRESIDENTE.
+1. El responsable deja de pedirse también en el registro de un PRESIDENTE. Confirmado por el
+   propietario el 2026-10-09 (RF-013).
 2. Un responsable enviado con una invitación de ENTRENADOR o DIRECTIVO se ignora, sin error.
+   Cubierto por RF-013 ("no pedirlo ni guardarlo") y RF-026.
 3. Quien ya tiene cuenta y acepta una invitación de JUGADOR no ve ningún formulario. Sustituido
    el 2026-10-09 por RF-026: se le pide el responsable si es menor de 18 años y su cuenta no lo
    tiene.
-4. La aprobación admite `rol: JUGADOR` o ningún rol; cualquier otro responde `403`.
+4. La aprobación admite `rol: JUGADOR` o ningún rol; cualquier otro responde `403`. Cubierto por
+   RF-016.

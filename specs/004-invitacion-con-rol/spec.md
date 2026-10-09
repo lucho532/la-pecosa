@@ -16,7 +16,7 @@ PRESIDENTE.
 
 **Depende de**: spec 001 (base multiclub), spec 002 (ingreso de personas al club) y spec 003
 (categorías del club). Esta funcionalidad no añade un apartado nuevo: cambia el comportamiento de
-lo que construyeron la 002 y la 003 para que cumpla la constitución 4.0.0.
+lo que construyeron la 002 y la 003 para que cumpla la constitución 4.1.0.
 
 ## Aclaraciones
 
@@ -57,6 +57,9 @@ lo que construyeron la 002 y la 003 para que cumpla la constitución 4.0.0.
   pantalla de aceptación le pide el nombre del padre, madre o responsable antes de dejarla entrar,
   y lo guarda en su cuenta. En los demás casos la aceptación sigue sin pedir ningún dato.
   Sustituye al supuesto 3 del plan.
+- P: Cuando el primer PRESIDENTE de un club se registra con la invitación del DESARROLLADOR, ¿la
+  pantalla le debe pedir el nombre del padre, madre o responsable? → R: No. No se le pide ni se
+  guarda: el responsable es solo para invitaciones de JUGADOR. Confirma el supuesto 1 del plan.
 
 ## Escenarios de usuario y pruebas *(obligatorio)*
 
@@ -135,7 +138,7 @@ y no aparece en ninguna categoría ni en "Sin categoría".
    no existe ningún dato suyo como jugador.
 7. **Dado** una invitación de JUGADOR, **cuando** la persona se registra, **entonces** la pantalla
    le pide el nombre del padre, madre o responsable, obligatorio si quien ingresa es menor de 18
-   años; con una invitación de ENTRENADOR o DIRECTIVO ese dato no se pide.
+   años; con una invitación de ENTRENADOR, DIRECTIVO o PRESIDENTE ese dato no se pide.
 8. **Dado** una persona que ya tiene cuenta por pertenecer a otro club, **cuando** acepta la
    invitación, **entonces** no se crea una segunda cuenta: queda añadida a este club con el rol de
    la invitación y entra de inmediato, sin perder nada en el otro.
@@ -246,8 +249,8 @@ su invitación se puede reenviar y corregir.
 - Se invita un correo que ya es integrante del club, con cualquier rol: se sigue rechazando.
 - Un entrenador que además tiene un hijo en el club: el club envía dos invitaciones a dos correos
   distintos, una de ENTRENADOR y otra de JUGADOR (constitución §8).
-- La invitación de PRESIDENTE que el DESARROLLADOR envía al crear el club no cambia: ya entraba
-  directamente.
+- La invitación de PRESIDENTE que el DESARROLLADOR envía al crear el club solo cambia en una cosa:
+  su registro deja de pedir el nombre del padre, madre o responsable. Ya entraba directamente.
 - El primer presidente nunca se registra y su enlace vence: el DESARROLLADOR reenvía la invitación
   o corrige el correo; no necesita invitar a "otro" presidente.
 - Un club necesita un segundo presidente: lo elige su PRESIDENTE dándole el rol a alguien ya
@@ -295,9 +298,9 @@ su invitación se puede reenviar y corregir.
   aparecer en "Sin categoría", ni quedar registrado como jugador en ningún momento.
 - **RF-013**: El registro DEBE pedir el nombre del padre, madre o responsable solamente cuando la
   invitación es de JUGADOR; es obligatorio si quien ingresa es menor de 18 años el día del
-  registro y opcional si es adulto. Con una invitación de ENTRENADOR o DIRECTIVO el sistema NO
-  DEBE pedirlo ni guardarlo. El sistema DEBE comprobarlo en el servidor. Los demás datos del
-  registro no cambian.
+  registro y opcional si es adulto. Con una invitación de ENTRENADOR o DIRECTIVO, y con la de
+  PRESIDENTE que envía el DESARROLLADOR, el sistema NO DEBE pedirlo ni guardarlo. El sistema DEBE
+  comprobarlo en el servidor. Los demás datos del registro no cambian.
 - **RF-014**: Las demás reglas de la invitación y del registro NO cambian: un solo uso, caducidad,
   correo fijo, documento único en el club, y rechazo de correos que ya son integrantes, de
   jugadores retirados y del correo del DESARROLLADOR.
@@ -431,5 +434,5 @@ su invitación se puede reenviar y corregir.
 - Mensualidades, cargos y el valor de la mensualidad por jugador (constitución §16.7).
 - Elección de un presidente adicional por otro PRESIDENTE del club.
 - Ficha del jugador, datos médicos y documentos.
-- Cualquier otro cambio en la invitación de PRESIDENTE que envía el DESARROLLADOR al crear el
-  club, y en quitarle el rol a un presidente.
+- Cualquier cambio en la invitación de PRESIDENTE que envía el DESARROLLADOR al crear el club
+  distinto de los de RF-013, RF-024 y RF-025, y en quitarle el rol a un presidente.

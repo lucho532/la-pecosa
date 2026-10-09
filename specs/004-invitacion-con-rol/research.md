@@ -105,8 +105,8 @@ invita y solo él aprueba o rechaza ingresos**, que el DIRECTIVO tampoco ve el a
 - **Invitación de PRESIDENTE** **(supuesto 1)**: hoy el registro de un presidente también muestra
   el campo. RF-013 dice "solamente cuando la invitación es de JUGADOR" y §12.1 dice "cuando el
   integrante es un jugador", así que deja de pedirse y de guardarse también ahí. Es el único efecto
-  de esta funcionalidad sobre la invitación de presidente, que la spec deja fuera de alcance; por
-  eso se pide confirmación.
+  de esta funcionalidad sobre la invitación de presidente. El propietario lo confirmó el
+  2026-10-09 y RF-013 ya lo recoge.
 - **La pantalla** no decide por su cuenta: `InvitacionVigenteDto` lleva `pideResponsable`, que
   sustituye a `pasaPorSalaDeEspera`.
 - **Cuenta que ya existe y acepta una invitación de JUGADOR** (RF-026, decidido el 2026-10-09;
@@ -249,12 +249,13 @@ esperar 54 (decisión 12).
 
 ## Supuestos por confirmar
 
-Rellenan detalles que la spec no fija. Ninguno inventa una regla de negocio nueva: cada uno aplica
-al caso no previsto la regla más cercana de la spec o de la constitución (§25).
+Rellenaban detalles que la spec no fijaba. Ninguno inventa una regla de negocio nueva: cada uno
+aplica al caso no previsto la regla más cercana de la spec o de la constitución (§25). Desde el
+2026-10-09 no queda ninguno por confirmar.
 
-| # | Supuesto | Dónde se usa |
-| --- | --- | --- |
-| 1 | El nombre del responsable deja de pedirse también en el registro de un PRESIDENTE, porque RF-013 y §12.1 lo limitan al JUGADOR | Decisión 5 |
-| 2 | Un `nombreResponsable` enviado con una invitación de ENTRENADOR o DIRECTIVO se ignora y no se guarda; no es un error | Decisión 5 |
-| 3 | Sustituido el 2026-10-09 por RF-026: quien ya tiene cuenta y acepta una invitación de JUGADOR no ve ningún formulario, salvo el nombre del responsable si es menor de 18 años y su cuenta no lo tiene | Decisión 5 |
-| 4 | La aprobación acepta que el cuerpo indique `rol: JUGADOR` o no indique nada; cualquier otro rol responde `403 rol_no_asignable` | Decisión 6 |
+| # | Supuesto | Dónde se usa | Estado |
+| --- | --- | --- | --- |
+| 1 | El nombre del responsable deja de pedirse también en el registro de un PRESIDENTE, porque RF-013 y §12.1 lo limitan al JUGADOR | Decisión 5 | Confirmado por el propietario el 2026-10-09; recogido en RF-013 |
+| 2 | Un `nombreResponsable` enviado con una invitación de ENTRENADOR o DIRECTIVO se ignora y no se guarda; no es un error | Decisión 5 | Cubierto por RF-013 y RF-026 |
+| 3 | Quien ya tiene cuenta y acepta una invitación de JUGADOR no ve ningún formulario, salvo el nombre del responsable si es menor de 18 años y su cuenta no lo tiene | Decisión 5 | Sustituido el 2026-10-09 por RF-026 |
+| 4 | La aprobación acepta que el cuerpo indique `rol: JUGADOR` o no indique nada; cualquier otro rol responde `403 rol_no_asignable` | Decisión 6 | Cubierto por RF-016 |
