@@ -50,7 +50,9 @@ Cada paso indica qué historia de la spec valida.
    `beto@…` como Jugador. **Esperado**: las cuatro aparecen pendientes, cada una con su rol, quién
    la envió, cuándo y cuándo vence.
 4. Leer los correos. **Esperado**: cada uno nombra el Club A y el rol, y ninguno dice que el club
-   revisará el ingreso.
+   revisará el ingreso. Sin llave de Brevo el registro de la API solo escribe el destinatario, el
+   asunto y el enlace de cada correo, no su texto: ahí se comprueba el club (va en el asunto) y, al
+   abrir el enlace, el rol; el texto completo lo comprueban las pruebas de `PlantillasCorreoPruebas`.
 5. Reenviar la de `entrenador@…`. **Esperado**: la nueva sigue siendo de Entrenador y el enlace
    anterior ya no sirve.
 6. Invitar otra vez a `ana@…`, ahora como Entrenador, y después otra vez como Jugador.
@@ -58,7 +60,8 @@ Cada paso indica qué historia de la spec valida.
    último enlace.
 7. Registrar a `directivo@…` con su enlace (ver el bloque 2) y entrar como **directivo**.
    **Esperado**: el menú no tiene "Ingresos". Abrir `/club/{clubA}/ingresos` escribiendo la
-   dirección: no muestra invitaciones, sala de espera ni aprobados, solo que su rol no lo permite.
+   dirección: no muestra invitaciones, sala de espera ni aprobados; la pantalla lo devuelve al
+   inicio del club sin pedir ninguna lista.
 8. Con la sesión del directivo, llamar directamente a la API (Swagger en
    <http://localhost:8080/swagger>): listar, invitar con `rol: JUGADOR`, reenviar y cancelar una
    invitación pendiente. **Esperado**: `403 rol_no_autorizado` en las cuatro; nada cambia.

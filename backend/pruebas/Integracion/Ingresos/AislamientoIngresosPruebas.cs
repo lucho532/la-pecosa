@@ -30,7 +30,7 @@ public class AislamientoIngresosPruebas
         var respuestas = new[]
         {
             await ajeno.GetAsync($"/api/clubes/{club.Id}/invitaciones"),
-            await ajeno.PostAsync($"/api/clubes/{club.Id}/invitaciones", new { correo = Sembrador.CorreoUnico() }),
+            await ajeno.PostAsync($"/api/clubes/{club.Id}/invitaciones", new { correo = Sembrador.CorreoUnico(), rol = "JUGADOR" }),
             await ajeno.PostAsync($"/api/clubes/{club.Id}/invitaciones/{invitacion.Id}/reenvio"),
             await ajeno.PostAsync($"/api/clubes/{club.Id}/invitaciones/{invitacion.Id}/cancelacion"),
             // Tampoco desde su propio club, con el identificador de la invitación ajena.
@@ -66,7 +66,7 @@ public class AislamientoIngresosPruebas
         var respuestas = new[]
         {
             await desarrollador.GetAsync($"/api/clubes/{club.Id}/invitaciones"),
-            await desarrollador.PostAsync($"/api/clubes/{club.Id}/invitaciones", new { correo = Sembrador.CorreoUnico() }),
+            await desarrollador.PostAsync($"/api/clubes/{club.Id}/invitaciones", new { correo = Sembrador.CorreoUnico(), rol = "JUGADOR" }),
             await desarrollador.PostAsync($"/api/clubes/{club.Id}/invitaciones/{invitacion.Id}/reenvio"),
             await desarrollador.PostAsync($"/api/clubes/{club.Id}/invitaciones/{invitacion.Id}/cancelacion"),
         };

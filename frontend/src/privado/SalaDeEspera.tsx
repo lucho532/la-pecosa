@@ -10,10 +10,12 @@ import { AvisoClubNoDisponible } from './AvisoClubNoDisponible';
 import { DesplegableClubes } from './DesplegableClubes';
 
 /**
- * Lo único que ve de un club quien tiene su ingreso en espera (RF-015): el nombre y la identidad
- * del club, que ya trae la sesión, y el aviso de que su ingreso está pendiente. No tiene menú y no
- * pide nada al club: la API se lo negaría (RF-016). Conserva el tema, el cambio de club y el
- * cierre de sesión (RF-019). "Actualizar" recarga la sesión; si ya fue aprobada, entra al club.
+ * Lo único que ve de un club quien tiene su ingreso en espera: el nombre y la identidad del club,
+ * que ya trae la sesión, y el aviso de que su ingreso está pendiente. Quien se registra con una
+ * invitación ya no pasa por aquí: entra directamente. Queda para el jugador agregado desde la
+ * ficha de un hermano, hasta que el presidente lo apruebe. No tiene menú y no pide nada al club:
+ * la API se lo negaría. Conserva el tema, el cambio de club y el cierre de sesión. "Actualizar"
+ * recarga la sesión; si ya fue aprobada, entra al club.
  * Si el club está suspendido o dado de baja muestra ese aviso, como a cualquier otro integrante.
  */
 export function SalaDeEspera({ club }: { club: ClubDeSesionDto }) {

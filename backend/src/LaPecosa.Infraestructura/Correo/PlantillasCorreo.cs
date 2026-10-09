@@ -12,8 +12,9 @@ namespace LaPecosa.Infraestructura.Correo;
 public static class PlantillasCorreo
 {
     /// <summary>
-    /// Redacta la invitación para registrarse en un club. La de presidente nombra su rol; la que
-    /// envía el club no nombra ninguno, porque el rol se decide al aprobar el ingreso (RF-003).
+    /// Redacta la invitación para registrarse en un club. Nombra siempre el club y el rol con el
+    /// que entra la persona, y no anuncia ninguna revisión: quien se registra entra directamente
+    /// (RF-006).
     /// </summary>
     public static MensajeCorreo Invitacion(string urlBaseFrontend, string nombreClub, Rol rol, string token)
     {
@@ -21,9 +22,8 @@ public static class PlantillasCorreo
         var invitacion = rol == Rol.PRESIDENTE
             ? $"Te invitaron a La Pecosa como presidente de {nombreClub}.\n\n" +
               $"Para aceptar la invitación, abre este enlace:\n{enlace}\n\n"
-            : $"{nombreClub} te invita a registrarte en La Pecosa.\n\n" +
-              $"Para aceptar la invitación, abre este enlace:\n{enlace}\n\n" +
-              "Después, el club revisará tu ingreso antes de darte acceso.\n\n";
+            : $"{nombreClub} te invita a registrarte en La Pecosa como {NombreDelRol(rol)}.\n\n" +
+              $"Para aceptar la invitación, abre este enlace:\n{enlace}\n\n";
         var texto =
             $"Hola:\n\n" +
             invitacion +
@@ -31,6 +31,14 @@ public static class PlantillasCorreo
 
         return new MensajeCorreo($"Invitación a {nombreClub} en La Pecosa", texto, enlace);
     }
+
+    private static string NombreDelRol(Rol rol) => rol switch
+    {
+        Rol.JUGADOR => "jugador",
+        Rol.ENTRENADOR => "entrenador",
+        Rol.DIRECTIVO => "directivo",
+        _ => throw new ArgumentOutOfRangeException(nameof(rol), rol, "Una invitación del club no lleva ese rol."),
+    };
 
     /// <summary>Redacta el correo de recuperación de contraseña.</summary>
     public static MensajeCorreo Recuperacion(string urlBaseFrontend, string token)

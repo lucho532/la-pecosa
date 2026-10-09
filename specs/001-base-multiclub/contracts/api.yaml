@@ -496,33 +496,10 @@ paths:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
 
-  /api/plataforma/clubes/{clubId}/invitaciones:
-    parameters:
-      - $ref: '#/components/parameters/clubId'
-    post:
-      tags: [Plataforma]
-      summary: Invita a un presidente a un club que ya existe
-      description: Si ese correo ya tenía una invitación vigente para el club, queda anulada.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/InvitarPresidenteDto' }
-      responses:
-        '201':
-          description: Invitación creada
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/InvitacionDto' }
-        '400': { $ref: '#/components/responses/DatosInvalidos' }
-        '401': { $ref: '#/components/responses/SinSesion' }
-        '403': { $ref: '#/components/responses/SoloDesarrollador' }
-        '404': { $ref: '#/components/responses/NoEncontrado' }
-        '409':
-          description: '`ya_es_presidente` (ese correo ya es presidente del club) o `correo_del_desarrollador`'
-          content:
-            application/problem+json:
-              schema: { $ref: '#/components/schemas/Problema' }
+  # Retirado por la funcionalidad 004 (specs/004-invitacion-con-rol, RF-024): ya no existe
+  # `POST /api/plataforma/clubes/{clubId}/invitaciones`, que invitaba a un presidente a un club que
+  # ya existe. El DESARROLLADOR solo invita al presidente al crear el club. El reenvío de esa
+  # invitación, justo debajo, se conserva.
 
   /api/plataforma/clubes/{clubId}/invitaciones/{invitacionId}/reenvio:
     parameters:
@@ -889,11 +866,7 @@ components:
           type: string
           description: Debe coincidir con el nombre del club
 
-    InvitarPresidenteDto:
-      type: object
-      required: [correo]
-      properties:
-        correo: { type: string, format: email }
+    # `InvitarPresidenteDto` se retiró con la funcionalidad 004, junto con su endpoint.
 
     ReenviarInvitacionDto:
       type: object

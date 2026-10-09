@@ -29,7 +29,7 @@ public class PersonaRetiradaPruebas
         var correo = await CorreoDeAsync(e.IntegranteJugador.UsuarioId);
         await e.Sembrar.RetirarAsync(e.IntegranteJugador, e.IntegrantePresidente);
 
-        var respuesta = await e.Directivo.PostAsync($"/api/clubes/{e.Club.Id}/invitaciones", new { correo });
+        var respuesta = await e.Presidente.PostAsync($"/api/clubes/{e.Club.Id}/invitaciones", new { correo, rol = "JUGADOR" });
 
         Assert.Equal(HttpStatusCode.Conflict, respuesta.StatusCode);
         Assert.Equal("persona_retirada", await ClienteDePrueba.CodigoAsync(respuesta));

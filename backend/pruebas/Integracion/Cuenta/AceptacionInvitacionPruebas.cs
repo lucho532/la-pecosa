@@ -6,7 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LaPecosa.Pruebas.Integracion.Cuenta;
 
-/// <summary>Aceptar una invitación con una cuenta que ya existe (RF-018): nunca una segunda cuenta.</summary>
+/// <summary>
+/// Aceptar una invitación con una cuenta que ya existe (RF-010): nunca una segunda cuenta, y entra
+/// directamente con el rol de la invitación. La ubicación del jugador y el club suspendido están en
+/// <see cref="AceptacionDirectaPruebas"/>.
+/// </summary>
 [Collection(ColeccionApi.Nombre)]
 public class AceptacionInvitacionPruebas
 {
@@ -93,14 +97,17 @@ public class AceptacionInvitacionPruebas
         Assert.Equal(HttpStatusCode.Gone, inventada.StatusCode);
     }
 
-    [Fact]
-    public async Task Con_una_invitacion_del_club_queda_en_espera_en_ese_club_y_sigue_usando_el_otro_con_normalidad()
+    [Theory]
+    [InlineData(Rol.JUGADOR)]
+    [InlineData(Rol.ENTRENADOR)]
+    [InlineData(Rol.DIRECTIVO)]
+    public async Task Con_una_invitacion_del_club_entra_aprobada_con_el_rol_de_la_invitacion_y_conserva_lo_del_otro_club(Rol rol)
     {
         var clubA = await _fabrica.Sembrador.CrearClubAsync();
         var clubB = await _fabrica.Sembrador.CrearClubAsync();
         var usuario = await _fabrica.Sembrador.CrearCuentaAsync();
         var original = await _fabrica.Sembrador.CrearIntegranteAsync(clubA, usuario, Rol.DIRECTIVO, nombres: "Lucía");
-        var (_, token) = await _fabrica.Sembrador.CrearInvitacionAsync(clubB, usuario.Correo, rol: Rol.JUGADOR);
+        var (_, token) = await _fabrica.Sembrador.CrearInvitacionAsync(clubB, usuario.Correo, rol: rol);
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(usuario);
 
         var respuesta = await cliente.PostAsync("/api/invitaciones/aceptacion", new { token });
@@ -108,11 +115,11 @@ public class AceptacionInvitacionPruebas
         Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
         var club = await ClienteDePrueba.LeerAsync<JsonElement>(respuesta);
         Assert.Equal(clubB.Id, club.GetProperty("clubId").GetGuid());
-        Assert.Equal("JUGADOR", club.GetProperty("rol").GetString());
-        Assert.Equal("EN_ESPERA", club.GetProperty("estadoIngreso").GetString());
+        Assert.Equal(rol.ToString(), club.GetProperty("rol").GetString());
+        Assert.Equal("APROBADO", club.GetProperty("estadoIngreso").GetString());
         Assert.Equal("Lucía", club.GetProperty("nombres").GetString());
 
-        // No se creó una segunda cuenta y en el club A no perdió nada (escenarios 2.7 y 2.8).
+        // No se creó una segunda cuenta y en el club A no perdió nada (escenario 2.8).
         Assert.Equal(1, await _fabrica.ConContextoAsync(contexto => contexto.Usuarios.CountAsync(u => u.CorreoNormalizado == usuario.CorreoNormalizado)));
         var suyos = await _fabrica.ConContextoAsync(contexto => contexto.UsuariosRol
             .IgnoreQueryFilters().Where(i => i.UsuarioId == usuario.Id).ToListAsync());
@@ -121,20 +128,27 @@ public class AceptacionInvitacionPruebas
         Assert.Equal(Rol.DIRECTIVO, suyos.Single(i => i.ClubId == clubA.Id).Rol);
         Assert.Equal(EstadoIngreso.APROBADO, suyos.Single(i => i.ClubId == clubA.Id).EstadoIngreso);
 
+        var enB = suyos.Single(i => i.ClubId == clubB.Id);
+        Assert.Equal(rol, enB.Rol);
+        Assert.Equal(EstadoIngreso.APROBADO, enB.EstadoIngreso);
+        Assert.Null(enB.AprobadoEn);
+
+        // Entra de inmediato al club nuevo, con su rol, y sigue usando el otro con normalidad.
         Assert.Equal(HttpStatusCode.OK, (await cliente.GetAsync($"/api/clubes/{clubA.Id}")).StatusCode);
-        var enB = await cliente.GetAsync($"/api/clubes/{clubB.Id}");
-        Assert.Equal(HttpStatusCode.Forbidden, enB.StatusCode);
-        Assert.Equal("ingreso_en_espera", await ClienteDePrueba.CodigoAsync(enB));
+        var entrar = await cliente.GetAsync($"/api/clubes/{clubB.Id}");
+        Assert.Equal(HttpStatusCode.OK, entrar.StatusCode);
+        Assert.Equal(rol.ToString(), (await ClienteDePrueba.LeerAsync<JsonElement>(entrar)).GetProperty("miRol").GetString());
     }
 
     [Theory]
-    [InlineData(Rol.PRESIDENTE)]
-    [InlineData(Rol.DIRECTIVO)]
-    public async Task Quien_ya_esta_en_el_club_recibe_409_con_una_invitacion_del_club_y_conserva_su_rol(Rol rol)
+    [InlineData(Rol.PRESIDENTE, Rol.JUGADOR)]
+    [InlineData(Rol.DIRECTIVO, Rol.ENTRENADOR)]
+    [InlineData(Rol.JUGADOR, Rol.DIRECTIVO)]
+    public async Task Quien_ya_esta_en_el_club_recibe_409_con_una_invitacion_del_club_y_conserva_su_rol(Rol rol, Rol rolInvitado)
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
         var (usuario, integrante) = await _fabrica.Sembrador.CrearIntegranteAsync(club, rol);
-        var (invitacion, token) = await _fabrica.Sembrador.CrearInvitacionAsync(club, usuario.Correo, rol: Rol.JUGADOR);
+        var (invitacion, token) = await _fabrica.Sembrador.CrearInvitacionAsync(club, usuario.Correo, rol: rolInvitado);
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(usuario);
 
         var respuesta = await cliente.PostAsync("/api/invitaciones/aceptacion", new { token });

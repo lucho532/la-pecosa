@@ -5,6 +5,7 @@ using LaPecosa.Aplicacion.Servicios;
 using LaPecosa.Aplicacion.Utilidades;
 using LaPecosa.Aplicacion.Validadores;
 using LaPecosa.Dominio.Entidades;
+using LaPecosa.Dominio.Enumeraciones;
 using LaPecosa.Dominio.Reglas;
 
 namespace LaPecosa.Aplicacion.Implementaciones;
@@ -14,17 +15,24 @@ namespace LaPecosa.Aplicacion.Implementaciones;
 /// Su responsabilidad es comprobar que la invitación está vigente, que el correo no tiene cuenta y
 /// que el documento no se repite en el club ni pertenece a otra cuenta (una persona tiene un único
 /// inicio de sesión), y crear la cuenta y el integrante en la misma transacción en que la
-/// invitación queda usada. Quien usa una invitación de presidente entra aprobado; quien usa una
-/// del club queda como JUGADOR en la sala de espera.
+/// invitación queda usada. Quien se registra entra directamente al club con el rol de su
+/// invitación, aprobado y sin sala de espera (RF-008); si es JUGADOR queda además, en esa misma
+/// transacción y con el club bloqueado, en la categoría activa de su año de nacimiento, o sin
+/// categoría si el club no la tiene (RF-011).
 /// No acepta un correo, un club ni un rol enviados por quien se registra, y no puede crear una
-/// cuenta DESARROLLADOR. No decide por su cuenta el estado de ingreso: lo deriva la regla de
-/// ingreso por invitación. No accede al contexto de Entity Framework ni conoce HTTP.
+/// cuenta DESARROLLADOR. No registra ninguna aprobación: nadie aprobó a quien fue invitado. Para
+/// leer las categorías fija en el contexto el club de la invitación válida, que es lo único que
+/// liga la petición a un club (constitución §7.1, tercera excepción); la respuesta no devuelve
+/// ningún dato de ese club. No accede al contexto de Entity Framework ni conoce HTTP.
 /// </summary>
 public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
 {
     private readonly IRepositorioInvitacionesPorToken _invitaciones;
     private readonly IRepositorioUsuarios _usuarios;
     private readonly IRepositorioPertenencias _pertenencias;
+    private readonly IRepositorioClub _club;
+    private readonly IContextoClub _contextoClub;
+    private readonly UbicadorDeJugadores _ubicador;
     private readonly IUnidadDeTrabajo _unidadDeTrabajo;
     private readonly IHashContrasena _hash;
     private readonly IEmisorTokenSesion _emisor;
@@ -35,6 +43,9 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
         IRepositorioInvitacionesPorToken invitaciones,
         IRepositorioUsuarios usuarios,
         IRepositorioPertenencias pertenencias,
+        IRepositorioClub club,
+        IContextoClub contextoClub,
+        UbicadorDeJugadores ubicador,
         IUnidadDeTrabajo unidadDeTrabajo,
         IHashContrasena hash,
         IEmisorTokenSesion emisor,
@@ -43,6 +54,9 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
         _invitaciones = invitaciones;
         _usuarios = usuarios;
         _pertenencias = pertenencias;
+        _club = club;
+        _contextoClub = contextoClub;
+        _ubicador = ubicador;
         _unidadDeTrabajo = unidadDeTrabajo;
         _hash = hash;
         _emisor = emisor;
@@ -60,7 +74,7 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
             invitacion.Rol,
             invitacion.Correo,
             tieneCuenta,
-            ReglaIngresoPorInvitacion.PasaPorSalaDeEspera(invitacion.Rol),
+            ReglaIngresoPorInvitacion.PideResponsable(invitacion.Rol),
             MapperIdentidadClub.AIdentidad(invitacion.Club));
     }
 
@@ -69,8 +83,12 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
         RegistrarConInvitacionDto datos, CancellationToken cancelacion = default)
     {
         var invitacion = await VigenteAsync(datos.Token, cancelacion);
+
+        // Desde aquí la petición queda limitada al club de la invitación (research §4).
+        _contextoClub.Fijar(invitacion.ClubId);
+
         var ahora = _reloj.AhoraUtc;
-        ValidadorRegistro.Validar(datos, DateOnly.FromDateTime(ahora));
+        ValidadorRegistro.Validar(datos, invitacion.Rol, DateOnly.FromDateTime(ahora));
 
         var documento = NormalizadorTexto.Documento(datos.NumeroDocumento);
         if (await _usuarios.ObtenerPorCorreoAsync(invitacion.Correo, cancelacion) is not null)
@@ -93,9 +111,55 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
                 "Ese documento ya está registrado con otra cuenta. Inicia sesión con esa cuenta para aceptar la invitación.");
         }
 
-        // El correo es siempre el de la invitación (RF-013); el club y el rol, también. Con una
-        // invitación del club el rol es JUGADOR y la persona queda en espera (RF-014).
-        var responsable = NormalizadorTexto.SinEspaciosSobrantes(datos.NombreResponsable);
+        var (usuario, integrante) = Nuevos(datos, invitacion, documento, ahora);
+
+        try
+        {
+            await _unidadDeTrabajo.EnTransaccionAsync(
+                async () =>
+                {
+                    // Con el club bloqueado, registrarse y crear la categoría del año a la vez deja
+                    // siempre al jugador dentro de ella (research §4).
+                    await _club.BloquearAsync(cancelacion);
+
+                    if (!await _invitaciones.MarcarUsadaAsync(invitacion.Id, ahora, cancelacion))
+                    {
+                        throw ErroresDeInvitacion.NoValida();
+                    }
+
+                    _usuarios.Agregar(usuario);
+                    _pertenencias.Agregar(integrante);
+                    await _unidadDeTrabajo.GuardarAsync(cancelacion);
+
+                    // Solo el jugador tiene categoría: a un entrenador o a un directivo no se les ubica (RF-012).
+                    if (integrante.Rol == Rol.JUGADOR)
+                    {
+                        await _ubicador.UbicarAUnoAsync(integrante, cancelacion);
+                    }
+                },
+                cancelacion);
+        }
+        catch (Exception error) when (_unidadDeTrabajo.EsViolacionDeUnicidad(error, out var indice)
+            && ErroresDeInvitacion.DeIndiceUnico(indice) is { } conflicto)
+        {
+            // Dos registros simultáneos: el índice único decide y se responde el mismo 409.
+            throw conflicto;
+        }
+
+        return MapperSesion.AToken(_emisor.Emitir(usuario.Id, usuario.SelloSeguridad));
+    }
+
+    /// <summary>
+    /// La cuenta y el integrante que nacen del registro. El correo, el club y el rol son siempre los
+    /// de la invitación (RF-009). El integrante nace aprobado y sin datos de aprobación, y el
+    /// responsable solo se guarda cuando la invitación es de JUGADOR (RF-013).
+    /// </summary>
+    private (Usuario Usuario, UsuarioRol Integrante) Nuevos(
+        RegistrarConInvitacionDto datos, Invitacion invitacion, string documento, DateTime ahora)
+    {
+        var responsable = ReglaIngresoPorInvitacion.PideResponsable(invitacion.Rol)
+            ? NormalizadorTexto.SinEspaciosSobrantes(datos.NombreResponsable)
+            : string.Empty;
         var usuario = new Usuario
         {
             Correo = invitacion.Correo,
@@ -111,7 +175,7 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
             ClubId = invitacion.ClubId,
             UsuarioId = usuario.Id,
             Rol = invitacion.Rol,
-            EstadoIngreso = ReglaIngresoPorInvitacion.EstadoDeIngreso(invitacion.Rol),
+            EstadoIngreso = EstadoIngreso.APROBADO,
             Nombres = NormalizadorTexto.SinEspaciosSobrantes(datos.Nombres),
             Apellidos = NormalizadorTexto.SinEspaciosSobrantes(datos.Apellidos),
             TipoDocumento = datos.TipoDocumento!.Value,
@@ -120,30 +184,7 @@ public class ServicioRegistroConInvitacion : IServicioRegistroConInvitacion
             CreadoEn = ahora,
         };
 
-        try
-        {
-            await _unidadDeTrabajo.EnTransaccionAsync(
-                async () =>
-                {
-                    if (!await _invitaciones.MarcarUsadaAsync(invitacion.Id, ahora, cancelacion))
-                    {
-                        throw ErroresDeInvitacion.NoValida();
-                    }
-
-                    _usuarios.Agregar(usuario);
-                    _pertenencias.Agregar(integrante);
-                    await _unidadDeTrabajo.GuardarAsync(cancelacion);
-                },
-                cancelacion);
-        }
-        catch (Exception error) when (_unidadDeTrabajo.EsViolacionDeUnicidad(error, out var indice)
-            && ErroresDeInvitacion.DeIndiceUnico(indice) is { } conflicto)
-        {
-            // Dos registros simultáneos: el índice único decide y se responde el mismo 409.
-            throw conflicto;
-        }
-
-        return MapperSesion.AToken(_emisor.Emitir(usuario.Id, usuario.SelloSeguridad));
+        return (usuario, integrante);
     }
 
     private async Task<Invitacion> VigenteAsync(string? token, CancellationToken cancelacion)

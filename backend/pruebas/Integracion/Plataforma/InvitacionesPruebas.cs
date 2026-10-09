@@ -8,7 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LaPecosa.Pruebas.Integracion.Plataforma;
 
-/// <summary>Invitaciones de presidente desde el panel (RF-012).</summary>
+/// <summary>
+/// La invitación del presidente desde el panel: el DESARROLLADOR la reenvía o corrige su correo
+/// mientras no se use, y ya no puede invitar a un presidente a un club que existe (constitución
+/// §12.5 y §20; RF-024 y RF-025; historia 4; CE-010).
+/// </summary>
 [Collection(ColeccionApi.Nombre)]
 public class InvitacionesPruebas
 {
@@ -77,54 +81,40 @@ public class InvitacionesPruebas
         Assert.False((await ClienteDePrueba.LeerAsync<JsonElement>(respuesta)).GetProperty("vencida").GetBoolean());
     }
 
-    [Fact]
-    public async Task Se_puede_invitar_a_otro_presidente_a_un_club_que_ya_tiene_uno()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task El_desarrollador_no_puede_invitar_a_un_presidente_a_un_club_que_ya_existe(bool yaTienePresidente)
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
-        await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
+        if (yaTienePresidente)
+        {
+            await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
+        }
+
         var correo = Sembrador.CorreoUnico();
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
 
-        var primera = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones", new { correo });
-        var tokenPrimera = _fabrica.Correo.UltimoToken("invitacion", correo);
-        var segunda = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones", new { correo });
+        var respuesta = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones", new { correo });
 
-        Assert.Equal(HttpStatusCode.Created, primera.StatusCode);
-        Assert.Equal(HttpStatusCode.Created, segunda.StatusCode);
-        // La segunda al mismo correo anula la primera: solo queda una vigente.
-        Assert.False(await EstaVigenteAsync(tokenPrimera));
-        var detalle = await DetalleAsync(cliente, club.Id);
-        Assert.Single(detalle.GetProperty("presidentes").EnumerateArray());
-        Assert.Single(detalle.GetProperty("invitaciones").EnumerateArray());
+        // La operación no existe: ni se niega ni se valida, y no se crea ni se envía nada.
+        Assert.Contains(respuesta.StatusCode, new[] { HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed });
+        Assert.Equal(0, _fabrica.Correo.Contar("invitacion", correo));
+        Assert.Empty((await DetalleAsync(cliente, club.Id)).GetProperty("invitaciones").EnumerateArray());
+        Assert.Equal(0, await _fabrica.ConContextoAsync(contexto =>
+            contexto.Invitaciones.IgnoreQueryFilters().CountAsync(invitacion => invitacion.ClubId == club.Id)));
     }
 
     [Fact]
-    public async Task Invitar_a_quien_ya_es_presidente_del_club_responde_409()
-    {
-        var club = await _fabrica.Sembrador.CrearClubAsync();
-        var (presidente, _) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
-        var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
-
-        var respuesta = await cliente.PostAsync(
-            $"/api/plataforma/clubes/{club.Id}/invitaciones", new { correo = presidente.Correo.ToUpperInvariant() });
-
-        Assert.Equal(HttpStatusCode.Conflict, respuesta.StatusCode);
-        Assert.Equal("ya_es_presidente", await ClienteDePrueba.CodigoAsync(respuesta));
-    }
-
-    [Fact]
-    public async Task El_correo_del_desarrollador_responde_409_al_invitar_y_al_corregir()
+    public async Task El_correo_del_desarrollador_responde_409_al_corregir()
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
         var (pendiente, token) = await _fabrica.Sembrador.CrearInvitacionAsync(club);
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
         var correo = $" {FabricaApi.CorreoDesarrollador.ToUpperInvariant()} ";
 
-        var invitar = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones", new { correo });
         var corregir = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones/{pendiente.Id}/reenvio", new { correo });
 
-        Assert.Equal(HttpStatusCode.Conflict, invitar.StatusCode);
-        Assert.Equal("correo_del_desarrollador", await ClienteDePrueba.CodigoAsync(invitar));
         Assert.Equal(HttpStatusCode.Conflict, corregir.StatusCode);
         Assert.Equal("correo_del_desarrollador", await ClienteDePrueba.CodigoAsync(corregir));
         Assert.True(await EstaVigenteAsync(token));
@@ -152,10 +142,10 @@ public class InvitacionesPruebas
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
 
         var detalle = await cliente.GetAsync($"/api/plataforma/clubes/{Guid.NewGuid()}");
-        var invitar = await cliente.PostAsync($"/api/plataforma/clubes/{Guid.NewGuid()}/invitaciones", new { correo = Sembrador.CorreoUnico() });
+        var enOtroClub = await cliente.PostAsync($"/api/plataforma/clubes/{Guid.NewGuid()}/invitaciones/{deOtro.Id}/reenvio");
         var reenviar = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones/{deOtro.Id}/reenvio");
 
-        foreach (var respuesta in new[] { detalle, invitar, reenviar })
+        foreach (var respuesta in new[] { detalle, enOtroClub, reenviar })
         {
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
             Assert.Equal("no_encontrado", await ClienteDePrueba.CodigoAsync(respuesta));
@@ -163,32 +153,33 @@ public class InvitacionesPruebas
     }
 
     [Fact]
-    public async Task Un_correo_mal_escrito_responde_400()
+    public async Task Un_correo_mal_escrito_al_corregir_responde_400_y_la_invitacion_sigue_sirviendo()
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
+        var (pendiente, token) = await _fabrica.Sembrador.CrearInvitacionAsync(club);
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeDesarrolladorAsync();
 
-        var respuesta = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones", new { correo = "sin-arroba" });
+        var respuesta = await cliente.PostAsync(
+            $"/api/plataforma/clubes/{club.Id}/invitaciones/{pendiente.Id}/reenvio", new { correo = "sin-arroba" });
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Equal("datos_invalidos", await ClienteDePrueba.CodigoAsync(respuesta));
+        Assert.True(await EstaVigenteAsync(token));
     }
 
     [Fact]
-    public async Task Solo_el_desarrollador_invita_y_reenvia()
+    public async Task Solo_el_desarrollador_reenvia()
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
         var (presidente, _) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
-        var (pendiente, _) = await _fabrica.Sembrador.CrearInvitacionAsync(club);
+        var (pendiente, token) = await _fabrica.Sembrador.CrearInvitacionAsync(club);
         var conSesion = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(presidente);
         var sinSesion = _fabrica.CrearClienteDePrueba();
-        var invitar = $"/api/plataforma/clubes/{club.Id}/invitaciones";
-        var reenviar = $"{invitar}/{pendiente.Id}/reenvio";
+        var reenviar = $"/api/plataforma/clubes/{club.Id}/invitaciones/{pendiente.Id}/reenvio";
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await conSesion.PostAsync(invitar, new { correo = Sembrador.CorreoUnico() })).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await conSesion.PostAsync(reenviar)).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await sinSesion.PostAsync(invitar, new { correo = Sembrador.CorreoUnico() })).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await sinSesion.PostAsync(reenviar)).StatusCode);
+        Assert.True(await EstaVigenteAsync(token));
     }
 
     [Fact]
@@ -210,12 +201,7 @@ public class InvitacionesPruebas
         var reenviar = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones/{delClub.Id}/reenvio");
         Assert.Equal(HttpStatusCode.NotFound, reenviar.StatusCode);
         Assert.Equal("no_encontrado", await ClienteDePrueba.CodigoAsync(reenviar));
-
-        // Invitar a un presidente al mismo correo no anula la invitación del club.
-        var invitar = await cliente.PostAsync($"/api/plataforma/clubes/{club.Id}/invitaciones", new { correo });
-        Assert.Equal(HttpStatusCode.Created, invitar.StatusCode);
         Assert.True(await EstaVigenteAsync(tokenDelClub));
-        Assert.True(await EstaVigenteAsync(_fabrica.Correo.UltimoToken("invitacion", correo)));
     }
 
     private static async Task<JsonElement> DetalleAsync(ClienteDePrueba cliente, Guid clubId) =>

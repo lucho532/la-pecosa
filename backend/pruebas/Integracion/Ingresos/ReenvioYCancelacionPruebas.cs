@@ -8,8 +8,9 @@ using Microsoft.EntityFrameworkCore;
 namespace LaPecosa.Pruebas.Integracion.Ingresos;
 
 /// <summary>
-/// Reenviar y cancelar invitaciones del club (RF-006): solo las pendientes. Es la continuación de
-/// <see cref="InvitacionesClubPruebas"/>, separada para no pasar de 250 líneas.
+/// Reenviar y cancelar invitaciones del club, que solo hace su PRESIDENTE y solo con las
+/// pendientes. Es la continuación de <see cref="InvitacionesClubPruebas"/>, separada para no pasar
+/// de 250 líneas.
 /// </summary>
 [Collection(ColeccionApi.Nombre)]
 public class ReenvioYCancelacionPruebas
@@ -21,12 +22,10 @@ public class ReenvioYCancelacionPruebas
         _fabrica = fabrica;
     }
 
-    [Theory]
-    [InlineData(Rol.PRESIDENTE)]
-    [InlineData(Rol.DIRECTIVO)]
-    public async Task Reenviar_entrega_un_enlace_nuevo_invalida_el_anterior_y_deja_una_sola_fila(Rol rol)
+    [Fact]
+    public async Task Reenviar_entrega_un_enlace_nuevo_invalida_el_anterior_y_deja_una_sola_fila()
     {
-        var (club, cliente) = await ClubConAsync(rol);
+        var (club, cliente) = await ClubConAsync(Rol.PRESIDENTE);
         var correo = Sembrador.CorreoUnico();
         var primera = await InvitarAsync(cliente, club, correo);
         var tokenAnterior = _fabrica.Correo.UltimoToken("invitacion", correo);
@@ -49,12 +48,10 @@ public class ReenvioYCancelacionPruebas
         Assert.Equal(nueva.GetProperty("invitacionId").GetGuid(), fila.GetProperty("invitacionId").GetGuid());
     }
 
-    [Theory]
-    [InlineData(Rol.PRESIDENTE)]
-    [InlineData(Rol.DIRECTIVO)]
-    public async Task Cancelar_deja_la_fila_como_cancelada_y_su_enlace_ya_no_sirve(Rol rol)
+    [Fact]
+    public async Task Cancelar_deja_la_fila_como_cancelada_y_su_enlace_ya_no_sirve()
     {
-        var (club, cliente) = await ClubConAsync(rol);
+        var (club, cliente) = await ClubConAsync(Rol.PRESIDENTE);
         var correo = Sembrador.CorreoUnico();
         var invitacionId = await InvitarAsync(cliente, club, correo);
         var token = _fabrica.Correo.UltimoToken("invitacion", correo);
@@ -117,16 +114,17 @@ public class ReenvioYCancelacionPruebas
     }
 
     [Fact]
-    public async Task La_invitacion_sigue_sirviendo_aunque_quien_la_envio_deje_de_ser_directivo_o_salga_del_club()
+    public async Task La_invitacion_sigue_sirviendo_aunque_quien_la_envio_deje_de_ser_presidente_o_salga_del_club()
     {
+        // Un club con dos presidentes: el segundo invita y después deja de serlo.
         var (club, delPresidente) = await ClubConAsync(Rol.PRESIDENTE);
-        var (directivo, integrante) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.DIRECTIVO);
-        var delDirectivo = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(directivo);
+        var (quienInvita, integrante) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
+        var delQueInvita = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(quienInvita);
         var correo = Sembrador.CorreoUnico();
-        await InvitarAsync(delDirectivo, club, correo);
+        await InvitarAsync(delQueInvita, club, correo);
         var token = _fabrica.Correo.UltimoToken("invitacion", correo);
 
-        // Deja de ser directivo: la invitación sirve y sigue diciendo quién la envió.
+        // Deja de ser presidente: la invitación sirve y sigue diciendo quién la envió.
         await _fabrica.ConContextoAsync(contexto => contexto.UsuariosRol
             .IgnoreQueryFilters().Where(i => i.Id == integrante.Id)
             .ExecuteUpdateAsync(cambios => cambios.SetProperty(i => i.Rol, Rol.JUGADOR)));
@@ -153,7 +151,7 @@ public class ReenvioYCancelacionPruebas
 
     private static async Task<Guid> InvitarAsync(ClienteDePrueba cliente, Club club, string correo)
     {
-        var respuesta = await cliente.PostAsync(Ruta(club), new { correo });
+        var respuesta = await cliente.PostAsync(Ruta(club), new { correo, rol = "JUGADOR" });
         Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
         return (await ClienteDePrueba.LeerAsync<JsonElement>(respuesta)).GetProperty("invitacionId").GetGuid();
     }

@@ -14,17 +14,18 @@ public class PlantillasCorreoPruebas
     {
         var mensaje = PlantillasCorreo.Invitacion(UrlBase, Club, Rol.PRESIDENTE, Token);
 
-        Assert.Contains("presidente", mensaje.Texto);
+        Assert.Contains("como presidente", mensaje.Texto);
+        Assert.DoesNotContain("revisará", mensaje.Texto, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(Club, mensaje.Texto);
         Assert.Equal($"{UrlBase}/invitacion#{Token}", mensaje.Enlace);
         Assert.Contains(mensaje.Enlace, mensaje.Texto);
     }
 
     [Theory]
-    [InlineData(Rol.JUGADOR)]
-    [InlineData(Rol.ENTRENADOR)]
-    [InlineData(Rol.DIRECTIVO)]
-    public void La_invitacion_del_club_lleva_el_club_y_el_enlace_y_no_nombra_ningun_rol(Rol rol)
+    [InlineData(Rol.JUGADOR, "jugador")]
+    [InlineData(Rol.ENTRENADOR, "entrenador")]
+    [InlineData(Rol.DIRECTIVO, "directivo")]
+    public void La_invitacion_del_club_nombra_el_club_y_el_rol_y_no_anuncia_ninguna_revision(Rol rol, string nombre)
     {
         var mensaje = PlantillasCorreo.Invitacion($"{UrlBase}/", Club, rol, Token);
 
@@ -33,11 +34,14 @@ public class PlantillasCorreoPruebas
         Assert.Equal($"{UrlBase}/invitacion#{Token}", mensaje.Enlace);
         Assert.Contains(mensaje.Enlace, mensaje.Texto);
 
-        foreach (var nombreDeRol in new[] { "jugador", "presidente", "entrenador", "directivo", "desarrollador" })
+        // Nombra su rol y ningún otro, y ya no dice que el club revisará el ingreso (RF-006).
+        Assert.Contains($"como {nombre}", mensaje.Texto);
+        foreach (var otro in new[] { "jugador", "presidente", "entrenador", "directivo", "desarrollador" }.Where(otro => otro != nombre))
         {
-            Assert.DoesNotContain(nombreDeRol, mensaje.Texto, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain(nombreDeRol, mensaje.Asunto, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(otro, mensaje.Texto, StringComparison.OrdinalIgnoreCase);
         }
+
+        Assert.DoesNotContain("revisará", mensaje.Texto, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

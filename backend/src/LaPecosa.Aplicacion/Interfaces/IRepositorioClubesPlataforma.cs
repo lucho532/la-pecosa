@@ -25,9 +25,6 @@ public interface IRepositorioClubesPlataforma
     /// <summary>Presidentes registrados de un club, cada uno con su cuenta.</summary>
     Task<IReadOnlyList<UsuarioRol>> ListarPresidentesAsync(Guid clubId, CancellationToken cancelacion = default);
 
-    /// <summary>Indica si la cuenta con ese correo normalizado ya es presidente del club.</summary>
-    Task<bool> EsPresidenteAsync(Guid clubId, string correoNormalizado, CancellationToken cancelacion = default);
-
     /// <summary>
     /// Busca un club bloqueando su fila hasta el final de la transacción, para que las reglas que
     /// cuentan sus presidentes no se crucen con otro cambio simultáneo.

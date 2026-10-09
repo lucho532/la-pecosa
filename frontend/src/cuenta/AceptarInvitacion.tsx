@@ -15,9 +15,9 @@ interface Props {
 
 /**
  * Invitación a un correo que ya tiene cuenta: no se registra de nuevo. Pide iniciar sesión con
- * esa cuenta y después ofrece aceptar; si la sesión abierta es de otro correo, lo explica. Con una
- * invitación del club no nombra ningún rol y avisa de que el ingreso quedará pendiente de
- * aprobación; si la persona ya está en ese club, muestra el mensaje de la API y no cambia nada.
+ * esa cuenta y después ofrece aceptar; si la sesión abierta es de otro correo, lo explica. Nombra
+ * siempre el club y el rol y no pide ningún dato: al aceptar, la persona entra directamente al
+ * club. Si ya está en ese club, muestra el mensaje de la API y no cambia nada.
  */
 export function AceptarInvitacion({ token, invitacion }: Props) {
   const { sesion, recargar, cerrar } = useSesion();
@@ -70,19 +70,11 @@ export function AceptarInvitacion({ token, invitacion }: Props) {
 
   return (
     <>
-      {invitacion.pasaPorSalaDeEspera ? (
-        <p>
-          <strong>{invitacion.nombreClub}</strong> te invita a unirte al club. Al aceptar, ese club se suma a
-          los que ya tienes, con la misma cuenta, y tu ingreso quedará pendiente de aprobación: hasta que el
-          club lo apruebe solo verás su pantalla de espera.
-        </p>
-      ) : (
-        <p>
-          Te invitaron a <strong>{invitacion.nombreClub}</strong> como{' '}
-          <strong>{nombreDeRol(invitacion.rol).toLowerCase()}</strong>. Al aceptar, ese club se suma a los
-          que ya tienes, con la misma cuenta.
-        </p>
-      )}
+      <p>
+        Te invitaron a <strong>{invitacion.nombreClub}</strong> como{' '}
+        <strong>{nombreDeRol(invitacion.rol).toLowerCase()}</strong>. Al aceptar, ese club se suma a los que
+        ya tienes, con la misma cuenta, y entras a él con ese rol.
+      </p>
       {error && <Aviso tono="error">{error}</Aviso>}
       <Boton onClick={() => void aceptar()} cargando={enviando} textoCargando="Aceptando…">
         Aceptar

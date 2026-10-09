@@ -6,17 +6,21 @@ using LaPecosa.Aplicacion.Utilidades;
 using LaPecosa.Aplicacion.Validadores;
 using LaPecosa.Dominio.Entidades;
 using LaPecosa.Dominio.Enumeraciones;
+using LaPecosa.Dominio.Reglas;
 
 namespace LaPecosa.Aplicacion.Implementaciones;
 
 /// <summary>
 /// Representa el servicio de las invitaciones que envía un club.
 /// Su responsabilidad es crear, listar, reenviar y cancelar las invitaciones del club de la
-/// petición. La invitación se guarda con el rol JUGADOR, que es con el que entra quien la use
-/// (RF-003). El correo se intenta enviar después de confirmar la transacción, sin colas; si falla,
-/// la invitación queda con el envío fallido y se puede reenviar (RF-008).
-/// No guarda el token en claro, no accede al contexto de Entity Framework y no conoce HTTP. No
-/// recibe un identificador de club: solo existe el que fijó la autorización.
+/// petición. La invitación se guarda con el rol que eligió quien invita, que es con el que entra
+/// quien la use (RF-001); reenviarla conserva ese rol e invitar de nuevo el correo aplica el de la
+/// invitación nueva (RF-004). El correo se intenta enviar después de confirmar la transacción, sin
+/// colas; si falla, la invitación queda con el envío fallido y se puede reenviar.
+/// No decide quién puede invitar (lo comprueba la autorización) ni qué roles son invitables (lo
+/// dice la regla de invitación del club), y no ofrece ninguna operación que cambie el rol de una
+/// invitación ya creada. No guarda el token en claro, no accede al contexto de Entity Framework y
+/// no conoce HTTP. No recibe un identificador de club: solo existe el que fijó la autorización.
 /// </summary>
 public class ServicioInvitacionesClub : IServicioInvitacionesClub
 {
@@ -66,12 +70,24 @@ public class ServicioInvitacionesClub : IServicioInvitacionesClub
 
         var errores = new ErroresDeValidacion();
         ValidadorCorreo.Obligatorio(errores, "correo", datos.Correo);
+        if (datos.Rol is null || !Enum.IsDefined(datos.Rol.Value))
+        {
+            errores.Agregar("rol", "El rol es obligatorio: elige jugador, entrenador o directivo.");
+        }
+
         errores.LanzarSiHayErrores();
+        var rol = datos.Rol!.Value;
+
+        // Antes de mirar el correo: con un rol que el club no puede dar no se crea ni se envía nada.
+        if (!ReglaInvitacionDelClub.Admite(rol))
+        {
+            throw ErroresDeInvitacion.RolNoInvitable();
+        }
 
         var correo = NormalizadorTexto.Correo(datos.Correo);
         await ComprobarCorreoInvitableAsync(correo, cancelacion);
 
-        return await CrearYEnviarAsync(club, correo, usuarioId, cancelacion);
+        return await CrearYEnviarAsync(club, correo, rol, usuarioId, cancelacion);
     }
 
     /// <inheritdoc />
@@ -82,7 +98,8 @@ public class ServicioInvitacionesClub : IServicioInvitacionesClub
         var anterior = await PendienteAsync(invitacionId, cancelacion);
         await ComprobarCorreoInvitableAsync(anterior.Correo, cancelacion);
 
-        return await CrearYEnviarAsync(club, anterior.Correo, usuarioId, cancelacion);
+        // La invitación nueva conserva el rol de la anterior: reenviar no lo cambia (RF-004).
+        return await CrearYEnviarAsync(club, anterior.Correo, anterior.Rol, usuarioId, cancelacion);
     }
 
     /// <inheritdoc />
@@ -111,7 +128,10 @@ public class ServicioInvitacionesClub : IServicioInvitacionesClub
         return invitacion;
     }
 
-    /// <summary>No se invita a quien ya está en el club o en su sala de espera, ni al DESARROLLADOR (RF-007).</summary>
+    /// <summary>
+    /// No se invita a quien ya está en el club o en su sala de espera, ni a un jugador retirado, ni
+    /// al DESARROLLADOR, sea cual sea el rol de la invitación (RF-014).
+    /// </summary>
     private async Task ComprobarCorreoInvitableAsync(string correo, CancellationToken cancelacion)
     {
         var desarrollador = await _usuarios.ObtenerDesarrolladorAsync(cancelacion);
@@ -139,7 +159,7 @@ public class ServicioInvitacionesClub : IServicioInvitacionesClub
     }
 
     private async Task<InvitacionClubDto> CrearYEnviarAsync(
-        Club club, string correo, Guid usuarioId, CancellationToken cancelacion)
+        Club club, string correo, Rol rol, Guid usuarioId, CancellationToken cancelacion)
     {
         var (invitacion, token) = await _unidadDeTrabajo.EnTransaccionAsync(
             async () =>
@@ -147,7 +167,7 @@ public class ServicioInvitacionesClub : IServicioInvitacionesClub
                 var ahora = _reloj.AhoraUtc;
                 await _invitaciones.AnularPendientesAsync(correo, ahora, cancelacion);
 
-                var nueva = ConstructorInvitaciones.Nueva(club.Id, Rol.JUGADOR, correo, usuarioId, ahora);
+                var nueva = ConstructorInvitaciones.Nueva(club.Id, rol, correo, usuarioId, ahora);
                 _invitaciones.Agregar(nueva.Invitacion);
                 await _unidadDeTrabajo.GuardarAsync(cancelacion);
                 return nueva;

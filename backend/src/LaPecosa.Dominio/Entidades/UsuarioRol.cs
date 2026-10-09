@@ -6,8 +6,10 @@ namespace LaPecosa.Dominio.Entidades;
 /// Representa la pertenencia de una persona a un club: lo que la especificación llama
 /// "integrante" (constitución §12.3).
 /// Su responsabilidad es guardar el único rol de la persona en ese club, su identidad en él
-/// (nombre, documento y fecha de nacimiento), su estado de ingreso y, cuando alguien del club lo
-/// aprobó, quién lo hizo, cuándo y con qué rol. De un jugador guarda además su categoría actual y,
+/// (nombre, documento y fecha de nacimiento), su estado de ingreso y, cuando el club lo aprobó
+/// desde la sala de espera, quién lo hizo, cuándo y con qué rol. Quien entra con una invitación
+/// nace aprobado, con el rol de la invitación y sin datos de aprobación. De un jugador guarda
+/// además su categoría actual y,
 /// si el club lo retiró, quién lo hizo y cuándo (constitución §11.2 y §14.1): todavía no existe la
 /// entidad Jugador y aquí el jugador es el integrante aprobado con el rol JUGADOR.
 /// No guarda el correo ni la contraseña, que son de la cuenta, y nunca lleva el rol DESARROLLADOR.
@@ -35,14 +37,16 @@ public class UsuarioRol : IPerteneceAClub
     public Rol Rol { get; set; }
 
     /// <summary>
-    /// Estado de ingreso. Ya existía, siempre <c>APROBADO</c>. Ahora puede ser <c>EN_ESPERA</c>
-    /// (RF-014): quien entra con una invitación del club espera a que lo aprueben.
+    /// Estado de ingreso. Quien entra con una invitación, del club o de presidente, nace
+    /// <c>APROBADO</c> (RF-008). <c>EN_ESPERA</c> queda para el jugador agregado desde la ficha de
+    /// un hermano, que espera a que el PRESIDENTE lo apruebe (constitución §12.1.1).
     /// </summary>
     public EstadoIngreso EstadoIngreso { get; set; }
 
     /// <summary>
-    /// Fecha y hora de la aprobación, en UTC. Nulo mientras está en espera y en quien entró sin
-    /// sala de espera. Los cuatro datos de la aprobación se rellenan juntos y no cambian después.
+    /// Fecha y hora de la aprobación, en UTC. Nulo mientras está en espera y en quien entró con
+    /// una invitación, que no pasa por ninguna aprobación (RF-019). Los cuatro datos de la
+    /// aprobación se rellenan juntos y no cambian después.
     /// </summary>
     public DateTime? AprobadoEn { get; set; }
 
@@ -56,8 +60,9 @@ public class UsuarioRol : IPerteneceAClub
     public string? AprobadoPorNombre { get; set; }
 
     /// <summary>
-    /// Rol con el que quedó al aprobarse: <c>JUGADOR</c>, <c>ENTRENADOR</c> o <c>DIRECTIVO</c>
-    /// (RF-025). No cambia aunque después cambie <see cref="Rol"/>.
+    /// Rol con el que quedó al aprobarse desde la sala de espera. Desde la funcionalidad 004 es
+    /// siempre <c>JUGADOR</c> (RF-016); las aprobaciones anteriores conservan <c>ENTRENADOR</c> o
+    /// <c>DIRECTIVO</c> si lo tenían. No cambia aunque después cambie <see cref="Rol"/>.
     /// </summary>
     public Rol? RolDeIngreso { get; set; }
 

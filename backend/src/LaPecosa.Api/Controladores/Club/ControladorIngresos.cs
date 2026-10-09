@@ -4,6 +4,7 @@ using LaPecosa.Aplicacion.DTOs;
 using LaPecosa.Aplicacion.Servicios;
 using LaPecosa.Dominio.Enumeraciones;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace LaPecosa.Api.Controladores.Club;
 
@@ -11,13 +12,14 @@ namespace LaPecosa.Api.Controladores.Club;
 /// Representa los endpoints de los ingresos de un club: su sala de espera, la aprobación y el
 /// rechazo de un ingreso y la lista de ingresos aprobados.
 /// Su responsabilidad es recibir la petición y delegar en los servicios.
-/// No contiene reglas de negocio: solo admite al PRESIDENTE y a los DIRECTIVOS del club de la ruta,
-/// lo que comprueba <see cref="IntegranteDelClubAttribute"/>. No ofrece ninguna operación que
-/// cambie el rol de alguien ya aprobado ni que modifique la lista de aprobados.
+/// No contiene reglas de negocio: solo admite al PRESIDENTE del club de la ruta, lo que comprueba
+/// <see cref="IntegranteDelClubAttribute"/>; un DIRECTIVO, un ENTRENADOR o un JUGADOR reciben 403
+/// en los cuatro endpoints (RF-017). No ofrece ninguna operación que elija o cambie el rol de
+/// nadie ni que modifique la lista de aprobados.
 /// </summary>
 [Route("api/clubes/{clubId:guid}/ingresos")]
 [Tags("Ingresos")]
-[IntegranteDelClub(Rol.PRESIDENTE, Rol.DIRECTIVO)]
+[IntegranteDelClub(Rol.PRESIDENTE)]
 [ProducesResponseType<Problema>(StatusCodes.Status401Unauthorized, Problema.TipoContenido)]
 [ProducesResponseType<Problema>(StatusCodes.Status403Forbidden, Problema.TipoContenido)]
 [ProducesResponseType<Problema>(StatusCodes.Status404NotFound, Problema.TipoContenido)]
@@ -48,12 +50,16 @@ public class ControladorIngresos : ControladorBase
     public Task<IReadOnlyList<IngresoAprobadoDto>> ListarAprobados(CancellationToken cancelacion) =>
         _consulta.ListarAprobadosAsync(cancelacion);
 
-    /// <summary>Aprueba el ingreso de una persona en espera y fija su rol.</summary>
+    /// <summary>
+    /// Aprueba el ingreso de una persona en espera, que entra como JUGADOR. El cuerpo es opcional.
+    /// </summary>
     [HttpPost("{usuarioRolId:guid}/aprobacion")]
     [ProducesResponseType<IngresoAprobadoDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<Problema>(StatusCodes.Status400BadRequest, Problema.TipoContenido)]
     [ProducesResponseType<Problema>(StatusCodes.Status409Conflict, Problema.TipoContenido)]
-    public Task<IngresoAprobadoDto> Aprobar(Guid usuarioRolId, AprobarIngresoDto datos, CancellationToken cancelacion) =>
+    public Task<IngresoAprobadoDto> Aprobar(
+        Guid usuarioRolId,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] AprobarIngresoDto? datos,
+        CancellationToken cancelacion) =>
         _aprobacion.AprobarAsync(usuarioRolId, datos, Integrante, cancelacion);
 
     /// <summary>Rechaza el ingreso de una persona en espera y la borra del club.</summary>

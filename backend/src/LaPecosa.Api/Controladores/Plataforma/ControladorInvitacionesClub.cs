@@ -8,10 +8,12 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 namespace LaPecosa.Api.Controladores.Plataforma;
 
 /// <summary>
-/// Representa los endpoints del panel de administración sobre las invitaciones de un club: invitar
-/// a otro presidente y reenviar una invitación.
+/// Representa el endpoint del panel de administración sobre la invitación del presidente de un
+/// club: reenviarla, con el mismo correo o con uno corregido, mientras no se haya usado (RF-025).
 /// Su responsabilidad es recibir la petición y delegar en <see cref="IServicioInvitacionPresidente"/>.
 /// No contiene reglas de negocio; solo admite a la cuenta DESARROLLADOR y nunca devuelve el token.
+/// No ofrece invitar a un presidente a un club que ya existe: el DESARROLLADOR solo invita al
+/// crear el club (constitución §12.5; RF-024).
 /// </summary>
 [Route("api/plataforma/clubes/{clubId:guid}/invitaciones")]
 [Tags("Plataforma")]
@@ -31,11 +33,6 @@ public class ControladorInvitacionesClub : ControladorBase
     {
         _servicio = servicio;
     }
-
-    /// <summary>Invita a un presidente a un club que ya existe.</summary>
-    [HttpPost]
-    public async Task<IActionResult> Invitar(Guid clubId, InvitarPresidenteDto datos, CancellationToken cancelacion) =>
-        StatusCode(StatusCodes.Status201Created, await _servicio.InvitarAsync(clubId, datos, UsuarioId, cancelacion));
 
     /// <summary>Reenvía una invitación sin usar, con el mismo correo o con uno corregido.</summary>
     [HttpPost("{invitacionId:guid}/reenvio")]

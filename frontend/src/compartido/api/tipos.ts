@@ -1,5 +1,6 @@
 // Tipos de los esquemas de specs/001-base-multiclub/contracts/api.yaml y de
-// specs/002-ingreso-club/contracts/api.yaml, con los mismos nombres. Los de
+// specs/002-ingreso-club/contracts/api.yaml, con los cambios de
+// specs/004-invitacion-con-rol/contracts/api.yaml y con los mismos nombres. Los de
 // specs/003-categorias-club/contracts/api.yaml están en tiposCategorias.ts.
 
 export type Rol = 'DESARROLLADOR' | 'PRESIDENTE' | 'DIRECTIVO' | 'ENTRENADOR' | 'JUGADOR';
@@ -76,8 +77,8 @@ export interface InvitacionVigenteDto {
   rol: Rol;
   correo: string;
   tieneCuenta: boolean;
-  /** Verdadero en las invitaciones del club: la pantalla no nombra ningún rol. */
-  pasaPorSalaDeEspera: boolean;
+  /** Verdadero solo en las invitaciones de jugador: el registro pide el nombre del responsable. */
+  pideResponsable: boolean;
   identidad: IdentidadClubDto;
 }
 
@@ -89,7 +90,10 @@ export interface RegistrarConInvitacionDto {
   numeroDocumento: string;
   fechaNacimiento: string;
   celular: string;
-  /** Obligatorio si la persona es menor de 18 años el día del registro. */
+  /**
+   * Solo con una invitación de jugador: obligatorio si la persona es menor de 18 años el día del
+   * registro. Con cualquier otro rol no se envía.
+   */
   nombreResponsable?: string | null;
   contrasena: string;
 }
@@ -171,10 +175,6 @@ export interface EliminarClubDto {
   nombreDeConfirmacion: string;
 }
 
-export interface InvitarPresidenteDto {
-  correo: string;
-}
-
 export interface ReenviarInvitacionDto {
   correo?: string;
 }
@@ -186,11 +186,14 @@ export interface RetirarPresidenteDto {
 
 export interface InvitarAlClubDto {
   correo: string;
+  /** Rol con el que entra la persona. Lo elige el presidente al invitar y no cambia después. */
+  rol: RolDeIngreso;
 }
 
 export interface InvitacionClubDto {
   invitacionId: string;
   correo: string;
+  rol: RolDeIngreso;
   estado: EstadoInvitacion;
   estadoEnvio: EstadoEnvio;
   /** Nombre de quien la envió; nulo si ya no está en el club. */
@@ -212,8 +215,9 @@ export interface IngresoEnEsperaDto {
   registradoEn: string;
 }
 
+/** Cuerpo opcional de la aprobación: al aprobar no se elige rol y la API solo admite JUGADOR. */
 export interface AprobarIngresoDto {
-  rol: RolDeIngreso;
+  rol?: 'JUGADOR' | null;
 }
 
 export interface IngresoAprobadoDto {

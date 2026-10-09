@@ -4,6 +4,7 @@ using LaPecosa.Aplicacion.Mappers;
 using LaPecosa.Aplicacion.Servicios;
 using LaPecosa.Aplicacion.Utilidades;
 using LaPecosa.Dominio.Entidades;
+using LaPecosa.Dominio.Enumeraciones;
 using LaPecosa.Dominio.Reglas;
 
 namespace LaPecosa.Aplicacion.Implementaciones;
@@ -12,19 +13,26 @@ namespace LaPecosa.Aplicacion.Implementaciones;
 /// Representa el servicio que acepta una invitación con una cuenta existente.
 /// Su responsabilidad es comprobar que la invitación está vigente y es del correo de la sesión, y
 /// en una transacción marcarla como usada y crear el integrante, copiando la identidad del
-/// integrante más reciente de la cuenta. Con una invitación del club el integrante nuevo queda
-/// como JUGADOR en la sala de espera, y si la cuenta ya está en ese club no cambia nada (409). Solo
-/// una invitación de presidente reemplaza el rol de quien ya era integrante; si era jugador, sale
-/// de su categoría y de sus equipos y deja de estar retirado. A un jugador retirado no lo devuelve
-/// al club una invitación del club (409): se le reincorpora.
-/// No crea cuentas ni pide de nuevo los datos de la persona, tampoco el responsable. No accede al
-/// contexto de Entity Framework ni conoce HTTP.
+/// integrante más reciente de la cuenta. El integrante nuevo entra directamente con el rol de la
+/// invitación, aprobado y sin sala de espera (RF-010); si es JUGADOR queda, en esa transacción y
+/// con el club bloqueado, en la categoría activa de su año de nacimiento, o sin categoría si el
+/// club no la tiene. Con una invitación del club, si la cuenta ya está en ese club no cambia nada
+/// (409). Solo una invitación de presidente reemplaza el rol de quien ya era integrante; si era
+/// jugador, sale de su categoría y de sus equipos y deja de estar retirado. A un jugador retirado
+/// no lo devuelve al club una invitación del club (409): se le reincorpora.
+/// No crea cuentas ni pide de nuevo los datos de la persona, tampoco el responsable: la cuenta
+/// conserva el que tenga. No cambia nada en los otros clubes de la persona ni registra ninguna
+/// aprobación. Para leer las categorías fija en el contexto el club de la invitación válida
+/// (constitución §7.1, tercera excepción). No accede al contexto de Entity Framework ni conoce HTTP.
 /// </summary>
 public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
 {
     private readonly IRepositorioInvitacionesPorToken _invitaciones;
     private readonly IRepositorioUsuarios _usuarios;
     private readonly IRepositorioPertenencias _pertenencias;
+    private readonly IRepositorioClub _club;
+    private readonly IContextoClub _contextoClub;
+    private readonly UbicadorDeJugadores _ubicador;
     private readonly IUnidadDeTrabajo _unidadDeTrabajo;
     private readonly IReloj _reloj;
 
@@ -33,12 +41,18 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
         IRepositorioInvitacionesPorToken invitaciones,
         IRepositorioUsuarios usuarios,
         IRepositorioPertenencias pertenencias,
+        IRepositorioClub club,
+        IContextoClub contextoClub,
+        UbicadorDeJugadores ubicador,
         IUnidadDeTrabajo unidadDeTrabajo,
         IReloj reloj)
     {
         _invitaciones = invitaciones;
         _usuarios = usuarios;
         _pertenencias = pertenencias;
+        _club = club;
+        _contextoClub = contextoClub;
+        _ubicador = ubicador;
         _unidadDeTrabajo = unidadDeTrabajo;
         _reloj = reloj;
     }
@@ -58,6 +72,9 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
             throw ErroresDeInvitacion.NoValida();
         }
 
+        // Desde aquí la petición queda limitada al club de la invitación (research §4).
+        _contextoClub.Fijar(invitacion.ClubId);
+
         var usuario = await _usuarios.ObtenerPorIdAsync(usuarioId, cancelacion);
         if (usuario is null || usuario.CorreoNormalizado != invitacion.Correo)
         {
@@ -68,9 +85,9 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
         }
 
         var existente = await _pertenencias.ObtenerAsync(usuarioId, invitacion.ClubId, cancelacion);
-        if (existente is not null && ReglaIngresoPorInvitacion.PasaPorSalaDeEspera(invitacion.Rol))
+        if (existente is not null && ReglaIngresoPorInvitacion.EsDelClub(invitacion.Rol))
         {
-            // Una invitación del club no degrada a quien ya está en él: no se gasta ni cambia nada.
+            // Una invitación del club no cambia a quien ya está en él: no se gasta ni cambia nada.
             // A un jugador retirado tampoco lo devuelve: eso es reincorporarlo (RF-046 de la 003).
             throw existente.Activo ? ErroresDeInvitacion.YaPertenecesAlClub() : ErroresDeInvitacion.PersonaRetirada();
         }
@@ -82,6 +99,10 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
             await _unidadDeTrabajo.EnTransaccionAsync(
                 async () =>
                 {
+                    // Con el club bloqueado, aceptar y crear la categoría del año a la vez deja
+                    // siempre al jugador dentro de ella (research §4).
+                    await _club.BloquearAsync(cancelacion);
+
                     if (!await _invitaciones.MarcarUsadaAsync(invitacion.Id, ahora, cancelacion))
                     {
                         throw ErroresDeInvitacion.NoValida();
@@ -96,7 +117,7 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
                         // Ya era integrante de este club y la invitación es de presidente: su rol
                         // pasa a ser el de la invitación (RF-018 de la 001).
                         existente.Rol = invitacion.Rol;
-                        existente.EstadoIngreso = ReglaIngresoPorInvitacion.EstadoDeIngreso(invitacion.Rol);
+                        existente.EstadoIngreso = EstadoIngreso.APROBADO;
 
                         // Si era jugador deja de serlo: solo los jugadores tienen categoría y equipos
                         // y solo a ellos se les retira (RF-012 y RF-041 de la 003).
@@ -109,6 +130,12 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
                     }
 
                     await _unidadDeTrabajo.GuardarAsync(cancelacion);
+
+                    // Quien entra como jugador se ubica igual que al registrarse (RF-011).
+                    if (existente is null && integrante.Rol == Rol.JUGADOR)
+                    {
+                        await _ubicador.UbicarAUnoAsync(integrante, cancelacion);
+                    }
                 },
                 cancelacion);
         }
@@ -137,7 +164,7 @@ public class ServicioAceptacionInvitacion : IServicioAceptacionInvitacion
             ClubId = invitacion.ClubId,
             UsuarioId = usuario.Id,
             Rol = invitacion.Rol,
-            EstadoIngreso = ReglaIngresoPorInvitacion.EstadoDeIngreso(invitacion.Rol),
+            EstadoIngreso = EstadoIngreso.APROBADO,
             Nombres = identidad.Nombres,
             Apellidos = identidad.Apellidos,
             TipoDocumento = identidad.TipoDocumento,

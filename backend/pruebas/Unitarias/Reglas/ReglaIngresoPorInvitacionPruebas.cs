@@ -5,29 +5,32 @@ namespace LaPecosa.Pruebas.Unitarias.Reglas;
 
 public class ReglaIngresoPorInvitacionPruebas
 {
-    [Fact]
-    public void La_invitacion_de_presidente_entra_aprobada_y_sin_sala_de_espera()
-    {
-        Assert.Equal(EstadoIngreso.APROBADO, ReglaIngresoPorInvitacion.EstadoDeIngreso(Rol.PRESIDENTE));
-        Assert.False(ReglaIngresoPorInvitacion.PasaPorSalaDeEspera(Rol.PRESIDENTE));
-    }
+    [Theory]
+    [InlineData(Rol.JUGADOR, true)]
+    [InlineData(Rol.ENTRENADOR, true)]
+    [InlineData(Rol.DIRECTIVO, true)]
+    [InlineData(Rol.PRESIDENTE, false)]
+    public void Es_del_club_toda_invitacion_que_no_es_de_presidente(Rol rol, bool esperado) =>
+        Assert.Equal(esperado, ReglaIngresoPorInvitacion.EsDelClub(rol));
+
+    [Theory]
+    [InlineData(Rol.JUGADOR, true)]
+    [InlineData(Rol.ENTRENADOR, false)]
+    [InlineData(Rol.DIRECTIVO, false)]
+    [InlineData(Rol.PRESIDENTE, false)]
+    public void Solo_la_invitacion_de_jugador_pide_el_responsable(Rol rol, bool esperado) =>
+        Assert.Equal(esperado, ReglaIngresoPorInvitacion.PideResponsable(rol));
 
     [Theory]
     [InlineData(Rol.JUGADOR)]
     [InlineData(Rol.ENTRENADOR)]
     [InlineData(Rol.DIRECTIVO)]
-    public void Cualquier_otra_invitacion_deja_en_espera(Rol rol)
+    public void La_invitacion_del_club_no_sirve_mientras_el_club_esta_dado_de_baja(Rol rol)
     {
-        Assert.Equal(EstadoIngreso.EN_ESPERA, ReglaIngresoPorInvitacion.EstadoDeIngreso(rol));
-        Assert.True(ReglaIngresoPorInvitacion.PasaPorSalaDeEspera(rol));
+        Assert.True(ReglaIngresoPorInvitacion.ElClubPermiteUsarla(rol, EstadoClub.ACTIVO));
+        Assert.True(ReglaIngresoPorInvitacion.ElClubPermiteUsarla(rol, EstadoClub.SUSPENDIDO));
+        Assert.False(ReglaIngresoPorInvitacion.ElClubPermiteUsarla(rol, EstadoClub.DADO_DE_BAJA));
     }
-
-    [Theory]
-    [InlineData(EstadoClub.ACTIVO, true)]
-    [InlineData(EstadoClub.SUSPENDIDO, true)]
-    [InlineData(EstadoClub.DADO_DE_BAJA, false)]
-    public void La_invitacion_del_club_no_sirve_mientras_el_club_esta_dado_de_baja(EstadoClub estado, bool esperado) =>
-        Assert.Equal(esperado, ReglaIngresoPorInvitacion.ElClubPermiteUsarla(Rol.JUGADOR, estado));
 
     [Theory]
     [InlineData(EstadoClub.ACTIVO)]

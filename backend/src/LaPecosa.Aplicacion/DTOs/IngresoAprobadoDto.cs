@@ -3,11 +3,13 @@ using LaPecosa.Dominio.Enumeraciones;
 namespace LaPecosa.Aplicacion.DTOs;
 
 /// <summary>
-/// Representa un ingreso aprobado de la lista de solo lectura del club (RF-025 y RF-025a).
+/// Representa un ingreso aprobado de la lista de solo lectura del club, que solo ve su PRESIDENTE
+/// (RF-019).
 /// Su responsabilidad es decir quién entró, con qué rol, quién lo aprobó y cuándo, tal como quedó
-/// registrado en ese momento.
-/// No refleja el rol actual de la persona ni el nombre actual de quien aprobó (§13), y no permite
-/// modificar nada.
+/// registrado en ese momento. En las aprobaciones nuevas el rol es siempre JUGADOR; las anteriores
+/// conservan el suyo y a quien las aprobó, aunque fuera un DIRECTIVO.
+/// No refleja el rol actual de la persona ni el nombre actual de quien aprobó (§13), no incluye a
+/// quien entró con una invitación y no permite modificar nada.
 /// </summary>
 /// <param name="UsuarioRolId">Identificador del integrante en este club.</param>
 /// <param name="Nombres">Nombres de la persona aprobada.</param>
