@@ -4,7 +4,8 @@ namespace LaPecosa.Aplicacion.Validadores;
 /// Representa la validación de las imágenes que se cargan: el escudo de un club y la foto de
 /// perfil de una cuenta (research §10 y §16).
 /// Su responsabilidad es aceptar solo PNG, JPEG o WebP reconocidos por su firma binaria, de hasta
-/// 1 MB, y decir qué tipo de contenido es.
+/// 1 MB, y decir qué tipo de contenido es. Su detección de firmas la reutiliza la validación de
+/// los archivos de la ficha del jugador, que admite además PDF y tiene su propio límite.
 /// No confía en la extensión ni en la cabecera enviada, no admite SVG y no guarda la imagen.
 /// </summary>
 public static class ValidadorImagen

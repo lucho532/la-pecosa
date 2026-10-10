@@ -9,8 +9,8 @@ namespace LaPecosa.Infraestructura.Repositorios;
 
 /// <summary>
 /// Representa el acceso a los jugadores del club de la petición con Entity Framework.
-/// Su responsabilidad es leer las listas de jugadores y cambiar su categoría y su retiro con una
-/// única sentencia condicionada cada vez. Trabaja siempre con el filtro de aislamiento activo: sin
+/// Su responsabilidad es leer las listas de jugadores y al jugador de una ficha, y cambiar su
+/// categoría, su retiro, su documento y su identidad con una única sentencia condicionada cada vez. Trabaja siempre con el filtro de aislamiento activo: sin
 /// club en el contexto no devuelve ni cambia nada.
 /// No se salta el filtro de aislamiento ni contiene reglas de negocio: solo expresa en la consulta
 /// qué es un jugador del club.
@@ -30,6 +30,10 @@ public class RepositorioJugadores : IRepositorioJugadores
     }
 
     private IQueryable<UsuarioRol> Jugadores => _contexto.UsuariosRol.Where(EsJugadorDelClub);
+
+    /// <summary>Quien tiene ficha: rol JUGADOR e ingreso aprobado, activo o retirado (RF-004 de la 005).</summary>
+    private IQueryable<UsuarioRol> ConFicha => _contexto.UsuariosRol
+        .Where(integrante => integrante.Rol == Rol.JUGADOR && integrante.EstadoIngreso == EstadoIngreso.APROBADO);
 
     /// <inheritdoc />
     public Task<UsuarioRol?> ObtenerAsync(Guid usuarioRolId, CancellationToken cancelacion = default) =>
@@ -133,5 +137,38 @@ public class RepositorioJugadores : IRepositorioJugadores
                     .SetProperty(integrante => integrante.RetiradoEn, (DateTime?)null)
                     .SetProperty(integrante => integrante.RetiradoPorUsuarioId, (Guid?)null)
                     .SetProperty(integrante => integrante.RetiradoPorNombre, (string?)null),
+                cancelacion) == 1;
+
+    /// <inheritdoc />
+    public Task<bool> ExisteDocumentoEnOtroAsync(
+        Guid usuarioRolId, string numeroDocumento, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol.AnyAsync(
+            integrante => integrante.Id != usuarioRolId && integrante.NumeroDocumento == numeroDocumento, cancelacion);
+
+    /// <inheritdoc />
+    public async Task<bool> CambiarDocumentoAsync(
+        Guid usuarioRolId, TipoDocumento tipoDocumento, string numeroDocumento, CancellationToken cancelacion = default) =>
+        await ConFicha
+            .Where(jugador => jugador.Id == usuarioRolId)
+            .ExecuteUpdateAsync(
+                cambios => cambios
+                    .SetProperty(jugador => jugador.TipoDocumento, tipoDocumento)
+                    .SetProperty(jugador => jugador.NumeroDocumento, numeroDocumento),
+                cancelacion) == 1;
+
+    /// <inheritdoc />
+    public async Task<bool> CorregirIdentidadAsync(
+        Guid usuarioRolId,
+        string nombres,
+        string apellidos,
+        DateOnly fechaNacimiento,
+        CancellationToken cancelacion = default) =>
+        await ConFicha
+            .Where(jugador => jugador.Id == usuarioRolId)
+            .ExecuteUpdateAsync(
+                cambios => cambios
+                    .SetProperty(jugador => jugador.Nombres, nombres)
+                    .SetProperty(jugador => jugador.Apellidos, apellidos)
+                    .SetProperty(jugador => jugador.FechaNacimiento, fechaNacimiento),
                 cancelacion) == 1;
 }

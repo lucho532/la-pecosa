@@ -19,4 +19,18 @@ public static class ErroresDeFicha
     /// </summary>
     public static ExcepcionDeAplicacion ArchivoNoAdmitido() => new(
         "archivo_no_admitido", 400, "El archivo debe ser un PDF o una imagen JPEG, PNG o WebP.");
+
+    /// <summary>
+    /// 409: ese número de documento ya lo tiene otro integrante del club, activo o retirado
+    /// (RF-023).
+    /// </summary>
+    public static ExcepcionDeAplicacion DocumentoRepetidoEnClub() => ExcepcionDeAplicacion.Conflicto(
+        "documento_repetido_en_club", "Ese documento ya está registrado en el club.");
+
+    /// <summary>
+    /// 409: ese número de documento ya lo usa otra cuenta en otro club. Sin esta regla, que es la
+    /// del registro, el inicio de sesión con documento no sabría a qué cuenta entrar.
+    /// </summary>
+    public static ExcepcionDeAplicacion DocumentoEnOtraCuenta() => ExcepcionDeAplicacion.Conflicto(
+        "documento_en_otra_cuenta", "Ese documento ya está registrado con otra cuenta.");
 }

@@ -54,7 +54,7 @@ export function FichaJugador() {
             <h1>{ficha.usuarioRolId === club.miUsuarioRolId ? 'Mi ficha' : `Ficha de ${nombreCompleto(ficha)}`}</h1>
             <UltimoCambio cambio={ficha.ultimoCambio} />
           </div>
-          <SeccionIdentidad ficha={ficha} />
+          <SeccionIdentidad ficha={ficha} rutaDeLaFicha={ruta} alCambiar={carga.fijar} />
           {ficha.permisos.puedeCambiar && ficha.datosClinicos ? (
             <FormularioFicha key={ficha.usuarioRolId} ficha={ficha} alGuardar={guardar} />
           ) : (

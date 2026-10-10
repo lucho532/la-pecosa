@@ -106,6 +106,59 @@ public class UltimoCambioPruebas
         Assert.Equal(cuenta.Id, (await e.FichaGuardadaAsync(adulto.Id))!.UltimoCambioPorUsuarioId);
     }
 
+    // Caso límite: queda el último guardado entero, sin mezclar datos de los dos (research §10).
+    [Fact]
+    public async Task Dos_guardados_simultaneos_dejan_una_sola_fila_que_coincide_con_uno_de_los_dos()
+    {
+        var e = await EscenarioFicha.CrearAsync(_fabrica);
+
+        for (var vuelta = 0; vuelta < 5; vuelta++)
+        {
+            var (cuenta, jugador) = await e.Base.Sembrar.CrearJugadorAsync(e.Club, 2014);
+            var familia = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(cuenta);
+            var deLaFamilia = Datos("3100000001", "Responsable Uno", "Uno");
+            var delPresidente = Datos("3200000002", "Responsable Dos", "Dos");
+
+            var respuestas = await Task.WhenAll(
+                familia.PutAsync(e.Ficha(jugador.Id), deLaFamilia),
+                e.Presidente.PutAsync(e.Ficha(jugador.Id), delPresidente));
+
+            Assert.All(respuestas, respuesta => Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode));
+            Assert.Equal(1, await FilasDeAsync(jugador.Id));
+            var ficha = (await e.FichaGuardadaAsync(jugador.Id))!;
+            var guardado = await e.JugadorGuardadoAsync(jugador.Id);
+            var quedo = new[]
+            {
+                guardado.Usuario!.Celular, guardado.Usuario.NombreResponsable, ficha.EmergenciaNombre, ficha.EmergenciaParentesco,
+                ficha.EmergenciaCelular, ficha.EntidadSalud, ficha.LugarAtencion, ficha.Alergias, ficha.Enfermedades,
+                ficha.Medicamentos, ficha.Observaciones,
+            };
+            Assert.Contains(quedo, new[] { Textos(deLaFamilia), Textos(delPresidente) });
+
+            // El sello es de quien guardó el último.
+            var ganoLaFamilia = quedo[0] == "3100000001";
+            Assert.Equal(ganoLaFamilia ? cuenta.Id : e.Base.IntegrantePresidente.UsuarioId, ficha.UltimoCambioPorUsuarioId);
+        }
+    }
+
+    /// <summary>Un formulario completo en el que todos los textos llevan la misma marca.</summary>
+    private static Dictionary<string, object?> Datos(string celular, string responsable, string marca) => new()
+    {
+        ["celular"] = celular,
+        ["nombreResponsable"] = responsable,
+        ["emergenciaNombre"] = $"Emergencia {marca}",
+        ["emergenciaParentesco"] = $"Parentesco {marca}",
+        ["emergenciaCelular"] = celular,
+        ["entidadSalud"] = $"Entidad {marca}",
+        ["lugarAtencion"] = $"Lugar {marca}",
+        ["alergias"] = $"Alergias {marca}",
+        ["enfermedades"] = $"Enfermedades {marca}",
+        ["medicamentos"] = $"Medicamentos {marca}",
+        ["observaciones"] = $"Observaciones {marca}",
+    };
+
+    private static string?[] Textos(Dictionary<string, object?> datos) => datos.Values.Select(valor => (string?)valor).ToArray();
+
     private Task<int> FilasDeAsync(Guid usuarioRolId) => _fabrica.ConContextoAsync(contexto =>
         contexto.FichasJugador.IgnoreQueryFilters().CountAsync(ficha => ficha.UsuarioRolId == usuarioRolId));
 }

@@ -57,6 +57,51 @@ public class SoloLecturaPruebas
         Assert.Null(await e.FichaGuardadaAsync(e.Ana.Id));
     }
 
+    [Fact]
+    public async Task No_cambian_el_documento_de_identidad_ni_corrigen_la_identidad()
+    {
+        var e = await EscenarioFicha.CrearAsync(_fabrica);
+
+        foreach (var (rol, cliente) in e.QuienesSoloConsultan)
+        {
+            foreach (var jugador in new[] { e.Ana, e.Beto })
+            {
+                await NegadoAsync(
+                    await cliente.PutAsync(
+                        e.DocumentoIdentidad(jugador.Id),
+                        new { tipoDocumento = "REGISTRO_CIVIL", numeroDocumento = Sembrador.Unico("rc") }),
+                    rol);
+                await NegadoAsync(
+                    await cliente.PutAsync(
+                        e.Identidad(jugador.Id), new { nombres = "Otro", apellidos = "Distinto", fechaNacimiento = "2010-01-01" }),
+                    rol);
+
+                var guardado = await e.JugadorGuardadoAsync(jugador.Id);
+                Assert.Equal(
+                    (jugador.Nombres, jugador.Apellidos, jugador.FechaNacimiento, jugador.TipoDocumento, jugador.NumeroDocumento),
+                    (guardado.Nombres, guardado.Apellidos, guardado.FechaNacimiento, guardado.TipoDocumento, guardado.NumeroDocumento));
+                Assert.Null(await e.FichaGuardadaAsync(jugador.Id));
+            }
+        }
+    }
+
+    // Las cuatro operaciones de cambio responden igual para un jugador que no existe: no revelan nada.
+    [Fact]
+    public async Task Reciben_el_mismo_403_para_un_identificador_que_no_existe()
+    {
+        var e = await EscenarioFicha.CrearAsync(_fabrica);
+        var nadie = Guid.NewGuid();
+
+        foreach (var (rol, cliente) in e.QuienesSoloConsultan)
+        {
+            await NegadoAsync(await cliente.PutAsync(e.Ficha(nadie), EscenarioFicha.Cuerpo()), rol);
+            await NegadoAsync(await cliente.PutAsync(e.DocumentoIdentidad(nadie), new { }), rol);
+            await NegadoAsync(await cliente.PutAsync(e.Identidad(nadie), new { }), rol);
+            await NegadoAsync(
+                await cliente.SubirAsync(e.Documento(nadie, DocumentoPedido.CERTIFICADO_SALUD), SembradorFichas.Pdf()), rol);
+        }
+    }
+
     private static async Task NegadoAsync(HttpResponseMessage respuesta, string rol)
     {
         Assert.True(respuesta.StatusCode == HttpStatusCode.Forbidden, $"{rol}: {(int)respuesta.StatusCode}");

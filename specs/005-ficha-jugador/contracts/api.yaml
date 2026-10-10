@@ -85,68 +85,66 @@ paths:
         '403': { $ref: '#/components/responses/NoAutorizado' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
 
-  # PENDIENTE: se descomenta en T013
-#  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/documento-identidad:
-#    parameters:
-#      - $ref: '#/components/parameters/clubId'
-#      - $ref: '#/components/parameters/usuarioRolId'
-#    put:
-#      tags: [Ficha]
-#      summary: Cambia el tipo y el número del documento de identidad del jugador
-#      description: |
-#        Solo PRESIDENTE y la cuenta del jugador. Actualiza al mismo jugador: conserva su
-#        categoría, sus equipos y su ficha. Desde ese momento inicia sesión con el número nuevo.
-#      requestBody:
-#        required: true
-#        content:
-#          application/json:
-#            schema: { $ref: '#/components/schemas/CambiarDocumentoIdentidadDto' }
-#      responses:
-#        '200':
-#          description: La ficha con el documento nuevo
-#          content:
-#            application/json:
-#              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
-#        '400': { $ref: '#/components/responses/DatosInvalidos' }
-#        '401': { $ref: '#/components/responses/SinSesion' }
-#        '403': { $ref: '#/components/responses/NoAutorizado' }
-#        '404': { $ref: '#/components/responses/NoEncontrado' }
-#        '409':
-#          description: |
-#            `documento_repetido_en_club`: ese número ya lo tiene otro integrante del club, activo
-#            o retirado. `documento_en_otra_cuenta`: ese número ya lo usa otra cuenta en otro club.
-#            No se guarda nada
-#          content:
-#            application/problem+json:
-#              schema: { $ref: '#/components/schemas/Problema' }
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/documento-identidad:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    put:
+      tags: [Ficha]
+      summary: Cambia el tipo y el número del documento de identidad del jugador
+      description: |
+        Solo PRESIDENTE y la cuenta del jugador. Actualiza al mismo jugador: conserva su
+        categoría, sus equipos y su ficha. Desde ese momento inicia sesión con el número nuevo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CambiarDocumentoIdentidadDto' }
+      responses:
+        '200':
+          description: La ficha con el documento nuevo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: |
+            `documento_repetido_en_club`: ese número ya lo tiene otro integrante del club, activo
+            o retirado. `documento_en_otra_cuenta`: ese número ya lo usa otra cuenta en otro club.
+            No se guarda nada
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
 
-  # PENDIENTE: se descomenta en T014
-#  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/identidad:
-#    parameters:
-#      - $ref: '#/components/parameters/clubId'
-#      - $ref: '#/components/parameters/usuarioRolId'
-#    put:
-#      tags: [Ficha]
-#      summary: Corrige los nombres, los apellidos y la fecha de nacimiento del jugador
-#      description: |
-#        Solo PRESIDENTE; a la cuenta del jugador, 403 `rol_no_autorizado`. Un jugador con
-#        categoría la conserva aunque cambie el año. Un jugador activo sin categoría entra en la
-#        categoría activa del año nuevo, si existe.
-#      requestBody:
-#        required: true
-#        content:
-#          application/json:
-#            schema: { $ref: '#/components/schemas/CorregirIdentidadDto' }
-#      responses:
-#        '200':
-#          description: La ficha con la identidad corregida y, si se ubicó, su categoría
-#          content:
-#            application/json:
-#              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
-#        '400': { $ref: '#/components/responses/DatosInvalidos' }
-#        '401': { $ref: '#/components/responses/SinSesion' }
-#        '403': { $ref: '#/components/responses/NoAutorizado' }
-#        '404': { $ref: '#/components/responses/NoEncontrado' }
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/identidad:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    put:
+      tags: [Ficha]
+      summary: Corrige los nombres, los apellidos y la fecha de nacimiento del jugador
+      description: |
+        Solo PRESIDENTE; a la cuenta del jugador, 403 `rol_no_autorizado`. Un jugador con
+        categoría la conserva aunque cambie el año. Un jugador activo sin categoría entra en la
+        categoría activa del año nuevo, si existe.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CorregirIdentidadDto' }
+      responses:
+        '200':
+          description: La ficha con la identidad corregida y, si se ubicó, su categoría
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
 
   /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/documentos/{documento}:
     parameters:

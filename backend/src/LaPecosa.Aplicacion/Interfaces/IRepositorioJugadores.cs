@@ -1,12 +1,14 @@
 using LaPecosa.Dominio.Entidades;
+using LaPecosa.Dominio.Enumeraciones;
 
 namespace LaPecosa.Aplicacion.Interfaces;
 
 /// <summary>
 /// Representa el acceso a los jugadores del club de la petición: los integrantes con rol JUGADOR,
 /// ingreso aprobado y no retirados, más los que el club retiró.
-/// Su responsabilidad es leer las listas de jugadores y cambiar su categoría, su retiro y su
-/// reincorporación con sentencias condicionadas, de modo que nunca se le asigne categoría a quien
+/// Su responsabilidad es leer las listas de jugadores y al jugador de una ficha, y cambiar su
+/// categoría, su retiro, su reincorporación, su documento de identidad y su identidad con
+/// sentencias condicionadas, de modo que nunca se le asigne categoría a quien
 /// no es jugador del club ni se mueva a quien ya tiene una cuando la ubicación es automática.
 /// No recibe un identificador de club ni ve integrantes de otro club. No decide a qué categoría va
 /// cada jugador ni bloquea el club: eso lo hacen los servicios.
@@ -72,4 +74,28 @@ public interface IRepositorioJugadores
     /// del retiro. Devuelve si lo reincorporó.
     /// </summary>
     Task<bool> ReincorporarAsync(Guid usuarioRolId, CancellationToken cancelacion = default);
+
+    /// <summary>
+    /// Indica si otro integrante del club, de cualquier rol, activo o retirado, tiene ya ese número
+    /// de documento normalizado (RF-023 de la 005).
+    /// </summary>
+    Task<bool> ExisteDocumentoEnOtroAsync(Guid usuarioRolId, string numeroDocumento, CancellationToken cancelacion = default);
+
+    /// <summary>
+    /// Cambia el tipo y el número de documento de ese jugador aprobado, activo o retirado, sobre su
+    /// misma fila: no crea otro integrante ni toca nada más (RF-022 de la 005). Devuelve si lo cambió.
+    /// </summary>
+    Task<bool> CambiarDocumentoAsync(
+        Guid usuarioRolId, TipoDocumento tipoDocumento, string numeroDocumento, CancellationToken cancelacion = default);
+
+    /// <summary>
+    /// Corrige los nombres, los apellidos y la fecha de nacimiento de ese jugador aprobado, activo o
+    /// retirado, sobre su misma fila. No lo mueve de categoría. Devuelve si lo corrigió.
+    /// </summary>
+    Task<bool> CorregirIdentidadAsync(
+        Guid usuarioRolId,
+        string nombres,
+        string apellidos,
+        DateOnly fechaNacimiento,
+        CancellationToken cancelacion = default);
 }

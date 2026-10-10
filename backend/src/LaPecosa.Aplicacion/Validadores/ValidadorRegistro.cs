@@ -12,7 +12,8 @@ namespace LaPecosa.Aplicacion.Validadores;
 /// además el nombre del padre, madre o responsable si la persona es menor de 18 años el día del
 /// registro, y lo admite, opcional, si es adulta. Con cualquier otro rol, también PRESIDENTE, ese
 /// dato ni se exige ni se valida: no se guarda (RF-013).
-/// No valida el correo (sale de la invitación) ni comprueba si el documento ya existe. No decide
+/// La identidad la valida <see cref="ValidadorIdentidad"/>, con las mismas reglas que aplica la ficha
+/// del jugador. No valida el correo (sale de la invitación) ni comprueba si el documento ya existe. No decide
 /// qué roles piden el responsable: lo dice la regla de ingreso por invitación.
 /// </summary>
 public static class ValidadorRegistro
@@ -31,36 +32,13 @@ public static class ValidadorRegistro
         var errores = new ErroresDeValidacion();
         var pideResponsable = ReglaIngresoPorInvitacion.PideResponsable(rolDeLaInvitacion);
 
-        errores.Obligatorio("nombres", datos.Nombres, 80, "El nombre");
-        errores.Obligatorio("apellidos", datos.Apellidos, 80, "Los apellidos");
+        ValidadorIdentidad.NombresYApellidos(errores, datos.Nombres, datos.Apellidos);
         errores.Obligatorio("celular", datos.Celular, 20, "El celular");
+        ValidadorIdentidad.Documento(errores, datos.TipoDocumento, datos.NumeroDocumento);
 
-        if (datos.TipoDocumento is null || !Enum.IsDefined(datos.TipoDocumento.Value))
-        {
-            errores.Agregar("tipoDocumento", "Elige el tipo de documento.");
-        }
-
-        // La longitud se mide ya normalizado: sin espacios ni puntos, que no se guardan.
-        var documento = NormalizadorTexto.Documento(datos.NumeroDocumento);
-        if (documento.Length == 0)
-        {
-            errores.Agregar("numeroDocumento", "El número de documento es obligatorio.");
-        }
-        else if (documento.Length > 20)
-        {
-            errores.Agregar("numeroDocumento", "El número de documento admite como máximo 20 caracteres.");
-        }
-
-        if (datos.FechaNacimiento is null)
-        {
-            errores.Agregar("fechaNacimiento", "La fecha de nacimiento es obligatoria.");
-        }
-        else if (datos.FechaNacimiento > hoy)
-        {
-            errores.Agregar("fechaNacimiento", "La fecha de nacimiento no puede ser futura.");
-        }
-        else if (string.IsNullOrWhiteSpace(datos.NombreResponsable)
-            && ReglaIngresoPorInvitacion.ExigeResponsable(rolDeLaInvitacion, datos.FechaNacimiento.Value, hoy))
+        if (ValidadorIdentidad.FechaNacimiento(errores, datos.FechaNacimiento, hoy)
+            && string.IsNullOrWhiteSpace(datos.NombreResponsable)
+            && ReglaIngresoPorInvitacion.ExigeResponsable(rolDeLaInvitacion, datos.FechaNacimiento!.Value, hoy))
         {
             errores.Agregar(
                 "nombreResponsable",
