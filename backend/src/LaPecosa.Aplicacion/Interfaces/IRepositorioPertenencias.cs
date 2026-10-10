@@ -6,7 +6,8 @@ namespace LaPecosa.Aplicacion.Interfaces;
 /// Representa las consultas de la propia cuenta que cruzan clubes por necesidad: iniciar sesión y
 /// elegir club (constitución §7.1, segunda excepción).
 /// Su responsabilidad es responder, siempre acotado a una cuenta o a un documento, a qué clubes
-/// pertenece una cuenta y de qué cuenta es un documento.
+/// pertenece una cuenta, cuáles son sus integrantes en uno de ellos (puede tener varios: los
+/// hermanos) y de qué cuenta es un documento.
 /// No lista integrantes de un club ni entrega datos de un club a quien no pertenece a él.
 /// </summary>
 public interface IRepositorioPertenencias
@@ -14,7 +15,17 @@ public interface IRepositorioPertenencias
     /// <summary>Integrantes de una cuenta, cada uno con su club.</summary>
     Task<IReadOnlyList<UsuarioRol>> ListarDeUsuarioAsync(Guid usuarioId, CancellationToken cancelacion = default);
 
-    /// <summary>Integrante de una cuenta en un club, con su club; nulo si no pertenece a él.</summary>
+    /// <summary>
+    /// Todos los integrantes de una cuenta en un club, cada uno con su club, del más antiguo al
+    /// más reciente. Vacía si la cuenta no pertenece a él; más de uno cuando hay hermanos.
+    /// </summary>
+    Task<IReadOnlyList<UsuarioRol>> ListarDeLaCuentaEnClubAsync(
+        Guid usuarioId, Guid clubId, CancellationToken cancelacion = default);
+
+    /// <summary>
+    /// Integrante más antiguo de una cuenta en un club, con su club; nulo si no pertenece a él.
+    /// Si la cuenta tiene hermanos en el club es el primero que entró.
+    /// </summary>
     Task<UsuarioRol?> ObtenerAsync(Guid usuarioId, Guid clubId, CancellationToken cancelacion = default);
 
     /// <summary>Cuenta dueña de un número de documento ya normalizado; nulo si nadie lo tiene.</summary>

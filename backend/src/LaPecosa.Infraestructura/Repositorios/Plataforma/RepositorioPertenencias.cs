@@ -7,8 +7,8 @@ namespace LaPecosa.Infraestructura.Repositorios.Plataforma;
 
 /// <summary>
 /// Representa el único acceso entre clubes de una cuenta (constitución §7.1, segunda excepción).
-/// Su responsabilidad es responder a qué clubes pertenece una cuenta y de qué cuenta es un
-/// documento. Por eso se salta el filtro de aislamiento, y cada consulta va acotada por cuenta o
+/// Su responsabilidad es responder a qué clubes pertenece una cuenta, cuáles son sus integrantes
+/// en uno de ellos y de qué cuenta es un documento. Por eso se salta el filtro de aislamiento, y cada consulta va acotada por cuenta o
 /// por documento.
 /// No lista los integrantes de un club ni entrega datos de un club a quien no pertenece a él.
 /// </summary>
@@ -30,6 +30,17 @@ public class RepositorioPertenencias : IRepositorioPertenencias
             .Include(integrante => integrante.Club)
             .Where(integrante => integrante.UsuarioId == usuarioId)
             .OrderBy(integrante => integrante.Club!.Nombre)
+            .ToListAsync(cancelacion);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<UsuarioRol>> ListarDeLaCuentaEnClubAsync(
+        Guid usuarioId, Guid clubId, CancellationToken cancelacion = default) =>
+        await _contexto.UsuariosRol
+            .IgnoreQueryFilters()
+            .Include(integrante => integrante.Club)
+            .Where(integrante => integrante.UsuarioId == usuarioId && integrante.ClubId == clubId)
+            .OrderBy(integrante => integrante.CreadoEn)
+            .ThenBy(integrante => integrante.Id)
             .ToListAsync(cancelacion);
 
     /// <inheritdoc />

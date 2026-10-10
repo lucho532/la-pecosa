@@ -14,6 +14,10 @@ namespace LaPecosa.Dominio.Entidades;
 /// el rol JUGADOR. De él cuelga su ficha (<see cref="FichaJugador"/> y
 /// <see cref="DocumentoJugador"/>), desde la que se cambia su documento de identidad y se corrige
 /// su identidad sobre esta misma fila, sin crear otro integrante (§10).
+/// Una cuenta puede tener varios integrantes con rol JUGADOR en el mismo club: son los hermanos
+/// (§12.1.2). Cada uno es una fila propia, con su documento, su estado de ingreso, su categoría,
+/// su retiro y su ficha; el hermano agregado desde una ficha nace en espera y recuerda desde cuál
+/// se agregó.
 /// No guarda el correo, la contraseña, el celular ni el responsable, que son de la cuenta, ni los
 /// datos de salud o los archivos, que son de la ficha; y nunca lleva el rol DESARROLLADOR.
 /// No guarda un historial de estados, de categorías ni de retiros, ni ningún rastro de un rechazo:
@@ -132,6 +136,16 @@ public class UsuarioRol : IPerteneceAClub
     /// Opcional. Nombres y apellidos de quien lo retiró, copiados en ese momento (§13).
     /// </summary>
     public string? RetiradoPorNombre { get; set; }
+
+    /// <summary>
+    /// Opcional. Foránea a <see cref="UsuarioRol"/> (la misma tabla), borrado a nulo. Solo lo
+    /// tiene el hermano agregado desde una ficha: es el jugador desde cuya ficha se agregó. Nulo
+    /// en quien entró con invitación.
+    /// </summary>
+    public Guid? AgregadoDesdeUsuarioRolId { get; set; }
+
+    /// <summary>Jugador desde cuya ficha se agregó a este hermano.</summary>
+    public UsuarioRol? AgregadoDesde { get; set; }
 
     /// <summary>Equipos de su categoría en los que juega; puede no haber ninguno (RF-026).</summary>
     public List<JugadorEquipo> Equipos { get; set; } = [];
