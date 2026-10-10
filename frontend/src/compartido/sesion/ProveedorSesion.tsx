@@ -3,10 +3,13 @@ import { api } from '../api/cliente';
 import type { SesionDto, TokenSesionDto } from '../api/tipos';
 import { borrarToken, convieneRenovar, guardarToken, leerToken } from './almacenToken';
 import { ContextoSesion, type ValorSesion } from './contextoSesion';
+import { olvidarJugadoresElegidos } from './jugadorElegido';
 
 /**
  * Mantiene la sesión de toda la aplicación. Al abrirla, si hay un token guardado lo renueva
- * cuando le queda menos de la mitad de su vigencia y carga la cuenta con sus clubes.
+ * cuando le queda menos de la mitad de su vigencia y carga la cuenta con sus clubes. Al iniciar
+ * y al cerrar sesión olvida con cuál jugador continuaba la familia en cada club: se elige de nuevo
+ * cada vez que se entra (RF-027); recargar la página no es volver a entrar y la conserva.
  */
 export function ProveedorSesion({ children }: { children: ReactNode }) {
   const [estado, setEstado] = useState<ValorSesion['estado']>(leerToken() ? 'cargando' : 'sin_sesion');
@@ -66,6 +69,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       recargar,
       actualizar: setSesion,
       iniciar: async (token) => {
+        olvidarJugadoresElegidos();
         guardarToken(token);
         const actual = await recargar();
         if (!actual) {
@@ -75,6 +79,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
         return actual;
       },
       cerrar: () => {
+        olvidarJugadoresElegidos();
         borrarToken();
         setSesion(null);
         setEstado('sin_sesion');

@@ -135,7 +135,7 @@ img {
   background: var(--lateral-suave);
 }
 
-.lateral-pie span:last-child {
+.lateral-pie span:last-of-type {
   color: var(--lateral-texto-suave);
   font-size: 14px;
 }
@@ -202,7 +202,8 @@ img {
     flex-wrap: wrap;
   }
 
-  .lateral-pie {
+  /* Con varios jugadores el pie dice cuál es el elegido: se queda a la vista. */
+  .lateral-pie:not(.lateral-pie-fijo) {
     display: none;
   }
 }

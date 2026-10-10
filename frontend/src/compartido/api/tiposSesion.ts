@@ -1,0 +1,41 @@
+// Tipos de los esquemas de specs/006-agregar-hermano/contracts/api.yaml, con los mismos nombres:
+// la sesión con los jugadores de la cuenta en cada club.
+
+import type { EstadoClub, EstadoIngreso, IdentidadClubDto, Rol } from './tipos';
+
+/** Uno de los jugadores de la cuenta en un club, para la lista en la que la familia elige. */
+export interface JugadorDeSesionDto {
+  /** Es el identificador que se envía como jugador elegido. */
+  usuarioRolId: string;
+  nombres: string;
+  apellidos: string;
+  estadoIngreso: EstadoIngreso;
+  /** Verdadero si el club lo retiró. */
+  retirado: boolean;
+}
+
+/**
+ * Un club de la sesión: una entrada por club, aunque la cuenta tenga varios jugadores en él. El
+ * rol, el estado de ingreso, el retiro y el nombre describen al integrante `usuarioRolId`: el único
+ * de la cuenta en el club; si la sesión se inició con un documento, el de ese documento; y si hay
+ * que elegir, el más antiguo, hasta que la aplicación los sustituya por los del jugador elegido.
+ */
+export interface ClubDeSesionDto {
+  clubId: string;
+  nombre: string;
+  rol: Rol;
+  estado: EstadoClub;
+  estadoIngreso: EstadoIngreso;
+  /** Verdadero si el club retiró a este jugador; no entra a él hasta que lo reincorporen. */
+  retirado: boolean;
+  identidad: IdentidadClubDto;
+  nombres: string;
+  apellidos: string;
+  usuarioRolId: string;
+  /**
+   * Los jugadores de la cuenta en este club entre los que hay que elegir, del más antiguo al más
+   * reciente. Vacía si tiene uno solo o si la sesión está limitada a uno: entonces no se ofrece
+   * elegir ni cambiar.
+   */
+  jugadores: JugadorDeSesionDto[];
+}

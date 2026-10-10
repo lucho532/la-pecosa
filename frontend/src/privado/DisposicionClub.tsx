@@ -2,40 +2,60 @@ import { useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../compartido/api/cliente';
 import { ErrorApi } from '../compartido/api/errores';
-import type { ClubDeSesionDto, ClubDto } from '../compartido/api/tipos';
+import type { ClubDto } from '../compartido/api/tipos';
+import type { ClubDeSesionDto } from '../compartido/api/tiposSesion';
 import { useCarga } from '../compartido/api/useCarga';
 import { Aviso } from '../compartido/componentes/Aviso';
 import { Avatar, inicialesDe } from '../compartido/componentes/Avatar';
 import { Boton } from '../compartido/componentes/Boton';
 import { BotonTema } from '../compartido/componentes/BotonTema';
 import { nombreDeRol } from '../compartido/formato';
+import { jugadorDe, olvidarJugadorElegido, useJugadorElegido } from '../compartido/sesion/jugadorElegido';
 import { guardarUltimoClub } from '../compartido/sesion/ultimoClub';
 import { useSesion } from '../compartido/sesion/useSesion';
 import { Escudo, IdentidadClub } from '../compartido/tema/IdentidadClub';
 import { AvisoClubNoDisponible, esClubNoDisponible } from './AvisoClubNoDisponible';
 import { AvisoRetirado } from './AvisoRetirado';
+import { BotonCambiarJugador } from './BotonCambiarJugador';
 import { puedeVerCategorias, rutaDeFicha } from './categorias/textos';
 import type { ContextoDelClub } from './contextoClub';
 import { DesplegableClubes } from './DesplegableClubes';
+import { ElegirJugador } from './ElegirJugador';
 import { SalaDeEspera } from './SalaDeEspera';
 
 /** Códigos con los que la API dice que la sesión guardada ya no refleja la relación con el club. */
-const SESION_DESACTUALIZADA = ['ingreso_en_espera', 'integrante_retirado', 'no_encontrado'];
+const SESION_DESACTUALIZADA = ['ingreso_en_espera', 'integrante_retirado', 'no_encontrado', 'jugador_sin_elegir'];
+
+/** Códigos con los que la API dice que el jugador elegido ya no vale, o que ahora hay que elegir. */
+const ELECCION_DESACTUALIZADA = ['no_encontrado', 'jugador_sin_elegir'];
 
 /**
- * Entrada al club elegido. Antes de pedir nada al club mira el estado de ingreso que trae la
- * sesión: quien está en espera ve solo la sala de espera y no se llama a la API del club, que se
- * lo negaría. Lo mismo quien fue retirado del club: solo ve el aviso de que ya no está en él. Los
- * demás, también quien acaba de registrarse con una invitación, ven la aplicación del club.
+ * Entrada al club elegido. Si la cuenta tiene varios jugadores en él y todavía no eligió con cuál
+ * continúa, muestra la lista antes que cualquier otra cosa y sin pedir nada al club (RF-021). Con
+ * el jugador elegido, lo que la sesión dice del integrante pasa a ser lo de ese jugador. Después
+ * mira su estado de ingreso: quien está en espera ve solo la sala de espera y no se llama a la API
+ * del club, que se lo negaría. Lo mismo quien fue retirado del club: solo ve el aviso de que ya no
+ * está en él. Los demás, también quien acaba de registrarse con una invitación, ven la aplicación
+ * del club, que se monta de nuevo al cambiar de jugador para que no quede nada del anterior.
  */
 export function DisposicionClub() {
   const { clubId = '' } = useParams();
   const { sesion } = useSesion();
-  const deSesion = sesion?.clubes.find((candidato) => candidato.clubId === clubId);
+  const deLaCuenta = sesion?.clubes.find((candidato) => candidato.clubId === clubId);
+
+  // Solo para volver a pintar cuando la familia elige o cambia de jugador.
+  useJugadorElegido(clubId);
+  const elegido = deLaCuenta ? jugadorDe(deLaCuenta) : null;
 
   useEffect(() => {
     guardarUltimoClub(clubId);
   }, [clubId]);
+
+  if (deLaCuenta && deLaCuenta.jugadores.length > 0 && !elegido) {
+    return <ElegirJugador club={deLaCuenta} />;
+  }
+
+  const deSesion = deLaCuenta && elegido ? { ...deLaCuenta, ...elegido } : deLaCuenta;
 
   if (deSesion?.estadoIngreso === 'EN_ESPERA') {
     return <SalaDeEspera club={deSesion} />;
@@ -46,7 +66,7 @@ export function DisposicionClub() {
     return <AvisoRetirado club={deSesion} />;
   }
 
-  return <AplicacionDelClub clubId={clubId} deSesion={deSesion} />;
+  return <AplicacionDelClub key={deSesion?.usuarioRolId} clubId={clubId} deSesion={deSesion} />;
 }
 
 interface Props {
@@ -71,12 +91,17 @@ function AplicacionDelClub({ clubId, deSesion }: Props) {
   // La API manda: si dice que la persona está en espera o que el club ya no es suyo (la
   // rechazaron con la pantalla abierta), se recarga la sesión. Con ella al día, quien sigue en
   // espera ve la sala de espera y quien ya no está en el club pasa a uno de los suyos, o a
-  // iniciar sesión si su cuenta ya no existe.
+  // iniciar sesión si su cuenta ya no existe. Si lo que ya no vale es el jugador elegido, o la
+  // cuenta pasó a tener varios, se olvida la elección: vuelve a la lista o entra con el que queda.
   useEffect(() => {
     if (sesionDesactualizada) {
+      if (codigo && ELECCION_DESACTUALIZADA.includes(codigo)) {
+        olvidarJugadorElegido(clubId);
+      }
+
       void recargar();
     }
-  }, [sesionDesactualizada, recargar]);
+  }, [sesionDesactualizada, codigo, clubId, recargar]);
 
   const nombre = club?.nombre ?? deSesion?.nombre ?? '';
   const rol = club?.miRol ?? deSesion?.rol;
@@ -108,11 +133,12 @@ function AplicacionDelClub({ clubId, deSesion }: Props) {
           {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/configuracion`}>Datos del club</NavLink>}
         </nav>
         {deSesion && rol && (
-          <div className="lateral-pie">
+          <div className={deSesion.jugadores.length > 0 ? 'lateral-pie lateral-pie-fijo' : 'lateral-pie'}>
             <span>
               {deSesion.nombres} {deSesion.apellidos}
             </span>
             <span>{nombreDeRol(rol)}</span>
+            <BotonCambiarJugador club={deSesion} variante="lateral" />
           </div>
         )}
         <Avatar iniciales={deSesion ? inicialesDe(deSesion.nombres, deSesion.apellidos) : ''} />

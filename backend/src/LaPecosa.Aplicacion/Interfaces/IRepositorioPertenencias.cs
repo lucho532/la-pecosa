@@ -31,6 +31,14 @@ public interface IRepositorioPertenencias
     /// <summary>Cuenta dueña de un número de documento ya normalizado; nulo si nadie lo tiene.</summary>
     Task<Usuario?> ObtenerCuentaPorDocumentoAsync(string numeroDocumento, CancellationToken cancelacion = default);
 
+    /// <summary>
+    /// Identificadores de los integrantes de esa cuenta que tienen ese número de documento ya
+    /// normalizado, en todos sus clubes: uno por club como mucho. Son a los que queda limitada
+    /// una sesión iniciada con ese documento.
+    /// </summary>
+    Task<IReadOnlyList<Guid>> IdsDeLaCuentaConDocumentoAsync(
+        Guid usuarioId, string numeroDocumento, CancellationToken cancelacion = default);
+
     /// <summary>Indica si ese número de documento ya normalizado existe en el club.</summary>
     Task<bool> ExisteDocumentoEnClubAsync(Guid clubId, string numeroDocumento, CancellationToken cancelacion = default);
 
