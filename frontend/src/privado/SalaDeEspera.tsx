@@ -56,12 +56,12 @@ export function SalaDeEspera({ club }: { club: ClubDeSesionDto }) {
       <main className="tarjeta">
         {club.estado === 'ACTIVO' ? (
           <>
-            <h2>Tu ingreso está pendiente de aprobación</h2>
+            <h2>El ingreso de {club.nombres} está pendiente de aprobación</h2>
             <p>
               {club.nombres} ya está registrado en {club.nombre}. Cuando el club apruebe su ingreso podrá
               entrar; no hay que registrarlo de nuevo.
             </p>
-            {sinCambios && <Aviso tono="info">Tu ingreso sigue pendiente de aprobación.</Aviso>}
+            {sinCambios && <Aviso tono="info">Su ingreso sigue pendiente de aprobación.</Aviso>}
             <Boton onClick={() => void actualizar()} cargando={actualizando} textoCargando="Actualizando…">
               Actualizar
             </Boton>
