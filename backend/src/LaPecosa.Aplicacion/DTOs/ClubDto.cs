@@ -4,7 +4,8 @@ namespace LaPecosa.Aplicacion.DTOs;
 
 /// <summary>
 /// Representa lo que ve un integrante de su club.
-/// Su responsabilidad es llevar la configuración y la identidad del club elegido y el rol de quien lo consulta.
+/// Su responsabilidad es llevar la configuración y la identidad del club elegido, y el rol y el
+/// identificador de integrante de quien lo consulta.
 /// No contiene datos de otros integrantes ni información que solo ve el DESARROLLADOR.
 /// </summary>
 /// <param name="ClubId">Identificador del club.</param>
@@ -16,6 +17,10 @@ namespace LaPecosa.Aplicacion.DTOs;
 /// <param name="Estado">Estado actual.</param>
 /// <param name="Identidad">Identidad visual del club.</param>
 /// <param name="MiRol">Rol de quien consulta en este club.</param>
+/// <param name="MiUsuarioRolId">
+/// Identificador del integrante de quien consulta en este club. Con el rol JUGADOR es el del
+/// jugador cuya ficha abre "Mi ficha".
+/// </param>
 public record ClubDto(
     Guid ClubId,
     string Nombre,
@@ -25,4 +30,5 @@ public record ClubDto(
     string? TelefonoContacto,
     EstadoClub Estado,
     IdentidadClubDto Identidad,
-    Rol MiRol);
+    Rol MiRol,
+    Guid MiUsuarioRolId);

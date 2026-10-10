@@ -59,7 +59,9 @@ public class UnidadDeTrabajo : IUnidadDeTrabajo
     public bool EsViolacionDeUnicidad(Exception error, out string? nombreIndice)
     {
         nombreIndice = null;
-        if (error is DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } postgres })
+        // Al guardar cambios el error llega envuelto; en una sentencia directa llega tal cual.
+        var postgres = error as PostgresException ?? (error as DbUpdateException)?.InnerException as PostgresException;
+        if (postgres is { SqlState: PostgresErrorCodes.UniqueViolation })
         {
             nombreIndice = postgres.ConstraintName;
             return true;

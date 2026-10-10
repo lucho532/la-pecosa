@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { api } from '../../compartido/api/cliente';
 import type { JugadorRetiradoDto, ReincorporacionDto } from '../../compartido/api/tiposCategorias';
 import type { Carga } from '../../compartido/api/useCarga';
@@ -6,7 +7,8 @@ import { Boton } from '../../compartido/componentes/Boton';
 import { Tabla, type Columna } from '../../compartido/componentes/Tabla';
 import { Tarjeta } from '../../compartido/componentes/Tarjeta';
 import { fecha } from '../../compartido/formato';
-import { nombreCompleto } from './textos';
+import { EstadoDeDocumentacion } from './EstadoDeDocumentacion';
+import { nombreCompleto, rutaDeFicha } from './textos';
 import { useAccion } from './useAccion';
 
 interface Props {
@@ -19,7 +21,8 @@ interface Props {
 
 /**
  * Jugadores retirados del club, del retiro más reciente al más antiguo: quién es, su año de
- * nacimiento, quién lo retiró y cuándo (RF-044). El presidente puede reincorporar a cada uno, que
+ * nacimiento, quién lo retiró y cuándo (RF-044). El nombre abre su ficha, que el club conserva
+ * completa mientras dura el retiro (RF-034). El presidente puede reincorporar a cada uno, que
  * vuelve a entrar con su misma cuenta y queda en la categoría activa de su año o sin categoría; el
  * directivo solo ve la lista.
  */
@@ -40,10 +43,21 @@ export function SeccionRetirados({ clubId, esPresidente, retirados, alCambiar }:
     });
 
   const columnas: Columna<JugadorRetiradoDto>[] = [
-    { titulo: 'Jugador', celda: (jugador) => <strong>{nombreCompleto(jugador)}</strong> },
+    {
+      titulo: 'Jugador',
+      celda: (jugador) => (
+        <Link to={rutaDeFicha(clubId, jugador.usuarioRolId)}>
+          <strong>{nombreCompleto(jugador)}</strong>
+        </Link>
+      ),
+    },
     { titulo: 'Año de nacimiento', celda: (jugador) => jugador.anioNacimiento },
     { titulo: 'Lo retiró', celda: (jugador) => jugador.retiradoPor },
     { titulo: 'Retirado el', celda: (jugador) => fecha(jugador.retiradoEn) },
+    {
+      titulo: 'Documentación',
+      celda: (jugador) => <EstadoDeDocumentacion pendientes={jugador.documentosPendientes} />,
+    },
   ];
 
   if (esPresidente) {

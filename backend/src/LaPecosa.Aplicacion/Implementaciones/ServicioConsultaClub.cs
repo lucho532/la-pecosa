@@ -3,7 +3,7 @@ using LaPecosa.Aplicacion.Interfaces;
 using LaPecosa.Aplicacion.Mappers;
 using LaPecosa.Aplicacion.Servicios;
 using LaPecosa.Aplicacion.Utilidades;
-using LaPecosa.Dominio.Enumeraciones;
+using LaPecosa.Dominio.Entidades;
 
 namespace LaPecosa.Aplicacion.Implementaciones;
 
@@ -23,9 +23,9 @@ public class ServicioConsultaClub : IServicioConsultaClub
     }
 
     /// <inheritdoc />
-    public async Task<ClubDto> ObtenerAsync(Rol miRol, CancellationToken cancelacion = default)
+    public async Task<ClubDto> ObtenerAsync(UsuarioRol quienPregunta, CancellationToken cancelacion = default)
     {
         var club = await _club.ObtenerAsync(cancelacion) ?? throw ExcepcionDeAplicacion.NoEncontrado();
-        return MapperClub.AClub(club, miRol);
+        return MapperClub.AClub(club, quienPregunta);
     }
 }

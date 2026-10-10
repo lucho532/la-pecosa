@@ -1,6 +1,7 @@
 using LaPecosa.Aplicacion.DTOs;
 using LaPecosa.Aplicacion.Utilidades;
 using LaPecosa.Dominio.Entidades;
+using LaPecosa.Dominio.Enumeraciones;
 
 namespace LaPecosa.Aplicacion.Mappers;
 
@@ -9,7 +10,8 @@ namespace LaPecosa.Aplicacion.Mappers;
 /// apartado "Categorías" y de la tarjeta "Mi categoría".
 /// Su responsabilidad es que ninguna entidad salga por la API (constitución §5), que cada lista
 /// salga ordenada y que de un jugador o de un entrenador solo salga lo que cada quien puede ver:
-/// el club nunca recibe documento, correo ni celular (RF-032), y la familia recibe un tipo
+/// en las listas el club nunca recibe documento, correo ni celular (RF-032), solo el PRESIDENTE y
+/// los DIRECTIVOS reciben el estado de la documentación de cada jugador, y la familia recibe un tipo
 /// distinto, sin identificadores (RF-035, §23).
 /// No consulta la base de datos ni decide el alcance de quien pregunta. Solo muestra los equipos
 /// activos y las asignaciones activas, aunque la categoría venga cargada con más.
@@ -26,8 +28,15 @@ public static class MapperCategorias
         Equipos(categoria),
         Entrenadores(categoria));
 
-    /// <summary>Categoría con sus jugadores, que deben venir con sus equipos cargados.</summary>
-    public static CategoriaDetalleDto ADetalle(Categoria categoria, IReadOnlyList<UsuarioRol> jugadores) => new(
+    /// <summary>
+    /// Categoría con sus jugadores, que deben venir con sus equipos cargados.
+    /// <paramref name="documentosEntregados"/> dice cuántos documentos tiene entregados cada
+    /// jugador; con nulo, ningún jugador lleva el estado de su documentación.
+    /// </summary>
+    public static CategoriaDetalleDto ADetalle(
+        Categoria categoria,
+        IReadOnlyList<UsuarioRol> jugadores,
+        IReadOnlyDictionary<Guid, int>? documentosEntregados) => new(
         categoria.Id,
         categoria.Anio,
         categoria.Activa,
@@ -35,19 +44,33 @@ public static class MapperCategorias
         jugadores.Count,
         Equipos(categoria),
         Entrenadores(categoria),
-        jugadores.PorApellidos().Select(jugador => AJugador(jugador, categoria)).ToList());
+        jugadores.PorApellidos()
+            .Select(jugador => AJugador(
+                jugador,
+                categoria,
+                documentosEntregados is null ? null : DocumentosPendientes(documentosEntregados, jugador.Id)))
+            .ToList());
 
     /// <summary>
     /// Jugador de una lista. Con categoría, lleva sus equipos activos y la marca de fuera de su
-    /// año (RF-016); sin ella, es un jugador de "Sin categoría".
+    /// año (RF-016); sin ella, es un jugador de "Sin categoría". <paramref name="documentosPendientes"/>
+    /// es nulo para quien no puede ver los documentos.
     /// </summary>
-    public static JugadorDeCategoriaDto AJugador(UsuarioRol jugador, Categoria? categoria) => new(
+    public static JugadorDeCategoriaDto AJugador(UsuarioRol jugador, Categoria? categoria, int? documentosPendientes) => new(
         jugador.Id,
         jugador.Nombres,
         jugador.Apellidos,
         jugador.FechaNacimiento.Year,
         categoria is not null && jugador.FechaNacimiento.Year != categoria.Anio,
-        categoria is null ? [] : Referencias(categoria, jugador.Equipos.Select(fila => fila.EquipoId)));
+        categoria is null ? [] : Referencias(categoria, jugador.Equipos.Select(fila => fila.EquipoId)),
+        documentosPendientes);
+
+    /// <summary>
+    /// Cuántos documentos pedidos le faltan a ese jugador, dado cuántos tiene entregados cada uno.
+    /// Se calcula al consultar; no se guarda ningún contador (CE-009 de la 005).
+    /// </summary>
+    public static int DocumentosPendientes(IReadOnlyDictionary<Guid, int> documentosEntregados, Guid usuarioRolId) =>
+        Enum.GetValues<DocumentoPedido>().Length - documentosEntregados.GetValueOrDefault(usuarioRolId);
 
     /// <summary>Integrante que se puede asignar como entrenador.</summary>
     public static CandidatoEntrenadorDto ACandidato(UsuarioRol integrante) =>
@@ -56,13 +79,14 @@ public static class MapperCategorias
     /// <summary>
     /// Jugador retirado. Quién lo retiró sale de lo copiado al retirar, nunca del nombre actual (§13).
     /// </summary>
-    public static JugadorRetiradoDto ARetirado(UsuarioRol jugador) => new(
+    public static JugadorRetiradoDto ARetirado(UsuarioRol jugador, int documentosPendientes) => new(
         jugador.Id,
         jugador.Nombres,
         jugador.Apellidos,
         jugador.FechaNacimiento.Year,
         jugador.RetiradoPorNombre ?? string.Empty,
-        jugador.RetiradoEn ?? throw new InvalidOperationException("Un jugador retirado debe tener la fecha de su retiro."));
+        jugador.RetiradoEn ?? throw new InvalidOperationException("Un jugador retirado debe tener la fecha de su retiro."),
+        documentosPendientes);
 
     /// <summary>
     /// Lo que ve la familia: la categoría de su jugador, los nombres de sus equipos y, de cada

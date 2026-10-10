@@ -25,7 +25,7 @@ public class ClubElegidoPruebas
     public async Task Un_integrante_obtiene_su_club_con_su_rol(Rol rol)
     {
         var club = await _fabrica.Sembrador.CrearClubAsync();
-        var (usuario, _) = await _fabrica.Sembrador.CrearIntegranteAsync(club, rol);
+        var (usuario, integrante) = await _fabrica.Sembrador.CrearIntegranteAsync(club, rol);
         var cliente = await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(usuario);
 
         var respuesta = await cliente.GetAsync($"/api/clubes/{club.Id}");
@@ -35,7 +35,24 @@ public class ClubElegidoPruebas
         Assert.Equal(club.Id, dto.GetProperty("clubId").GetGuid());
         Assert.Equal(club.Nombre, dto.GetProperty("nombre").GetString());
         Assert.Equal(rol.ToString(), dto.GetProperty("miRol").GetString());
+        Assert.Equal(integrante.Id, dto.GetProperty("miUsuarioRolId").GetGuid());
         Assert.Equal("ACTIVO", dto.GetProperty("estado").GetString());
+    }
+
+    [Fact]
+    public async Task Dos_integrantes_del_mismo_club_reciben_cada_uno_su_identificador_de_integrante()
+    {
+        var club = await _fabrica.Sembrador.CrearClubAsync();
+        var (presidente, integrantePresidente) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.PRESIDENTE);
+        var (jugador, integranteJugador) = await _fabrica.Sembrador.CrearIntegranteAsync(club, Rol.JUGADOR);
+
+        var delPresidente = await ClienteDePrueba.LeerAsync<JsonElement>(
+            await (await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(presidente)).GetAsync($"/api/clubes/{club.Id}"));
+        var delJugador = await ClienteDePrueba.LeerAsync<JsonElement>(
+            await (await _fabrica.CrearClienteDePrueba().ConSesionDeAsync(jugador)).GetAsync($"/api/clubes/{club.Id}"));
+
+        Assert.Equal(integrantePresidente.Id, delPresidente.GetProperty("miUsuarioRolId").GetGuid());
+        Assert.Equal(integranteJugador.Id, delJugador.GetProperty("miUsuarioRolId").GetGuid());
     }
 
     [Fact]

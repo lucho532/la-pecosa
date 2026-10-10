@@ -13,6 +13,12 @@ public interface IRepositorioUsuarios
     /// <summary>Busca una cuenta por su identificador.</summary>
     Task<Usuario?> ObtenerPorIdAsync(Guid usuarioId, CancellationToken cancelacion = default);
 
+    /// <summary>
+    /// La cuenta, con seguimiento y recién leída de la base de datos aunque ya estuviera cargada en
+    /// la petición, para cambiarla dentro de una transacción sin partir de datos anteriores a ella.
+    /// </summary>
+    Task<Usuario?> ObtenerParaCambiarAsync(Guid usuarioId, CancellationToken cancelacion = default);
+
     /// <summary>Busca una cuenta por su correo ya normalizado.</summary>
     Task<Usuario?> ObtenerPorCorreoAsync(string correoNormalizado, CancellationToken cancelacion = default);
 

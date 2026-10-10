@@ -63,6 +63,12 @@ public class ContextoLaPecosa : DbContext
     /// <summary>Equipos en los que juega cada jugador.</summary>
     public DbSet<JugadorEquipo> JugadoresEquipo => Set<JugadorEquipo>();
 
+    /// <summary>Lo que la ficha añade a cada jugador.</summary>
+    public DbSet<FichaJugador> FichasJugador => Set<FichaJugador>();
+
+    /// <summary>Archivos entregados para los documentos que pide la ficha.</summary>
+    public DbSet<DocumentoJugador> DocumentosJugador => Set<DocumentoJugador>();
+
     /// <summary>Club de la petición; lo lee el filtro global en cada consulta.</summary>
     private Guid? ClubDeLaPeticion => _contextoClub.ClubId;
 

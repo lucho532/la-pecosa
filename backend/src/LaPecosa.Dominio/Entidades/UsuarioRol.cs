@@ -9,10 +9,13 @@ namespace LaPecosa.Dominio.Entidades;
 /// (nombre, documento y fecha de nacimiento), su estado de ingreso y, cuando el club lo aprobó
 /// desde la sala de espera, quién lo hizo, cuándo y con qué rol. Quien entra con una invitación
 /// nace aprobado, con el rol de la invitación y sin datos de aprobación. De un jugador guarda
-/// además su categoría actual y,
-/// si el club lo retiró, quién lo hizo y cuándo (constitución §11.2 y §14.1): todavía no existe la
-/// entidad Jugador y aquí el jugador es el integrante aprobado con el rol JUGADOR.
-/// No guarda el correo ni la contraseña, que son de la cuenta, y nunca lleva el rol DESARROLLADOR.
+/// además su categoría actual y, si el club lo retiró, quién lo hizo y cuándo (constitución §11.2
+/// y §14.1): no existe una entidad Jugador aparte, y aquí el jugador es el integrante aprobado con
+/// el rol JUGADOR. De él cuelga su ficha (<see cref="FichaJugador"/> y
+/// <see cref="DocumentoJugador"/>), desde la que se cambia su documento de identidad y se corrige
+/// su identidad sobre esta misma fila, sin crear otro integrante (§10).
+/// No guarda el correo, la contraseña, el celular ni el responsable, que son de la cuenta, ni los
+/// datos de salud o los archivos, que son de la ficha; y nunca lleva el rol DESARROLLADOR.
 /// No guarda un historial de estados, de categorías ni de retiros, ni ningún rastro de un rechazo:
 /// quien es rechazado se borra.
 /// </summary>
@@ -66,21 +69,32 @@ public class UsuarioRol : IPerteneceAClub
     /// </summary>
     public Rol? RolDeIngreso { get; set; }
 
-    /// <summary>Nombres. Obligatorio.</summary>
+    /// <summary>
+    /// Nombres. Obligatorio. Se registran al entrar; los de un jugador solo los corrige después el
+    /// PRESIDENTE, desde su ficha, igual que los apellidos y la fecha de nacimiento.
+    /// </summary>
     public string Nombres { get; set; } = string.Empty;
 
     /// <summary>Apellidos. Obligatorio.</summary>
     public string Apellidos { get; set; } = string.Empty;
 
-    /// <summary>Tipo de documento (§10).</summary>
+    /// <summary>
+    /// Tipo de documento (§10). El de un jugador lo cambian, junto con el número, su cuenta y el
+    /// PRESIDENTE desde la ficha: por ejemplo al pasar de registro civil a tarjeta de identidad.
+    /// </summary>
     public TipoDocumento TipoDocumento { get; set; }
 
     /// <summary>
-    /// Número de documento, sin espacios ni puntos y en minúsculas. Único dentro del club (RF-017).
+    /// Número de documento, sin espacios ni puntos y en minúsculas. Único dentro del club, también
+    /// frente a los retirados (RF-017). Con él se inicia sesión: al cambiarlo desde la ficha se
+    /// entra con el nuevo.
     /// </summary>
     public string NumeroDocumento { get; set; } = string.Empty;
 
-    /// <summary>Fecha de nacimiento. Obligatoria y no futura.</summary>
+    /// <summary>
+    /// Fecha de nacimiento. Obligatoria y no futura. Corregir la de un jugador no lo mueve de
+    /// categoría; si no tiene ninguna, lo ubica en la activa del año nuevo.
+    /// </summary>
     public DateOnly FechaNacimiento { get; set; }
 
     /// <summary>Fecha de creación, en UTC.</summary>

@@ -90,7 +90,7 @@ public class ServicioEntrenadoresDeCategoria : IServicioEntrenadoresDeCategoria
 
                 await _asignaciones.AsignarAsync(categoriaId, usuarioRolId, _reloj.AhoraUtc, cancelacion);
                 await _categorias.MarcarUsadaAsync(categoriaId, cancelacion);
-                return await _lector.DetalleAsync(categoriaId, cancelacion);
+                return await _lector.DetalleAsync(categoriaId, conDocumentacion: true, cancelacion);
             },
             cancelacion);
 
@@ -105,7 +105,7 @@ public class ServicioEntrenadoresDeCategoria : IServicioEntrenadoresDeCategoria
                 await IntegranteAsync(usuarioRolId, cancelacion);
 
                 await _asignaciones.RetirarAsync(categoriaId, usuarioRolId, cancelacion);
-                return await _lector.DetalleAsync(categoriaId, cancelacion);
+                return await _lector.DetalleAsync(categoriaId, conDocumentacion: true, cancelacion);
             },
             cancelacion);
 
@@ -144,7 +144,7 @@ public class ServicioEntrenadoresDeCategoria : IServicioEntrenadoresDeCategoria
 
                 await _asignaciones.ReemplazarEquiposAsync(asignacion.Id, equipoIds, cancelacion);
                 await _equipos.MarcarUsadosAsync(equipoIds, cancelacion);
-                return await _lector.DetalleAsync(categoriaId, cancelacion);
+                return await _lector.DetalleAsync(categoriaId, conDocumentacion: true, cancelacion);
             },
             cancelacion);
     }

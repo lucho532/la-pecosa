@@ -25,6 +25,19 @@ public class RepositorioUsuarios : IRepositorioUsuarios
         _contexto.Usuarios.FirstOrDefaultAsync(usuario => usuario.Id == usuarioId, cancelacion);
 
     /// <inheritdoc />
+    public async Task<Usuario?> ObtenerParaCambiarAsync(Guid usuarioId, CancellationToken cancelacion = default)
+    {
+        var usuario = await ObtenerPorIdAsync(usuarioId, cancelacion);
+        if (usuario is not null)
+        {
+            // La sesión ya pudo cargar esta cuenta antes de la transacción: se vuelve a leer.
+            await _contexto.Entry(usuario).ReloadAsync(cancelacion);
+        }
+
+        return usuario;
+    }
+
+    /// <inheritdoc />
     public Task<Usuario?> ObtenerPorCorreoAsync(string correoNormalizado, CancellationToken cancelacion = default) =>
         _contexto.Usuarios.FirstOrDefaultAsync(usuario => usuario.CorreoNormalizado == correoNormalizado, cancelacion);
 

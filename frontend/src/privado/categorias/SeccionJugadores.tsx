@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { api } from '../../compartido/api/cliente';
 import type { CategoriaDetalleDto, JugadorDeCategoriaDto } from '../../compartido/api/tiposCategorias';
 import { Aviso } from '../../compartido/componentes/Aviso';
@@ -7,7 +8,8 @@ import { Tabla, type Columna } from '../../compartido/componentes/Tabla';
 import { Tarjeta } from '../../compartido/componentes/Tarjeta';
 import { BotonRetirarJugador } from './BotonRetirarJugador';
 import { DialogoCambiarCategoria } from './DialogoCambiarCategoria';
-import { nombreCompleto } from './textos';
+import { EstadoDeDocumentacion } from './EstadoDeDocumentacion';
+import { nombreCompleto, rutaDeFicha } from './textos';
 import { useAccion } from './useAccion';
 import { useUbicarJugador } from './useUbicarJugador';
 
@@ -22,7 +24,8 @@ interface Props {
 }
 
 /**
- * Jugadores de una categoría: nombre, apellidos, año de nacimiento y equipos, y nada más (RF-032).
+ * Jugadores de una categoría: nombre, apellidos, año de nacimiento y equipos (RF-032). El nombre abre
+ * la ficha del jugador (RF-034), que es donde están sus demás datos y donde la API decide qué ve cada quien.
  * A quien está en una categoría que no es la de su año se le señala con texto, no solo con color
  * (RF-016). El presidente ve una casilla por equipo en cada fila, que guarda al instante,
  * y puede pasar a cada jugador a otra categoría.
@@ -51,7 +54,14 @@ export function SeccionJugadores({ clubId, categoria, esPresidente, alCambiar, a
     });
 
   const columnas: Columna<JugadorDeCategoriaDto>[] = [
-    { titulo: 'Jugador', celda: (jugador) => <strong>{nombreCompleto(jugador)}</strong> },
+    {
+      titulo: 'Jugador',
+      celda: (jugador) => (
+        <Link to={rutaDeFicha(clubId, jugador.usuarioRolId)}>
+          <strong>{nombreCompleto(jugador)}</strong>
+        </Link>
+      ),
+    },
     {
       titulo: 'Año de nacimiento',
       celda: (jugador) => (
@@ -83,6 +93,14 @@ export function SeccionJugadores({ clubId, categoria, esPresidente, alCambiar, a
         ),
     },
   ];
+
+  // La API solo entrega el estado de la documentación al presidente y a los directivos (RF-032).
+  if (categoria.jugadores.some((jugador) => jugador.documentosPendientes !== undefined)) {
+    columnas.push({
+      titulo: 'Documentación',
+      celda: (jugador) => <EstadoDeDocumentacion pendientes={jugador.documentosPendientes} />,
+    });
+  }
 
   if (esPresidente) {
     columnas.push({

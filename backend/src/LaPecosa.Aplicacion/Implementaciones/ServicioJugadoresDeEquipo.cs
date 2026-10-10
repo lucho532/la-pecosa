@@ -52,7 +52,7 @@ public class ServicioJugadoresDeEquipo : IServicioJugadoresDeEquipo
 
                 await _equipos.PonerJugadorAsync(equipoId, usuarioRolId, cancelacion);
                 await _equipos.MarcarUsadosAsync([equipoId], cancelacion);
-                return await _lector.DetalleAsync(categoriaId, cancelacion);
+                return await _lector.DetalleAsync(categoriaId, conDocumentacion: true, cancelacion);
             },
             cancelacion);
 
@@ -66,7 +66,7 @@ public class ServicioJugadoresDeEquipo : IServicioJugadoresDeEquipo
                 await ComprobarQueExistenAsync(categoriaId, equipoId, usuarioRolId, cancelacion);
 
                 await _equipos.SacarJugadorAsync(equipoId, usuarioRolId, cancelacion);
-                return await _lector.DetalleAsync(categoriaId, cancelacion);
+                return await _lector.DetalleAsync(categoriaId, conDocumentacion: true, cancelacion);
             },
             cancelacion);
 

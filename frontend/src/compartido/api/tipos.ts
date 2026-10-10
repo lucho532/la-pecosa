@@ -119,6 +119,8 @@ export interface ClubDto {
   estado: EstadoClub;
   identidad: IdentidadClubDto;
   miRol: Rol;
+  /** Integrante de quien pregunta en este club; con el rol JUGADOR abre "Mi ficha". */
+  miUsuarioRolId: string;
 }
 
 export interface ActualizarConfiguracionClubDto {

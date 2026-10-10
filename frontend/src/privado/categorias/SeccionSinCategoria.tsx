@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { JugadorDeCategoriaDto } from '../../compartido/api/tiposCategorias';
 import type { Carga } from '../../compartido/api/useCarga';
 import { Aviso } from '../../compartido/componentes/Aviso';
@@ -6,7 +7,8 @@ import { Tabla, type Columna } from '../../compartido/componentes/Tabla';
 import { Tarjeta } from '../../compartido/componentes/Tarjeta';
 import { BotonRetirarJugador } from './BotonRetirarJugador';
 import { DialogoCambiarCategoria } from './DialogoCambiarCategoria';
-import { nombreCompleto } from './textos';
+import { EstadoDeDocumentacion } from './EstadoDeDocumentacion';
+import { nombreCompleto, rutaDeFicha } from './textos';
 import { useAccion } from './useAccion';
 import { useUbicarJugador } from './useUbicarJugador';
 
@@ -21,7 +23,8 @@ interface Props {
 /**
  * Lista "Sin categoría": los jugadores aprobados del club que todavía no tienen categoría, porque
  * el club no tiene activa la de su año de nacimiento. Muestra nombre, apellidos y año de
- * nacimiento, y nada más (RF-032). El presidente puede ubicar a cada uno a mano.
+ * nacimiento (RF-032); el nombre abre la ficha del jugador (RF-034). El presidente puede ubicar a
+ * cada uno a mano.
  */
 export function SeccionSinCategoria({ clubId, esPresidente, sinCategoria, alCambiar }: Props) {
   const { mensaje, fijarMensaje } = useAccion();
@@ -31,8 +34,19 @@ export function SeccionSinCategoria({ clubId, esPresidente, sinCategoria, alCamb
   });
 
   const columnas: Columna<JugadorDeCategoriaDto>[] = [
-    { titulo: 'Jugador', celda: (jugador) => <strong>{nombreCompleto(jugador)}</strong> },
+    {
+      titulo: 'Jugador',
+      celda: (jugador) => (
+        <Link to={rutaDeFicha(clubId, jugador.usuarioRolId)}>
+          <strong>{nombreCompleto(jugador)}</strong>
+        </Link>
+      ),
+    },
     { titulo: 'Año de nacimiento', celda: (jugador) => jugador.anioNacimiento },
+    {
+      titulo: 'Documentación',
+      celda: (jugador) => <EstadoDeDocumentacion pendientes={jugador.documentosPendientes} />,
+    },
   ];
 
   if (esPresidente) {

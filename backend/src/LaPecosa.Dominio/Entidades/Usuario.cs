@@ -28,15 +28,21 @@ public class Usuario
     /// </summary>
     public string? ContrasenaHash { get; set; }
 
-    /// <summary>Celular de contacto. Obligatorio al registrarse.</summary>
+    /// <summary>
+    /// Celular de contacto. Obligatorio al registrarse. Después lo cambian, desde la ficha de un
+    /// jugador de la cuenta, la propia cuenta y el PRESIDENTE del club de ese jugador; como es de
+    /// la cuenta, el cambio se ve en todos sus jugadores y clubes (RF-039 de la 005).
+    /// </summary>
     public string? Celular { get; set; }
 
     /// <summary>
-    /// Opcional. Nombre del padre, madre o responsable. Solo se pide y se guarda al registrarse
-    /// con una invitación de JUGADOR: obligatorio si la persona es menor de 18 años ese día y
-    /// opcional si es adulta; con cualquier otro rol queda nulo (RF-013). Una cuenta que ya existe
-    /// sin él lo recibe al aceptar una invitación de JUGADOR siendo menor (RF-026). Es un dato de contacto
-    /// de la cuenta, como el celular, y solo sale por la API en la sala de espera del club.
+    /// Opcional. Nombre del padre, madre o responsable. Se pide al registrarse con una invitación
+    /// de JUGADOR: obligatorio si la persona es menor de 18 años ese día y opcional si es adulta;
+    /// con cualquier otro rol queda nulo (RF-013). Una cuenta que ya existe sin él lo recibe al
+    /// aceptar una invitación de JUGADOR siendo menor (RF-026). Después se cambia desde la ficha de
+    /// un jugador de la cuenta, igual que el celular, y sigue siendo obligatorio mientras ese
+    /// jugador sea menor (RF-020 de la 005). Es un dato de contacto de la cuenta: sale por la API
+    /// en la sala de espera del club y en la ficha de sus jugadores.
     /// </summary>
     public string? NombreResponsable { get; set; }
 

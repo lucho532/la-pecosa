@@ -50,6 +50,12 @@ public static class RegistroDeCasosDeUso
         servicios.AddScoped<IServicioRetiroJugador, ServicioRetiroJugador>();
         servicios.AddScoped<IServicioMiCategoria, ServicioMiCategoria>();
 
+        servicios.AddScoped<AccesoAFicha>();
+        servicios.AddScoped<IServicioConsultaFicha, ServicioConsultaFicha>();
+        servicios.AddScoped<IServicioFichaJugador, ServicioFichaJugador>();
+        servicios.AddScoped<IServicioDocumentosJugador, ServicioDocumentosJugador>();
+        servicios.AddScoped<IServicioIdentidadJugador, ServicioIdentidadJugador>();
+
         return servicios;
     }
 }

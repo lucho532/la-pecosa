@@ -14,7 +14,7 @@ import { useSesion } from '../compartido/sesion/useSesion';
 import { Escudo, IdentidadClub } from '../compartido/tema/IdentidadClub';
 import { AvisoClubNoDisponible, esClubNoDisponible } from './AvisoClubNoDisponible';
 import { AvisoRetirado } from './AvisoRetirado';
-import { puedeVerCategorias } from './categorias/textos';
+import { puedeVerCategorias, rutaDeFicha } from './categorias/textos';
 import type { ContextoDelClub } from './contextoClub';
 import { DesplegableClubes } from './DesplegableClubes';
 import { SalaDeEspera } from './SalaDeEspera';
@@ -101,6 +101,8 @@ function AplicacionDelClub({ clubId, deSesion }: Props) {
           <NavLink to={`/club/${clubId}`} end>
             Inicio
           </NavLink>
+          {/* Solo la cuenta de un jugador tiene ficha propia (RF-033); los demás roles no ven el enlace. */}
+          {club?.miRol === 'JUGADOR' && <NavLink to={rutaDeFicha(clubId, club.miUsuarioRolId)}>Mi ficha</NavLink>}
           {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/ingresos`}>Ingresos</NavLink>}
           {rol && puedeVerCategorias(rol) && <NavLink to={`/club/${clubId}/categorias`}>Categorías</NavLink>}
           {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/configuracion`}>Datos del club</NavLink>}
