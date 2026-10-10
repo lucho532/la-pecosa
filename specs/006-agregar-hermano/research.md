@@ -303,7 +303,7 @@ construido y siguen vigentes, salvo el supuesto 1.
 | --- | --- | --- |
 | Registro con invitación (004) | `409` si el número tiene dueño | Igual: basta con que exista uno. Sin cambios de código |
 | Cambio de documento desde la ficha (005) | `409` si el dueño es otra cuenta | "El dueño" deja de ser uno solo. Pasa a preguntar si lo tiene **alguna** otra cuenta: mismo `409` en los mismos casos, y deja de depender de qué fila devuelva la consulta |
-| Reincorporar a un retirado (003) | No mira el documento | **(supuesto 9)** No cambia. Si el otro club reincorpora al que salió por esta vía, el número queda activo en dos cuentas y decide el desempate de la sección 15 |
+| Reincorporar a un retirado (003) | No mira el documento | **Decidido el 2026-10-10** (RF-041): se niega mientras el número esté activo con otra cuenta. Ver sección 19 |
 
 ## 17. Pruebas del incremento
 
@@ -322,6 +322,109 @@ construido y siguen vigentes, salvo el supuesto 1.
 - **Cambian**: en `AgregarHermanoRechazosPruebas`, la que esperaba `409` para el documento de otra
   cuenta. Se añade un caso a `CambioDeDocumentoPruebas` y otro a `RegistroConInvitacionPruebas`.
 - **Contrato**: `AccesoClubPruebas` sigue en 61 endpoints.
+
+## Incremento del 2026-10-10: la familia retira y la reincorporación (RF-041 a RF-043)
+
+Las secciones 18 a 22 son solo de este incremento. Resuelven el supuesto 9 y aplican la
+constitución 4.2.0 (§8, §10, §14.1 y §20), enmendada el mismo día.
+
+## 18. Por dónde retira la familia
+
+- **Decisión**: la misma operación de la 003, `POST /api/clubes/{clubId}/jugadores/{id}/retiro`.
+  Su autorización pasa de `[PRESIDENTE]` a `[PRESIDENTE, JUGADOR]`, y el servicio de retiro
+  comprueba, con una regla de dominio nueva, `ReglaQuienRetira`, que la cuenta de un jugador solo
+  retira al **jugador de la petición** (el elegido o el de la sesión con documento). Con otro
+  identificador, aunque sea un hermano de la misma cuenta, `404 no_encontrado`, como en la ficha.
+- **Motivo**: RF-042 pide "el retiro que ya existe". Reutilizar la operación conserva el efecto
+  (fuera de la categoría y de los equipos, `Activo = false`, ficha intacta), el bloqueo del club y
+  la idempotencia sin duplicarlos, y el contrato sigue en 61 endpoints.
+- **Quién es "el jugador de la petición"**: el mismo integrante que ya usa la ficha (RF-030). Con
+  varios hermanos, la familia retira al que tiene elegido; para retirar a otro, cambia de jugador
+  **(supuesto 13)**.
+- **Lo que ya cubre la autorización y no se repite**: el jugador en espera o ya retirado no llega
+  al servicio (`403 ingreso_en_espera`, `403 integrante_retirado`); el DIRECTIVO y el ENTRENADOR
+  siguen en `403 rol_no_autorizado`; la familia no reincorpora porque esa operación sigue siendo
+  solo del PRESIDENTE (RF-043).
+- **Por qué `404` y no `403`** con un jugador ajeno: §7.5 pide que conocer un identificador no dé
+  acceso ni revele si existe; es la respuesta de la ficha para lo mismo.
+- **Alternativas**: un endpoint propio de la familia, sin identificador (`…/ficha/retiro`): uno
+  más con el mismo efecto, y el contrato pasaría a 62; meter la decisión en `ReglaAccesoAFicha`:
+  mezcla ver la ficha con dar de baja.
+
+## 19. La reincorporación con el documento activo en otra cuenta
+
+- **Decisión**: `ServicioRetiroJugador.ReincorporarAsync`, dentro de su transacción:
+  1. Lee al retirado y los integrantes que tienen su número, en cualquier club (la lectura de la
+     sección 12).
+  2. Bloquea, con `IRepositorioRetiroEntreClubes`, el club propio y los de esos integrantes, en
+     una sola sentencia y en orden de identificador.
+  3. Vuelve a leer los integrantes con ese número, ya con los clubes bloqueados.
+  4. `ReglaDocumentoCompartido` responde una cuarta pregunta: ¿hay un integrante **de otra
+     cuenta**, `APROBADO` y `Activo`, con ese número? Si lo hay, `409
+     documento_activo_en_otro_club` y no cambia nada (RF-041).
+  5. Si no, reincorpora y ubica como hoy.
+- **Cualquier rol cuenta como activo**, no solo JUGADOR. Hoy solo un jugador puede compartir
+  número con otra cuenta (RF-039), así que el resultado es el mismo; mirarlos todos evita que un
+  cambio futuro deje un documento activo en dos cuentas por otra vía.
+- **En espera no cuenta como activo** **(supuesto 12)**. Si otra cuenta tiene un hermano en
+  espera con ese número, se reincorpora; si después aquel se aprueba, la baja de la sección 13
+  retira a este. Así nunca quedan dos activos (CE-013), y no se frena una reincorporación por una
+  solicitud que quizá se rechace.
+- **La misma cuenta** activa en otro club no impide nada: es el mismo niño inscrito en dos clubes.
+- **Por qué bloquear los otros clubes** (pasos 2 y 3): sin eso, dos reincorporaciones a la vez en
+  clubes distintos, de cuentas distintas y con el mismo número, verían las dos "nadie activo" y lo
+  dejarían activo en dos cuentas. Con los mismos bloqueos ordenados que la aprobación con baja,
+  una de las dos operaciones espera a la otra y lee su resultado; tampoco hay abrazo mortal entre
+  una reincorporación y una aprobación. La lectura se repite tras bloquear porque la primera solo
+  sirve para saber qué clubes bloquear.
+- **Sin documento compartido** se bloquea solo el club propio, como hoy.
+- **El motivo** (RF-041): "Este documento está activo en otro club. Para reincorporarlo, primero
+  debe retirarse de allí, por su presidente o por su familia." No nombra el club ni da datos de la
+  otra cuenta: el mismo nivel de información que el aviso de la sección 14.
+- **Alternativas**: comprobar sin bloquear (deja las carreras de arriba); impedir el retiro en
+  vez de la reincorporación (la spec decide lo contrario); avisar al otro club (fuera de alcance).
+
+## 20. Quién figura como autor del retiro hecho por la familia
+
+- **Decisión** **(supuesto 11)**: quien retira es el propio integrante del jugador, así que el
+  servicio copia, como siempre, su `UsuarioId` y su nombre (§13). En la lista de retirados del
+  PRESIDENTE, "Lo retiró" muestra el nombre del mismo jugador, lo que indica que fue su familia.
+  El servicio no cambia.
+- **Alternativas**: el nombre del responsable de la cuenta (los mayores de edad no lo tienen);
+  dejarlo vacío como la baja automática (borra un dato que sí es del club).
+
+## 21. La pantalla
+
+- **Ficha propia**: un botón "Retirar del club" con `DialogoConfirmacion` en modo peligro, solo
+  cuando quien la ve tiene el rol JUGADOR y la ficha es la del jugador de la petición (la misma
+  condición que "Agregar un hermano"). El texto dice que deja de entrar a este club, que sus datos
+  se conservan, que solo el club puede reincorporarlo y, si hay hermanos, que ellos no cambian.
+- **Después de retirarlo**: se recarga la sesión, que ya trae al jugador como retirado, y
+  `DisposicionClub` muestra `AvisoRetirado`, que ya existe (historia 2.14). Si la cuenta tiene
+  otros jugadores, ese aviso ya ofrece "Cambiar de jugador".
+- **La reincorporación negada**: `SeccionRetirados` ya muestra el mensaje del `409`; no cambia.
+- **Componente nuevo**: `BotonRetirarseDelClub.tsx` en `privado/ficha/`, para que
+  `FichaJugador.tsx` (102 líneas) apenas crezca. `BotonRetirarJugador.tsx` es del PRESIDENTE y
+  recibe otro tipo de jugador; no se reutiliza.
+
+## 22. Pruebas del incremento
+
+- **Unitarias**: `ReglaQuienRetira` (PRESIDENTE a cualquiera; JUGADOR solo al de la petición; los
+  demás a nadie); `ReglaDocumentoCompartido`, la cuarta pregunta: otra cuenta activa, en espera o
+  retirada, la misma cuenta activa, otro rol activo.
+- **Integración**, en `Integracion/Hermanos/`:
+  - `FamiliaRetiraPruebas`: historias 2.14 y 2.16; la cuenta y los hermanos no cambian; con un
+    hermano elegido, el otro responde `404`; con sesión de documento; la lista de retirados
+    muestra el nombre del jugador; ya no entra al club; la familia no reincorpora (`403`).
+  - `ReincorporarConDocumentoCompartidoPruebas`: historias 2.13 y 2.15; el motivo no trae nada
+    del otro club; la misma cuenta activa en otro club; otra cuenta en espera; dos
+    reincorporaciones a la vez en clubes distintos dejan una sola activa; reincorporación y
+    aprobación con baja a la vez.
+- **Cambia**: `RetiroJugadorPruebas.Solo_el_presidente_de_ese_club_retira_y_reincorpora…`, que
+  cuenta al jugador entre quienes no retiran. Pasa a comprobar que se retira a sí mismo con `204`
+  y que a otro jugador le responde `404`.
+- **Contrato**: `AccesoClubPruebas` sigue en 61 endpoints; las dos rutas re-descritas no cuentan
+  dos veces.
 
 ## Supuestos por confirmar
 
@@ -343,7 +446,16 @@ construido y siguen vigentes, salvo el supuesto 1.
    otra cuenta, `409` y no se aprueba (sección 13).
 8. Entre dos cuentas del mismo nivel, el documento abre la del integrante más reciente
    (sección 15).
-9. La reincorporación en el otro club no cambia ni mira el documento (sección 16). **Pide
-   decisión del propietario**: dejarlo así o negarla mientras el documento esté activo con otra
-   cuenta.
+9. La reincorporación en el otro club no cambia ni mira el documento (sección 16).
+   **Decidido por el propietario el 2026-10-10**: se niega mientras el documento esté activo con
+   otra cuenta, y la familia puede retirar a su jugador (spec, RF-041 a RF-043). Lo resuelven las
+   secciones 18 a 22.
 10. El aviso a la familia llega en la respuesta de agregar, después de crear (sección 12).
+11. Cuando la familia retira, el autor del retiro es el propio jugador: "Lo retiró" muestra su
+    nombre (sección 20).
+12. Un hermano en espera con ese número en otra cuenta no impide reincorporar; si después se
+    aprueba, retira al reincorporado (sección 19).
+13. Con varios hermanos, la familia retira al jugador elegido; para retirar a otro cambia de
+    jugador (sección 18).
+
+Los supuestos 6, 7, 8, 10, 11, 12 y 13 fueron **confirmados por el propietario el 2026-10-10**.

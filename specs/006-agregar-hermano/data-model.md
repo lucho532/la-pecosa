@@ -116,6 +116,44 @@ Otro club:   APROBADO y activo ──aprobar al hermano aquí──▶ APROBADO 
              retirado o EN_ESPERA ──cualquier cosa aquí──▶ sin cambios
 ```
 
+## Retiro por la familia y reincorporación (incremento, RF-041 a RF-043)
+
+Tampoco añade tablas, columnas ni migración. Usa las columnas del retiro de la 003.
+
+| Pregunta | Se responde con | Requisito |
+| --- | --- | --- |
+| ¿Quién puede retirar a este jugador? | El PRESIDENTE de su club, a cualquier jugador aprobado; la cuenta del jugador, solo al integrante de la petición | RF-042, RF-043 |
+| ¿Se puede reincorporar? | Ningún integrante de **otra** cuenta con ese número está `APROBADO` y `Activo`, en cualquier club y con cualquier rol | RF-041 |
+
+Las dos se calculan en el momento de la operación y no se guardan.
+
+### Qué guarda el retiro según quién lo hace
+
+| Campo | Lo retira el PRESIDENTE | Lo retira su familia | Baja al aprobar un hermano en otro club |
+| --- | --- | --- | --- |
+| Activo | `false` | `false` | `false` |
+| CategoriaId | `NULL` | `NULL` | `NULL` |
+| Equipos | Ninguno | Ninguno | Ninguno |
+| RetiradoEn | Ahora | Ahora | El momento de la aprobación |
+| RetiradoPorUsuarioId | Cuenta del PRESIDENTE | Cuenta del jugador | `NULL` |
+| RetiradoPorNombre | Nombre del PRESIDENTE | Nombre del propio jugador (supuesto 11) | `NULL` |
+
+En los tres casos no cambian su `EstadoIngreso`, su identidad, su ficha, sus documentos, su
+`Usuario` ni sus hermanos.
+
+### Transiciones de un jugador aprobado
+
+```text
+activo ──retira el PRESIDENTE o su familia──▶ retirado
+activo ──se aprueba en otro club un hermano de otra cuenta con su número──▶ retirado
+retirado ──reincorpora el PRESIDENTE, sin su número activo en otra cuenta──▶ activo
+retirado ──reincorpora el PRESIDENTE, con su número activo en otra cuenta──▶ retirado (409)
+```
+
+La familia nunca hace la tercera transición. Con estas reglas, un número queda activo como mucho
+en una cuenta (CE-013): la reincorporación lo comprueba con los clubes bloqueados, y la
+aprobación con baja retira a todos los de otra cuenta en la misma transacción.
+
 ## Usuario (sin cambios de estructura)
 
 `NombreResponsable` puede escribirse al agregar un hermano menor cuando la cuenta no lo tenía

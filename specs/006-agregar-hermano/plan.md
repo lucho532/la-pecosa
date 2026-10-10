@@ -9,6 +9,13 @@ ya usa otra cuenta en otro club). Todo lo demás está construido y validado (T0
 [tasks.md](tasks.md)) y no se vuelve a planificar. Lo nuevo está en la sección
 [Incremento](#incremento-el-documento-que-ya-usa-otra-cuenta-rf-034-a-rf-040), al final.
 
+**Actualización del 2026-10-10**: se añade un segundo incremento, RF-041 a RF-043 (la familia
+retira a su jugador y la reincorporación se niega mientras el documento esté activo en otra
+cuenta), en la sección
+[Segundo incremento](#segundo-incremento-la-familia-retira-y-la-reincorporación-rf-041-a-rf-043).
+Resuelve el supuesto 9. La constitución pasó a la 4.2.0, que recoge las decisiones de los dos
+incrementos; ninguno de los dos está construido todavía.
+
 ## Resumen
 
 La familia que ya tiene un hijo en el club agrega a otro desde "Mi ficha": escribe su identidad y
@@ -269,9 +276,9 @@ Son los puntos donde hay que cuidar la no regresión (§27.2):
 | Desviación | Por qué hace falta | Alternativa más simple descartada |
 | --- | --- | --- |
 | §12.3 escribe `Jugador.UsuarioId`; el jugador sigue siendo el `UsuarioRol` con rol JUGADOR | Heredada de la 003, la 004 y la 005. El `UsuarioRol` ya cumple lo que §12.3 pide del jugador (pertenece a una única cuenta y tiene su propio registro); varios por cuenta no exigen la entidad | Dejarlo como está **es** la opción simple. La entidad `Jugador` completa se descarta por §19 y §27.2; si el propietario la quiere, es una spec de refactorización propia |
-| **Incremento.** §7.1 cierra la lista de excepciones al aislamiento; RF-034, RF-036 y RF-038 leen y escriben en otro club a partir de un documento | Decisión del propietario del 2026-10-09 (spec, Aclaraciones). Sin cruzar clubes no se puede saber que el documento está activo en otro ni retirarlo de allí | Mantener el `409 documento_en_otra_cuenta` era la opción simple y es la que el propietario cambió. Lo que cruza clubes queda en un repositorio propio, acotado a un número de documento, que no devuelve el club ni la otra cuenta |
-| **Incremento.** §14.1: "el PRESIDENTE lo retira. Nadie más puede hacerlo"; RF-036 lo retira al aprobar en otro club | La misma decisión. RF-037 pide que sea el retiro que ya existe | Un estado o una marca distinta del retiro: más modelo para el mismo efecto (§19) |
-| **Incremento.** §10: un documento en dos clubes "es la misma persona… con un único inicio de sesión"; RF-034 lo deja en dos cuentas | La misma decisión. RF-040 conserva un único inicio de sesión por documento | Pasar al jugador de una cuenta a otra: fuera de alcance en la spec |
+
+Las tres desviaciones del incremento frente a §7.1, §10 y §14.1 que figuraban aquí quedaron
+resueltas por la enmienda 4.2.0 del 2026-10-10, que incorpora esas decisiones a la constitución.
 
 ## Consecuencias que conviene tener presentes
 
@@ -302,7 +309,8 @@ de `/speckit-tasks` o durante `/speckit-analyze`:
 4. Si la cuenta ya tiene responsable, el que se escriba al agregar un hermano se ignora.
 5. Si el jugador de origen deja de existir, la sala de espera no dice de quién es hermano.
 
-Los supuestos 6 a 10 son del incremento y están en su sección.
+Los supuestos 6 a 10 son del incremento y están en su sección; los 11 a 13, del segundo
+incremento.
 
 ## Incremento: el documento que ya usa otra cuenta (RF-034 a RF-040)
 
@@ -349,36 +357,36 @@ contrato sigue en 61 endpoints.
 
 ### Comprobación de la constitución (incremento)
 
-Evaluada contra la versión **4.1.0**. Solo se listan los principios que el incremento toca.
+Evaluada primero contra la **4.1.0** y de nuevo contra la **4.2.0**. Solo se listan los
+principios que el incremento toca.
 
 | Principio | Cómo lo cumple el incremento | Resultado |
 | --- | --- | --- |
 | §2.3 y §3 Tamaño y documentación | Lo nuevo va en archivos propios; `tipos.ts` pasa de 237 a 238 líneas. Se reescribe la documentación de las clases que cambian | Cumple |
 | §5 Capas | Las tres decisiones son de una regla de `Dominio/Reglas`; los repositorios solo leen y ejecutan | Cumple |
-| §7.1 Aislamiento entre clubes | El PRESIDENTE y la familia llegan a saber que un documento está activo en otro club, y la aprobación escribe en él. No está entre las tres excepciones de §7.1 | **Desviación justificada** |
+| §7.1 Aislamiento entre clubes | El PRESIDENTE y la familia llegan a saber que un documento está activo en otro club, y la aprobación escribe en él. En la 4.1.0 era una desviación; la 4.2.0 la añade como cuarta excepción, sin nombre del club ni datos de la otra cuenta | Cumple (4.2.0) |
 | §7.5 Aislamiento dentro del club | El aviso es un booleano: sin nombre de club, sin cuenta, sin identificadores | Cumple |
-| §10 Documento | Sigue siendo único por club. Pasa a poder estar en dos cuentas, cosa que §10 no contempla | **Desviación justificada** |
+| §10 Documento | Sigue siendo único por club. Puede estar en dos cuentas solo por el hermano agregado, y el inicio de sesión abre la del jugador activo, como dice la 4.2.0 | Cumple (4.2.0) |
 | §12.1.1 Sala de espera | Aprueba y rechaza solo el PRESIDENTE; rechazar sigue borrando solo a ese jugador | Cumple |
 | §12.4 Inicio de sesión | Un documento abre una sola cuenta; con la contraseña de otra, la misma respuesta que cualquier dato incorrecto | Cumple |
 | §13 Histórico | El retirado conserva su ficha y su historial. No se copia el nombre de quien aprueba: es de otro club (supuesto 6) | Cumple |
-| §14 y §14.1 Retiro | Es el retiro que ya existe, con `Activo`; no se borra nada. Pero lo provoca la aprobación de otro club, y §14.1 dice "nadie más puede hacerlo" | **Desviación justificada** |
+| §14 y §14.1 Retiro | Es el retiro que ya existe, con `Activo`; no se borra nada. La 4.2.0 incluye el retiro al aprobarse un hermano en otro club, en la misma operación y sin autor | Cumple (4.2.0) |
 | §15 Reglas en backend | Admitir, avisar, retirar y elegir la cuenta se deciden en la API | Cumple |
 | §19 Simplicidad | Sin tabla, columna, migración ni endpoint | Cumple |
 | §20 Pruebas | Aislamiento del aviso, baja al aprobar, nada al rechazar ni al esperar, inicio de sesión (research §17) | Cumple |
 | §22 y §23 Migraciones y API | Sin migración; contrato actualizado, DTOs, `problem+json` | Cumple |
 | §25 Decisiones no tomadas | Cinco detalles que la spec no fija quedan como supuestos 6 a 10. La contradicción con la constitución se documenta aquí y no se resuelve por cuenta propia | Cumple |
 
-**Resultado de la puerta**: pasa, con tres desviaciones justificadas por una decisión expresa del
-propietario (spec, Aclaraciones del 2026-10-09), anotadas en "Seguimiento de complejidad".
+**Resultado de la puerta**: pasaba contra la 4.1.0 con tres desviaciones justificadas por una
+decisión expresa del propietario (spec, Aclaraciones del 2026-10-09).
 
-**Enmienda pendiente**: la letra de §7.1, §10 y §14.1 contradice RF-034 a RF-040. Como en la 002,
-la 003 y la 004, una decisión tomada en las aclaraciones pide enmendar la constitución (4.1.0 →
-4.2.0) antes de implementar: una cuarta excepción en §7.1, el documento en dos cuentas en §10, el
-retiro por ingreso en otro club en §14.1 y sus pruebas en §20. Este plan no la escribe.
+**Enmienda aplicada**: la 4.2.0 (2026-10-10) incorpora esas decisiones: la cuarta excepción de
+§7.1, el documento en dos cuentas en §10, la regla de §12.1.2, el retiro por ingreso en otro club
+en §14.1 y sus pruebas en §20. Reevaluado contra la 4.2.0, el incremento cumple sin desviaciones.
 
 **Revisión tras el diseño**: el contrato no entrega el nombre del otro club ni datos de la otra
 cuenta por ningún camino, y el único que escribe en otro club es `RepositorioRetiroEntreClubes`,
-acotado a un número de documento. Las tres desviaciones son las mismas; no aparece ninguna otra.
+acotado a un número de documento, que es lo que permite la cuarta excepción de §7.1.
 
 ### Código fuente del incremento
 
@@ -484,11 +492,12 @@ la batería en verde.
   cualquier documento; ahora es fácil que pase sin mala intención.
 - **Agregar un hermano dice si un documento está activo en otro club.** El `409` de hoy ya decía
   que estaba registrado con otra cuenta.
-- **Si el otro club lo reincorpora**, el documento queda activo en dos cuentas (supuesto 9).
+- **Si el otro club quiere reincorporarlo**, no puede mientras siga activo aquí: lo resuelve el
+  segundo incremento (RF-041 a RF-043).
 
 ### Supuestos del incremento
 
-Rellenan lo que la spec no fija. Conviene confirmarlos antes de `/speckit-tasks`:
+Rellenan lo que la spec no fija. **Confirmados por el propietario el 2026-10-10**:
 
 6. La baja automática no guarda quién retiró: el otro club ve al jugador en su lista de retirados
    con la fecha y con "Lo retiró" vacío. Poner el nombre de quien aprobó llevaría un dato de este
@@ -499,7 +508,165 @@ Rellenan lo que la spec no fija. Conviene confirmarlos antes de `/speckit-tasks`
 8. Desempate de RF-040: si el documento está activo en dos cuentas, en espera en dos y activo en
    ninguna, o retirado en todas, abre la del integrante más reciente.
 9. La reincorporación en el otro club no cambia y no comprueba si el documento está activo con
-   otra cuenta. **Pide decisión del propietario**: dejarlo así, o negar la reincorporación mientras
-   el documento esté activo con otra cuenta.
+   otra cuenta. **Decidido por el propietario el 2026-10-10**: se niega mientras el documento esté
+   activo con otra cuenta, y la familia puede retirar a su jugador. Lo planifica el segundo
+   incremento.
 10. El aviso a la familia llega en la respuesta de agregar, después de crear al hermano (historia
     1.11), no como una confirmación previa.
+
+## Segundo incremento: la familia retira y la reincorporación (RF-041 a RF-043)
+
+Planifica únicamente RF-041 a RF-043, las historias 2.13 a 2.16 (escenarios 13 a 16 de la
+historia 2), los casos límite nuevos y el criterio CE-013. Resuelve el supuesto 9. Las decisiones
+están en [research.md](research.md), secciones 18 a 22. Se construye después del primer
+incremento, porque reutiliza su lectura por número de documento, su bloqueo ordenado de clubes y
+`ReglaDocumentoCompartido`.
+
+### Resumen del segundo incremento
+
+La cuenta de un jugador aprobado y activo puede retirarlo del club desde su ficha, con "Retirar
+del club" y una confirmación. Es el retiro de la 003, por la misma operación: la cuenta y sus
+demás jugadores no cambian y la familia ve el aviso de retiro que ya existe. Solo la propia cuenta
+y el PRESIDENTE retiran; la familia no reincorpora. La reincorporación se niega con `409
+documento_activo_en_otro_club` mientras el documento del jugador esté aprobado y activo con otra
+cuenta en cualquier club, sin decir cuál; con la misma cuenta sigue como hoy. Así un documento no
+queda nunca activo en dos cuentas, y la familia que se fue tiene un camino de vuelta que no
+depende de un PRESIDENTE.
+
+Enfoque técnico: sin tablas, columnas, migración ni endpoints nuevos. `POST …/retiro` admite el
+rol JUGADOR y una regla de dominio nueva, `ReglaQuienRetira`, limita a la cuenta al jugador de la
+petición. `ServicioRetiroJugador.ReincorporarAsync` bloquea los clubes donde está el número con el
+repositorio del primer incremento, vuelve a leer y pregunta a `ReglaDocumentoCompartido` si hay
+otra cuenta activa con ese número. En la pantalla, un botón nuevo en la ficha propia.
+
+### Contexto técnico del segundo incremento
+
+**Lenguaje, dependencias, plataforma, almacenamiento y pruebas**: los mismos. Sin migración.
+
+**Rendimiento**: la reincorporación hace dos lecturas por número de documento y un bloqueo más;
+el retiro, ninguna consulta nueva.
+
+**Restricciones**: las del plan, más dos. El motivo del `409` no nombra el otro club ni da datos
+de la otra cuenta (RF-041). La comprobación y la reincorporación van con los clubes del número
+bloqueados, para que dos operaciones a la vez no dejen el documento activo en dos cuentas
+(CE-013).
+
+**Escala y alcance**: 1 regla de dominio nueva; 1 pregunta más en `ReglaDocumentoCompartido`; 0
+operaciones de API nuevas y 2 que cambian (`POST …/retiro`, `POST …/reincorporacion`); 1
+componente de pantalla nuevo y 1 archivo de frontend que cambia. El contrato sigue en 61
+endpoints.
+
+### Comprobación de la constitución (segundo incremento)
+
+Evaluada contra la versión **4.2.0**. Solo se listan los principios que el incremento toca.
+
+| Principio | Cómo lo cumple el segundo incremento | Resultado |
+| --- | --- | --- |
+| §2.3 y §3 Tamaño y documentación | `ServicioRetiroJugador` pasa de 93 a unas 130 líneas; el botón va en un archivo propio. Se reescribe la documentación de `IServicioRetiroJugador`, `ServicioRetiroJugador` y `ControladorJugadores`, que hoy dicen que solo retira el PRESIDENTE | Cumple |
+| §5 Capas | Quién retira y si se reincorpora lo deciden reglas de `Dominio/Reglas`; el servicio lee, bloquea y ejecuta | Cumple |
+| §7.1 Aislamiento entre clubes | La reincorporación consulta, por número, si está activo en otro club, que es lo que permite la cuarta excepción. Bloquear esos clubes no cambia ningún dato. El motivo no revela el club ni la otra cuenta | Cumple |
+| §7.5 Aislamiento dentro del club | La cuenta solo retira al jugador de la petición; otro identificador, incluso de un hermano, responde `404` | Cumple |
+| §8 Jugador | "Retirar del club a su propio jugador. No puede reincorporarlo" | Cumple |
+| §10 Documento | La reincorporación se niega mientras el número esté activo con otra cuenta; con la misma, sigue | Cumple |
+| §13 Histórico | El retiro por la familia copia el nombre de quien retira, que es el propio jugador (supuesto 11) | Cumple |
+| §14.1 Retiro | Las tres formas de retiro y ninguna más; solo un aprobado y activo; solo el PRESIDENTE reincorpora; la negativa con motivo sin datos del otro club | Cumple |
+| §15 Reglas en backend | Quién retira y si se reincorpora se deciden en la API; el botón solo se oculta | Cumple |
+| §18 Estados | Sin estados nuevos: el retiro sigue siendo `Activo = false` | Cumple |
+| §19 Simplicidad | Reutiliza la operación de retiro y el bloqueo ordenado del primer incremento | Cumple |
+| §20 Pruebas | Las cinco viñetas nuevas de la 4.2.0 sobre retiro y reincorporación (research §22) | Cumple |
+| §23 API | Mismas rutas; un código de error nuevo con `problem+json`; contrato actualizado | Cumple |
+| §24 Diseño visual | `Boton` y `DialogoConfirmacion` en modo peligro, como el retiro del PRESIDENTE | Cumple |
+| §25 Decisiones no tomadas | Tres detalles que la spec no fija quedan como supuestos 11 a 13 | Cumple, con supuestos por confirmar |
+
+**Resultado de la puerta**: pasa, sin desviaciones.
+
+**Revisión tras el diseño**: el contrato no añade rutas, la respuesta del `409` no lleva datos del
+otro club, y no aparece ninguna escritura fuera del club de la petición distinta de la baja del
+primer incremento. La puerta sigue pasando.
+
+### Código fuente del segundo incremento
+
+```text
+backend/src/
+├── LaPecosa.Dominio/Reglas/
+│   ├── + ReglaQuienRetira.cs            # PRESIDENTE a cualquiera; JUGADOR solo al de la petición
+│   └── ~ ReglaDocumentoCompartido.cs    # ¿hay otra cuenta activa con ese número?
+├── LaPecosa.Aplicacion/
+│   ├── Servicios/         ~ IServicioRetiroJugador     # documentación: también retira la familia
+│   ├── Implementaciones/  ~ ServicioRetiroJugador      # la regla al retirar; bloqueo y
+│   │                                                   # comprobación al reincorporar
+│   └── Utilidades/        ~ ErroresDeCategorias        # documento_activo_en_otro_club
+└── LaPecosa.Api/Controladores/Club/
+    └── ~ ControladorJugadores.cs        # retiro: [PRESIDENTE, JUGADOR]; documentación
+
+backend/pruebas/
+├── Unitarias/Reglas/      + ReglaQuienRetiraPruebas
+│                          ~ ReglaDocumentoCompartidoPruebas  # la cuarta pregunta
+└── Integracion/
+    ├── Hermanos/          + FamiliaRetiraPruebas                       # RF-042, RF-043
+    │                      + ReincorporarConDocumentoCompartidoPruebas  # RF-041, CE-013
+    └── Categorias/        ~ RetiroJugadorPruebas    # el jugador ya no está entre quienes no retiran
+
+frontend/src/privado/ficha/
+├── + BotonRetirarseDelClub.tsx          # botón, confirmación y recarga de la sesión
+└── ~ FichaJugador.tsx                   # lo muestra en la ficha propia
+```
+
+### Pantallas del segundo incremento
+
+| Ruta | Qué cambia | Quién |
+| --- | --- | --- |
+| `/club/:clubId/jugadores/:usuarioRolId/ficha` | "Retirar del club" con confirmación, solo en la ficha propia; después, el aviso de retiro que ya existe | JUGADOR |
+| `/club/:clubId/categorias` → Retirados | Nada en la pantalla: el mensaje del nuevo `409` al reincorporar ya se muestra | PRESIDENTE |
+
+### Trazabilidad del segundo incremento
+
+| Requisito | Backend | Pantalla | Pruebas clave |
+| --- | --- | --- | --- |
+| RF-041 | `ServicioRetiroJugador.ReincorporarAsync`, `ReglaDocumentoCompartido`, `IRepositorioRetiroEntreClubes` | El mensaje en "Retirados" | Activo en otra cuenta: `409 documento_activo_en_otro_club` y nada cambia; sin nombre ni identificador del otro club; misma cuenta activa en otro club: `200`; otra cuenta en espera: `200`; tras retirarlo allí: `200`; dos reincorporaciones a la vez: una sola activa |
+| RF-042 | `ReglaQuienRetira`, `ControladorJugadores`, `ServicioRetiroJugador.RetirarAsync` | Botón y diálogo en la ficha | La familia retira a su jugador: `204`, fuera de su categoría y sus equipos, ficha intacta; la cuenta y los hermanos igual; luego `403 integrante_retirado` y el aviso; con sesión de documento |
+| RF-043 | `ReglaQuienRetira`, la autorización de siempre | Sin botón para otros roles ni en fichas ajenas | Hermano no elegido o jugador de otra cuenta: `404`; DIRECTIVO y ENTRENADOR: `403`; la familia reincorpora: `403` |
+| CE-013 | Los bloqueos ordenados de la reincorporación y de la aprobación con baja | — | Reincorporación y aprobación con baja a la vez: nunca dos cuentas activas con el número |
+
+### Orden de construcción del segundo incremento
+
+Para `/speckit-tasks`: tareas a continuación de las del primer incremento. Cada bloque deja la
+batería en verde.
+
+1. **La familia retira (RF-042, RF-043)**: `ReglaQuienRetira` con sus pruebas; la autorización y
+   la regla en el retiro; `RetiroJugadorPruebas` ajustada; el botón en la ficha. No depende del
+   primer incremento y podría ir antes, pero sin el bloque 2 no sirve como camino de vuelta.
+2. **Reincorporación (RF-041, CE-013)**: la cuarta pregunta de `ReglaDocumentoCompartido`; el
+   bloqueo y la comprobación en `ReincorporarAsync`; las pruebas de concurrencia.
+3. **Cierre**: contrato frente a Swagger, el botón a 360 px en los dos temas, documentación XML y
+   el bloque 6 del quickstart.
+
+### Cambios sobre lo ya construido (segundo incremento)
+
+| Qué cambia | Por qué | Cómo se protege |
+| --- | --- | --- |
+| `POST …/retiro` admite el rol JUGADOR | RF-042 | Para el PRESIDENTE no cambia nada. La regla se aplica **antes** de leer al jugador, para que el `404` no dependa de si existe ni de su estado. `RetiroJugadorPruebas` se ajusta en la prueba de roles y las demás siguen en verde |
+| La reincorporación lee por número y puede bloquear varios clubes | RF-041 | Sin documento compartido bloquea solo su club, como hoy; las pruebas de reincorporación de la 003 no cambian |
+| La documentación del retiro dice que también retira la familia | §3 | Se reescribe en la misma tarea que el cambio |
+
+### Consecuencias del segundo incremento
+
+- **Una familia puede retirar por error a su único jugador del club**: queda retirado como
+  cualquier otro y solo el PRESIDENTE lo reincorpora (caso límite de la spec). El diálogo de
+  confirmación lo advierte.
+- **El PRESIDENTE del club anterior no tiene forma de pedir la vuelta**: sabe que el documento
+  está activo en otro club, pero no cuál. La familia o el otro PRESIDENTE deciden (spec, fuera de
+  alcance).
+- **El retiro por la familia no avisa al PRESIDENTE**: lo verá en "Retirados", como hoy cualquier
+  retiro.
+
+### Supuestos del segundo incremento
+
+Rellenan lo que la spec no fija. **Confirmados por el propietario el 2026-10-10**:
+
+11. Cuando la familia retira, el autor del retiro es el propio jugador: en "Retirados", "Lo
+    retiró" muestra su nombre.
+12. Un hermano en espera con ese número en otra cuenta no impide reincorporar; si después se
+    aprueba, retira al reincorporado.
+13. Con varios hermanos, la familia retira al jugador elegido; para retirar a otro, cambia de
+    jugador.

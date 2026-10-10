@@ -160,6 +160,34 @@ entonces, conviene levantarlo en un proyecto de Compose aparte, sin llave de Bre
 12. Repetir los pasos 2 y 6 a 360 px de ancho y en tema claro y oscuro. **Esperado**: los dos
     avisos se leen sin desplazamiento horizontal.
 
+### 6. La familia retira y la reincorporación (RF-041 a RF-043)
+
+Sigue donde termina el bloque 5: Caro está retirada en el Club B y su documento está activo en el
+Club A, en el hermano que aprobó el presidente A (aquí, "el hermano de Caro").
+
+1. Como presidente B, en "Retirados", reincorporar a Caro. **Esperado**: no se reincorpora; el
+   mensaje dice que el documento está activo en otro club y que primero debe retirarse de allí,
+   sin nombrar el Club A ni a la familia de Ana. Caro sigue en "Retirados" (2.13, RF-041).
+2. Con el correo de la cuenta de Ana, Club A, elegir al hermano de Caro y abrir "Mi ficha".
+   **Esperado**: aparece "Retirar del club". Pulsarlo y **cancelar**. **Esperado**: no cambia
+   nada.
+3. Pulsarlo de nuevo y confirmar. **Esperado**: solo se ve el aviso de que ya no está en el
+   Club A, con "Cambiar de jugador". Al cambiar, Ana y sus otros hermanos siguen igual (2.14,
+   RF-042).
+4. Como presidente A, abrir "Retirados". **Esperado**: el hermano de Caro figura con la fecha y,
+   en "Lo retiró", su propio nombre.
+5. Como presidente B, reincorporar a Caro. **Esperado**: se reincorpora en la categoría 2013, sin
+   el equipo que tenía (2.15).
+6. Como presidente A, reincorporar al hermano de Caro. **Esperado**: no se reincorpora, con el
+   mismo mensaje del paso 1. Un mismo documento no queda activo en dos cuentas (CE-013).
+7. Entrar con el **documento de Caro** y la contraseña de **su** cuenta. **Esperado**: entra al
+   Club B (RF-040: la cuenta con el jugador activo).
+8. Como directivo y como entrenador del Club A, abrir la ficha de Ana. Con la cuenta de Beto,
+   abrir la suya. **Esperado**: el directivo y el entrenador no ven "Retirar del club"; Beto solo
+   lo ve en su propia ficha (RF-043).
+9. Repetir los pasos 1 a 3 a 360 px de ancho y en tema claro y oscuro. **Esperado**: el botón, el
+   diálogo y el mensaje se leen sin desplazamiento horizontal.
+
 ## Comprobaciones directas contra la API
 
 Para lo que la pantalla no deja intentar. `$t` es el token de la cuenta de Ana obtenido con el
@@ -186,3 +214,14 @@ Del incremento (bloque 5):
 | `POST …/hermanos` con el documento del presidente B | `409 documento_en_otra_cuenta` |
 | `GET …/ingresos/en-espera` como presidente A | `retiraDeOtroClub` en cada ingreso; el cuerpo no contiene el nombre ni el identificador del Club B, ni el correo de la otra cuenta |
 | `POST /api/sesion` con el documento de Caro y la contraseña de la cuenta que no lo tiene activo | `401 credenciales_invalidas`, con el mismo cuerpo que una contraseña equivocada |
+
+Del incremento (bloque 6). `$hermano` es el identificador de otro jugador aprobado de la cuenta de
+Ana en el Club A:
+
+| Petición | Esperado |
+| --- | --- |
+| `POST …/jugadores/$hermano/retiro` con `$t` y la cabecera de Ana | `404 no_encontrado`; el hermano sigue activo |
+| `POST …/jugadores/$ana/retiro` con el token de Beto | `404 no_encontrado` |
+| `POST …/jugadores/$ana/retiro` como directivo o entrenador | `403 rol_no_autorizado` |
+| `POST …/jugadores/{retirado}/reincorporacion` con `$t` | `403 rol_no_autorizado` |
+| `POST …/jugadores/{Caro}/reincorporacion` como presidente B, con el hermano de Caro activo en el Club A | `409 documento_activo_en_otro_club`; el cuerpo no contiene el nombre ni el identificador del Club A, ni el correo de la otra cuenta |

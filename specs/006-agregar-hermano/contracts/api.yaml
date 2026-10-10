@@ -28,6 +28,9 @@ info:
       cuentas distintas, en clubes distintos. `retiraDeOtroClub` es el único dato que la API
       entrega sobre el otro club: un booleano, sin nombre de club ni datos de la otra cuenta. No
       hay rutas nuevas.
+    - INCREMENTO (RF-041 a RF-043): la cuenta de un jugador puede retirarlo del club con la
+      operación de retiro de la 003, y la reincorporación se niega mientras su documento esté
+      activo con otra cuenta en otro club. Tampoco hay rutas nuevas.
 
 servers:
   - url: http://localhost:8080
@@ -40,6 +43,7 @@ tags:
   - name: Sesion
   - name: Ingresos
   - name: Ficha
+  - name: Jugadores
 
 paths:
   # ------------------------------------------------------------------ Hermanos
@@ -242,6 +246,73 @@ paths:
           description: La ficha, como en la 005
         '404':
           description: No es el jugador que hace la petición
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  # ---------------------------------------------------------------- Jugadores
+
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/retiro:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+      - $ref: '#/components/parameters/jugadorElegido'
+    post:
+      tags: [Jugadores]
+      summary: CAMBIA. Retirar del club a un jugador
+      description: |
+        INCREMENTO (RF-042, RF-043). La operación, la petición sin cuerpo y el efecto son los de la
+        003: el jugador sale de su categoría y de sus equipos, deja de entrar a este club y
+        conserva su ficha y su historial. Cambia quién puede llamarla:
+        - PRESIDENTE: cualquier jugador aprobado de su club, como hasta ahora.
+        - NUEVO. JUGADOR: solo el jugador que hace la petición (el elegido, o el de la sesión
+          con documento). La cuenta y sus demás jugadores no cambian. Queda registrado como autor
+          el nombre de ese jugador.
+        - DIRECTIVO y ENTRENADOR: 403 `rol_no_autorizado`, como hasta ahora.
+      responses:
+        '204':
+          description: Retirado
+        '403':
+          description: |
+            `rol_no_autorizado` para DIRECTIVO y ENTRENADOR. El jugador que ya está retirado o en
+            espera recibe `integrante_retirado` o `ingreso_en_espera` antes de llegar aquí.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '404':
+          description: |
+            `no_encontrado`. NUEVO: para el rol JUGADOR, `{usuarioRolId}` no es el jugador que
+            hace la petición, aunque sea un hermano de la misma cuenta.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409':
+          description: '`no_es_jugador`, como en la 003'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/reincorporacion:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    post:
+      tags: [Jugadores]
+      summary: CAMBIA. Reincorporar a un jugador retirado
+      description: |
+        INCREMENTO (RF-041). Solo PRESIDENTE, como hasta ahora; la familia no reincorpora. La
+        petición y la respuesta de éxito son las de la 003. NUEVO: se niega mientras el documento
+        del jugador esté en un integrante aprobado y activo de otra cuenta, en cualquier club. Si
+        solo lo está con la misma cuenta, sigue como hasta ahora. Se decide con lo que haya en el
+        momento de reincorporar.
+      responses:
+        '200':
+          description: El jugador reincorporado, como en la 003 (`ReincorporacionDto`)
+        '409':
+          description: |
+            `jugador_no_retirado`, como en la 003. NUEVO: `documento_activo_en_otro_club`; no se
+            cambia nada. El cuerpo no trae el nombre ni el identificador del otro club, ni ningún
+            dato de la otra cuenta.
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }

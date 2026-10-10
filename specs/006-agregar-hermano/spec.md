@@ -33,6 +33,15 @@ agregado desde la ficha, y hace que una cuenta pueda tener varios jugadores.
 - P: El documento queda en dos cuentas. ¿Cuál abre quien entra con ese documento? → R: La cuenta
   nueva, donde el jugador está activo.
 
+### Sesión del 2026-10-10
+
+- P: Si el PRESIDENTE del otro club quiere reincorporar al jugador que se retiró de allí al
+  aprobarse aquí su hermano, ¿qué pasa? → R: Se niega mientras ese documento esté activo en otra
+  cuenta, con un motivo que no nombra el club ni la cuenta.
+- P: ¿Quién puede retirarlo del club donde quedó activo para que el anterior lo reincorpore? → R:
+  El PRESIDENTE de ese club o la familia, con una opción nueva "Retirar del club" en la ficha del
+  jugador. Así la familia no depende de que un PRESIDENTE lo libere.
+
 ## Escenarios de usuario y pruebas *(obligatorio)*
 
 ### Historia de usuario 1 - La familia agrega un hermano desde la ficha (Prioridad: P1)
@@ -191,6 +200,17 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
     club y el jugador de la otra cuenta sigue activo en el otro club, sin ningún cambio.
 12. **Dado** un jugador retirado del otro club por esta vía, **cuando** su familia anterior entra
     con el correo y lo elige, **entonces** ve el aviso de que ya no está en ese club.
+13. **Dado** un jugador retirado del otro club por esta vía, **cuando** el PRESIDENTE de ese club
+    intenta reincorporarlo mientras el documento sigue activo en la cuenta nueva, **entonces** el
+    sistema se lo niega con un motivo que no nombra el club ni la cuenta donde está activo.
+14. **Dado** la familia con un jugador aprobado y activo elegido, **cuando** usa "Retirar del
+    club" en su ficha y lo confirma, **entonces** el jugador queda retirado de ese club con el
+    retiro que ya existe y la familia ve el aviso de que ya no está en él.
+15. **Dado** un jugador retirado por su familia que tenía el mismo documento retirado en otro club,
+    **cuando** el PRESIDENTE de ese otro club lo reincorpora, **entonces** el sistema lo permite.
+16. **Dado** un DIRECTIVO, un ENTRENADOR o la cuenta de otro jugador, **cuando** intenta retirar a
+    un jugador ajeno, incluso llamando directamente a la operación, **entonces** el sistema se lo
+    niega.
 
 ---
 
@@ -224,6 +244,11 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
   hermano no cambia; el retiro es de un jugador, no de la cuenta.
 - La familia cambia el celular o el responsable desde la ficha de un hijo: cambia para todos los
   jugadores de la cuenta, incluidos los que están en espera (spec 005, RF-039).
+- El jugador retirado por esta vía vuelve a su club anterior: el PRESIDENTE de ese club no puede
+  reincorporarlo mientras siga activo aquí; la familia o el PRESIDENTE de aquí lo retiran y
+  entonces sí puede (RF-041 a RF-043).
+- La familia retira por error a su único jugador del club: queda retirado como cualquier otro;
+  solo el PRESIDENTE lo reincorpora.
 - El club se suspende mientras hay un hermano en espera: la familia no entra a ese club (spec
   001); al reactivarse, el hermano sigue en espera.
 - La familia elimina su cuenta: se van todos sus jugadores, también los que están en espera.
@@ -338,6 +363,18 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
   DEBE abrir una sola: aquella donde el jugador está activo; si no está activo en ninguna, aquella
   donde está en espera. Con la contraseña de cualquier otra cuenta, el ingreso DEBE negarse como
   cualquier ingreso con datos incorrectos.
+- **RF-041**: El sistema NO DEBE reincorporar a un jugador retirado mientras su documento esté
+  activo con otra cuenta en otro club, y DEBE explicar el motivo sin nombrar ese club ni dar datos
+  de esa cuenta. Si el documento solo está activo con la misma cuenta, la reincorporación sigue
+  como hoy.
+
+**La familia retira a su jugador**
+
+- **RF-042**: La cuenta de un jugador aprobado y activo DEBE poder retirarlo del club desde su
+  ficha, con la opción "Retirar del club", después de confirmarlo. Es el retiro que ya existe: el
+  jugador conserva su ficha y su historial, y la cuenta y sus demás jugadores NO DEBEN cambiar.
+- **RF-043**: Solo la cuenta del jugador y el PRESIDENTE de su club DEBEN poder retirarlo. La
+  familia NO DEBE poder reincorporarlo; eso lo sigue haciendo solo el PRESIDENTE.
 
 **Acceso desde la aplicación**
 
@@ -356,7 +393,9 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
 - **Spec 001, inicio de sesión con documento**: un documento podía estar en una sola cuenta; ahora
   puede estar en varias y RF-040 decide cuál abre.
 - **Retiro de un jugador**: hasta ahora solo lo hacía su propio club; RF-036 añade un retiro que
-  provoca la aprobación en otro club.
+  provoca la aprobación en otro club, y RF-042 deja que la familia retire a su propio jugador.
+- **Reincorporación de un jugador (spec 003)**: RF-041 la niega mientras el documento esté activo
+  con otra cuenta en otro club.
 - El registro con invitación (spec 004) y el cambio de documento desde la ficha (spec 005) NO
   cambian: siguen sin aceptar un documento que usa otra cuenta.
 
@@ -406,6 +445,9 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
   rechazos y de las esperas probadas, sigue activo allí sin ningún cambio.
 - **CE-012**: En el 100 % de los ingresos probados con un documento que está en dos cuentas, se
   abre únicamente la cuenta donde el jugador está activo.
+- **CE-013**: En el 100 % de los intentos probados, ningún documento queda activo en dos cuentas:
+  la reincorporación se niega mientras esté activo en otra, y se permite cuando el PRESIDENTE o la
+  familia lo retiran de allí.
 
 ## Supuestos
 
@@ -433,8 +475,11 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
   del PRESIDENTE de este club, que decide con el aviso de RF-038 a la vista.
 - La ficha del otro club no viaja: el jugador nace aquí con su ficha vacía, como cualquier hermano
   (RF-017).
-- Si el otro club quiere recuperarlo, lo trata como a cualquier jugador retirado; esta
-  funcionalidad no añade un camino de vuelta.
+- Si el otro club quiere recuperarlo, primero debe retirarse del club donde quedó activo, por su
+  PRESIDENTE o por su familia (RF-042); después el otro club lo reincorpora como a cualquier
+  jugador retirado (RF-041). No hay solicitud ni aviso entre clubes.
+- "Retirar del club" vale para cualquier jugador aprobado y activo de la cuenta, no solo para los
+  que vinieron de otro club: es la misma baja que hoy hace el PRESIDENTE.
 - Cuando el documento es de la misma cuenta en otro club no hay baja: la familia lo tiene inscrito
   en los dos clubes a propósito.
 
@@ -444,6 +489,8 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
 - Pasar un jugador de una cuenta a otra, o separar hermanos en cuentas distintas. La baja de
   RF-036 no traslada nada: el jugador de la otra cuenta queda retirado allí y aquí nace uno nuevo.
 - Que el otro club o la otra familia autoricen, reciban aviso o deshagan la baja automática.
+- Una solicitud a la familia para aceptar la reincorporación en otro club; se resuelve con RF-042.
+- Que la familia reincorpore a un jugador retirado.
 - Que la familia cancele, corrija o elimine a un hermano en espera.
 - Avisos o correos al club o a la familia sobre el ingreso pendiente, la aprobación o el rechazo.
 - Cambiar el correo de la cuenta.
