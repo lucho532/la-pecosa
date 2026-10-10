@@ -5,7 +5,8 @@ import { olvidarJugadorElegido } from '../compartido/sesion/jugadorElegido';
 
 interface Props {
   club: ClubDeSesionDto;
-  variante?: 'secundario' | 'lateral';
+  /** `menu` lo pinta como una opción del menú de perfil de la barra superior. */
+  variante?: 'secundario' | 'menu';
 }
 
 /**
@@ -23,6 +24,14 @@ export function BotonCambiarJugador({ club, variante = 'secundario' }: Props) {
   function cambiar() {
     olvidarJugadorElegido(club.clubId);
     navegar(`/club/${club.clubId}`, { replace: true });
+  }
+
+  if (variante === 'menu') {
+    return (
+      <button type="button" role="menuitem" onClick={cambiar}>
+        Cambiar de jugador
+      </button>
+    );
   }
 
   return (

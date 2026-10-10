@@ -44,12 +44,6 @@
   text-decoration: underline;
 }
 
-.boton-lateral {
-  background: transparent;
-  border-color: var(--lateral-texto-suave);
-  color: var(--lateral-texto);
-}
-
 .campo {
   display: flex;
   flex-direction: column;

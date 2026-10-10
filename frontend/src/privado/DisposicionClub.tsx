@@ -1,14 +1,22 @@
 import { useEffect } from 'react';
-import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../compartido/api/cliente';
 import { ErrorApi } from '../compartido/api/errores';
 import type { ClubDto } from '../compartido/api/tipos';
 import type { ClubDeSesionDto } from '../compartido/api/tiposSesion';
 import { useCarga } from '../compartido/api/useCarga';
 import { Aviso } from '../compartido/componentes/Aviso';
-import { Avatar, inicialesDe } from '../compartido/componentes/Avatar';
-import { Boton } from '../compartido/componentes/Boton';
-import { BotonTema } from '../compartido/componentes/BotonTema';
+import { inicialesDe } from '../compartido/componentes/Avatar';
+import { BarraSuperior } from '../compartido/componentes/BarraSuperior';
+import { EnlaceMenu } from '../compartido/componentes/EnlaceMenu';
+import {
+  IconoCategorias,
+  IconoDatosClub,
+  IconoFicha,
+  IconoIngresos,
+  IconoInicio,
+} from '../compartido/componentes/Iconos';
+import { MenuPerfil } from '../compartido/componentes/MenuPerfil';
 import { nombreDeRol } from '../compartido/formato';
 import { jugadorDe, olvidarJugadorElegido, useJugadorElegido } from '../compartido/sesion/jugadorElegido';
 import { guardarUltimoClub } from '../compartido/sesion/ultimoClub';
@@ -76,8 +84,9 @@ interface Props {
 }
 
 /**
- * Armazón de la aplicación del club elegido: menú lateral, cabecera con el escudo, los colores y el
- * nombre del club siempre visibles (constitución §7.2) y cierre de sesión. Al cambiar de club en el
+ * Armazón de la aplicación del club elegido: menú lateral con el escudo, el nombre del club
+ * siempre visibles (constitución §7.2) y la navegación; barra superior con el tema y el perfil,
+ * desde donde se cambia de jugador y se cierra sesión; y el escudo de fondo como marca de agua. Al cambiar de club en el
  * desplegable cambia la identidad. Pide el club a la API en cada entrada: es la API
  * la que decide si la persona pertenece a él y si el club está disponible.
  */
@@ -121,47 +130,80 @@ function AplicacionDelClub({ clubId, deSesion }: Props) {
           <Escudo identidad={identidad} nombre={nombre} />
           <span>{nombre}</span>
         </div>
-        <DesplegableClubes clubId={clubId} />
+        <div className="solo-escritorio">
+          <DesplegableClubes clubId={clubId} />
+        </div>
         <nav className="lateral-menu" aria-label={`Menú de ${nombre}`}>
-          <NavLink to={`/club/${clubId}`} end>
+          <EnlaceMenu a={`/club/${clubId}`} icono={<IconoInicio />} exacto>
             Inicio
-          </NavLink>
+          </EnlaceMenu>
           {/* Solo la cuenta de un jugador tiene ficha propia (RF-033); los demás roles no ven el enlace. */}
-          {club?.miRol === 'JUGADOR' && <NavLink to={rutaDeFicha(clubId, club.miUsuarioRolId)}>Mi ficha</NavLink>}
-          {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/ingresos`}>Ingresos</NavLink>}
-          {rol && puedeVerCategorias(rol) && <NavLink to={`/club/${clubId}/categorias`}>Categorías</NavLink>}
-          {rol === 'PRESIDENTE' && <NavLink to={`/club/${clubId}/configuracion`}>Datos del club</NavLink>}
+          {club?.miRol === 'JUGADOR' && (
+            <EnlaceMenu a={rutaDeFicha(clubId, club.miUsuarioRolId)} icono={<IconoFicha />}>
+              Mi ficha
+            </EnlaceMenu>
+          )}
+          {rol === 'PRESIDENTE' && (
+            <EnlaceMenu a={`/club/${clubId}/ingresos`} icono={<IconoIngresos />}>
+              Ingresos
+            </EnlaceMenu>
+          )}
+          {rol && puedeVerCategorias(rol) && (
+            <EnlaceMenu a={`/club/${clubId}/categorias`} icono={<IconoCategorias />}>
+              Categorías
+            </EnlaceMenu>
+          )}
+          {rol === 'PRESIDENTE' && (
+            <EnlaceMenu a={`/club/${clubId}/configuracion`} icono={<IconoDatosClub />}>
+              Datos del club
+            </EnlaceMenu>
+          )}
         </nav>
-        {deSesion && rol && (
-          <div className={deSesion.jugadores.length > 0 ? 'lateral-pie lateral-pie-fijo' : 'lateral-pie'}>
-            <span>
-              {deSesion.nombres} {deSesion.apellidos}
-            </span>
-            <span>{nombreDeRol(rol)}</span>
-            <BotonCambiarJugador club={deSesion} variante="lateral" />
-          </div>
-        )}
-        <Avatar iniciales={deSesion ? inicialesDe(deSesion.nombres, deSesion.apellidos) : ''} />
-        <BotonTema enLateral />
-        <Boton variante="lateral" onClick={cerrarSesion}>
-          Cerrar sesión
-        </Boton>
       </aside>
-      <main className="principal">
-        {esClubNoDisponible(codigo) ? (
-          <AvisoClubNoDisponible codigo={codigo} tieneOtrosClubes={(sesion?.clubes.length ?? 0) > 1} />
-        ) : (
-          error && !sesionDesactualizada && <Aviso tono="error">{error}</Aviso>
-        )}
-        {!contexto && (cargando || sesionDesactualizada) && <p className="texto-suave">Cargando…</p>}
-        {club?.estado === 'SUSPENDIDO' && (
-          <Aviso tono="aviso">
-            <strong>Club suspendido.</strong> Solo tú, como presidente, puedes entrar; los demás integrantes ven
-            un aviso de incidencia temporal.
-          </Aviso>
-        )}
-        {contexto && <Outlet context={contexto} />}
-      </main>
+      <div className="contenido">
+        <BarraSuperior
+          marca={
+            <>
+              <Escudo identidad={identidad} nombre={nombre} />
+              <span>{nombre}</span>
+            </>
+          }
+        >
+          {/* El nombre es el del jugador elegido cuando la cuenta tiene varios (RF-024): entonces
+              se queda a la vista también en el teléfono. */}
+          <MenuPerfil
+            nombre={deSesion ? `${deSesion.nombres} ${deSesion.apellidos}` : ''}
+            detalle={rol ? nombreDeRol(rol) : undefined}
+            iniciales={deSesion ? inicialesDe(deSesion.nombres, deSesion.apellidos) : ''}
+            alCerrarSesion={cerrarSesion}
+            nombreSiempreVisible={(deSesion?.jugadores.length ?? 0) > 0}
+            opciones={
+              <>
+                {/* En el teléfono no hay menú lateral: el desplegable de clubes va aquí. */}
+                <div className="solo-movil">
+                  <DesplegableClubes clubId={clubId} />
+                </div>
+                {deSesion && <BotonCambiarJugador club={deSesion} variante="menu" />}
+              </>
+            }
+          />
+        </BarraSuperior>
+        <main className="principal">
+          {esClubNoDisponible(codigo) ? (
+            <AvisoClubNoDisponible codigo={codigo} tieneOtrosClubes={(sesion?.clubes.length ?? 0) > 1} />
+          ) : (
+            error && !sesionDesactualizada && <Aviso tono="error">{error}</Aviso>
+          )}
+          {!contexto && (cargando || sesionDesactualizada) && <p className="texto-suave">Cargando…</p>}
+          {club?.estado === 'SUSPENDIDO' && (
+            <Aviso tono="aviso">
+              <strong>Club suspendido.</strong> Solo tú, como presidente, puedes entrar; los demás integrantes
+              ven un aviso de incidencia temporal.
+            </Aviso>
+          )}
+          {contexto && <Outlet context={contexto} />}
+        </main>
+      </div>
     </IdentidadClub>
   );
 }
