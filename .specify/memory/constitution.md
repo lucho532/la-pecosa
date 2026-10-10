@@ -174,6 +174,21 @@ la spec 004:
 - Pendientes: siguen abiertas las siete decisiones de la §28. La spec 004 adapta el código a esta
   versión. Hasta que exista la elección de un presidente por otro PRESIDENTE (§12.5), cada club
   tiene un solo presidente
+
+Enmienda 4.1.0 → 4.2.0 (2026-10-10), decidida por el propietario del proyecto en las aclaraciones
+de la spec 006 (2026-10-09 y 2026-10-10):
+- §7.1: cuarta excepción acotada al aislamiento: el documento de un hermano o de un jugador que se
+  reincorpora puede consultarse en otros clubes, y aprobar al hermano retira de allí al jugador de
+  otra cuenta, sin entregar el nombre de ese club ni datos de esa cuenta
+- §10: un mismo documento puede estar en dos cuentas, solo por el hermano agregado (§12.1.2); el
+  inicio de sesión con ese documento abre la cuenta donde el jugador está activo
+- §8 (Jugador) y §14.1: la familia puede retirar a su propio jugador; aprobar un hermano en otro
+  club retira al jugador de otra cuenta con ese documento; la reincorporación se niega mientras el
+  documento esté activo con otra cuenta
+- §12.1.2: se admite el documento de un JUGADOR de otra cuenta en otro club, no el de otro rol
+- §20: pruebas ajustadas y nuevas
+- Principios modificados: ninguno renombrado. Secciones añadidas o eliminadas: ninguna
+- Pendientes: siguen abiertas las siete decisiones de la §28. La spec 006 implementa esta versión
 -->
 
 # Constitución del Proyecto — La Pecosa, plataforma multiclub de escuelas de fútbol
@@ -525,8 +540,14 @@ excepciones son:
   §12.4): encontrar la cuenta por su correo o su documento y listar los clubes a los que
   pertenece. Siempre quedan limitadas a esa cuenta.
 - Abrir una invitación por su enlace (ver §12.1): devuelve solo esa invitación y su club.
+- El documento de un jugador que pasa a otra cuenta (ver §10, §12.1.2 y §14.1). Al agregar un
+  hermano, al aprobarlo y al reincorporar a un jugador retirado se consulta, por ese número de
+  documento, si está en otros clubes, con qué rol y si está activo. Al aprobar al hermano, el
+  jugador activo de otra cuenta con ese documento queda retirado en su club. Es la única escritura
+  en un club desde otro club, y solo hace ese retiro.
 
-Ninguna excepción entrega datos de un club a quien no pertenece a él.
+Ninguna excepción entrega datos de un club a quien no pertenece a él. La cuarta solo revela que el
+documento está activo en otro club: nunca el nombre de ese club ni ningún dato de la otra cuenta.
 
 ### 7.2. Identidad y configuración de cada club
 
@@ -756,6 +777,7 @@ Puede, únicamente sobre su propio jugador:
 - Pagar mensualidades y arbitrajes.
 - Confirmar asistencia a entrenamientos y partidos.
 - Actualizar datos de contacto, médicos y documentos.
+- Retirar del club a su propio jugador (ver §14.1). No puede reincorporarlo.
 
 No accede a la ficha, los pagos ni los datos de contacto de otros jugadores.
 
@@ -805,6 +827,16 @@ El documento:
 - Puede existir en dos clubes distintos: es la misma persona, integrante de ambos, con un único
   inicio de sesión (ver §7.3 y §12.4).
 - No debe utilizarse como sustituto de las claves primarias internas.
+
+Normalmente un documento pertenece a una sola cuenta. La única forma de que esté en dos es agregar
+como hermano a un jugador que ya está en otra cuenta en otro club (ver §12.1.2). Al aprobarse, el
+jugador queda retirado del otro club (ver §14.1) y el documento queda en las dos cuentas. Nadie
+puede registrarse con un documento que ya tiene otra cuenta, ni cambiar su documento a uno así.
+
+Cuando un documento está en más de una cuenta, el inicio de sesión con ese documento abre una sola:
+la cuenta donde el jugador está activo; si no está activo en ninguna, aquella donde está en
+espera. Con la contraseña de cualquier otra cuenta, el ingreso se niega como cualquier ingreso con
+datos incorrectos (ver §12.4).
 
 Un jugador puede pasar de registro civil a tarjeta de identidad. Ese cambio actualiza el tipo y el
 número sobre el mismo registro; no crea otra persona.
@@ -938,6 +970,14 @@ El jugador agregado:
 - Pasa por la sala de espera, porque nadie del club lo invitó: no tiene categoría ni genera
   mensualidad hasta que el club lo aprueba (ver §12.1.1). Es el único ingreso que necesita
   aprobación.
+
+Si el documento del hermano ya lo tiene un JUGADOR de otra cuenta en otro club, se admite. La
+familia recibe el aviso de que, al aprobarse, dejará de estar en el otro club, y la sala de espera
+se lo advierte al PRESIDENTE antes de decidir, sin nombrar ese club ni dar datos de esa cuenta.
+Mientras espera, o si se le rechaza, nada cambia en el otro club; al aprobarse queda retirado de
+allí (ver §14.1). Si con otra cuenta ese documento es de un PRESIDENTE, un DIRECTIVO o un
+ENTRENADOR en cualquier club, no se admite y se explica el motivo. Cuando es de la misma cuenta en
+otro club no hay retiro: la familia lo tiene inscrito en los dos clubes.
 
 #### 12.1.1. Sala de espera
 
@@ -1160,8 +1200,18 @@ solo se desactiva.
 
 ### 14.1. Retiro de un jugador
 
-Cuando un jugador se va del club, el PRESIDENTE lo retira. Nadie más puede hacerlo, y solo se
-retira a un jugador aprobado.
+Solo se retira a un jugador aprobado y activo. Un jugador queda retirado únicamente de estas tres
+formas:
+
+- Lo retira el PRESIDENTE de su club.
+- Lo retira su propia cuenta, con la opción "Retirar del club" de su ficha y después de
+  confirmarlo. La cuenta y sus demás jugadores no cambian.
+- Queda retirado al aprobarse, en otro club, un hermano de otra cuenta con su mismo documento (ver
+  §12.1.2). Ocurre en la misma operación que la aprobación: si el retiro no puede hacerse, la
+  aprobación tampoco. Nadie de su club ni de su familia lo confirma ni recibe aviso, y no queda
+  registrado quién lo retiró, porque es de otro club.
+
+Nadie más puede retirarlo.
 
 El jugador retirado:
 
@@ -1172,7 +1222,13 @@ El jugador retirado:
 - No genera mensualidad (ver §16.7).
 
 El PRESIDENTE puede reincorporarlo: vuelve a entrar con su misma cuenta y se le ubica como a un
-jugador que acaba de entrar (ver §12.1). No recupera los equipos que tenía.
+jugador que acaba de entrar (ver §12.1). No recupera los equipos que tenía. Solo el PRESIDENTE
+reincorpora; la familia no.
+
+La reincorporación se niega mientras el documento del jugador esté activo con otra cuenta en otro
+club, con un motivo que no nombra ese club ni da datos de esa cuenta. Para recuperarlo, primero
+debe retirarlo el club donde está activo, por su PRESIDENTE o por su familia. Si el documento solo
+está activo con la misma cuenta, la reincorporación sigue igual.
 
 El PRESIDENTE y los DIRECTIVOS ven la lista de jugadores retirados de su club.
 
@@ -1445,7 +1501,20 @@ Las pruebas deben validar principalmente:
   demás jugadores.
 - Aislamiento entre categorías y entre cuentas de jugador.
 - Que solamente el PRESIDENTE crea, desactiva, reactiva y borra categorías y equipos, asigna
-  entrenadores, cambia a un jugador de categoría o de equipo y retira o reincorpora jugadores.
+  entrenadores, cambia a un jugador de categoría o de equipo y reincorpora jugadores.
+- Que solamente el PRESIDENTE y la propia cuenta del jugador lo retiran del club, y que retirarlo
+  desde la cuenta no cambia la cuenta ni sus demás jugadores.
+- Que se admite como hermano el documento de un JUGADOR de otra cuenta en otro club, y no el de un
+  PRESIDENTE, un DIRECTIVO o un ENTRENADOR.
+- Que mientras ese hermano espera, o si se le rechaza, el otro club no cambia; y que al aprobarlo
+  el jugador de la otra cuenta queda retirado en la misma operación, o no se aprueba.
+- Que los avisos a la familia y al PRESIDENTE no revelan el nombre del otro club ni datos de la
+  otra cuenta.
+- Que con un documento en dos cuentas el inicio de sesión abre la del jugador activo, o la del que
+  está en espera, y niega la contraseña de la otra.
+- Que no se reincorpora a un jugador cuyo documento está activo con otra cuenta en otro club, y sí
+  cuando solo lo está con la misma cuenta.
+- Que no se puede registrar ni cambiar a un documento que ya tiene otra cuenta, aunque esté en dos.
 - Que un jugador que entra al club queda en la categoría de su año, o sin categoría si no existe,
   y que entra en ella al crearse.
 - Que un jugador nunca está en dos categorías ni en un equipo de otra categoría.
@@ -1636,4 +1705,4 @@ Escalabilidad
 La solución más sencilla que cumpla correctamente las reglas de negocio será preferible a una
 solución más compleja.
 
-**Versión**: 4.1.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-08
+**Versión**: 4.2.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-10
