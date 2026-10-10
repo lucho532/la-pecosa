@@ -32,6 +32,14 @@
 ## Notas
 
 - La lista se validó en una sola pasada el 2026-10-09; no quedó ningún punto sin cumplir.
+- Segunda pasada el 2026-10-09, tras la respuesta del propietario al supuesto 1 del plan: el
+  documento que usa otra cuenta en otro club ya no se rechaza (RF-034 a RF-040, CE-011 y CE-012).
+  Todos los puntos siguen cumplidos. El plan, el modelo de datos, el contrato, las tareas y el
+  código todavía aplican el rechazo anterior y hay que actualizarlos.
+- Decisiones tomadas por defecto en esa segunda pasada, que conviene revisar: la baja solo alcanza
+  a jugadores, no a otros roles; no hay baja cuando el documento es de la misma cuenta en otro
+  club; ni el otro club ni la otra familia reciben aviso; el aviso al PRESIDENTE no nombra al otro
+  club; dos hermanos en espera con el mismo documento en clubes distintos se deciden por separado.
 - No hay criterios de tiempo de uso medidos a mano, por indicación del propietario.
 - No se le preguntó nada al propietario antes de escribir: la constitución (§8, §12.1.1, §12.1.2
   y §12.4) ya fija las reglas principales.

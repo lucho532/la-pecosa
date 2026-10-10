@@ -31,6 +31,13 @@ Con las guías de la 003, la 004 y la [005](../005-ficha-jugador/quickstart.md),
 Anotar el número de documento de Ana y tener pensados tres números nuevos para sus hermanos
 **Luis** (nacido en 2014), **Mara** (2016) y **Nico** (cualquier año).
 
+Para el bloque 5 (RF-034 a RF-040), además:
+
+- En el Club B, la categoría **2013** activa con un equipo, y registrados como JUGADOR, cada uno
+  con su propia cuenta: **Caro** (2013), en esa categoría y en el equipo, con algo escrito en su
+  ficha, y **Dani** (2013).
+- Anotar los documentos de Caro, de Dani y del **presidente B**, y las contraseñas de sus cuentas.
+
 ## Pruebas automatizadas
 
 ```powershell
@@ -119,6 +126,40 @@ Cada paso indica qué historia de la spec valida.
    **Esperado**: el endpoint de hermanos existe, y la sesión y la sala de espera traen los campos
    nuevos.
 
+### 5. El documento que ya usa otra cuenta (RF-034 a RF-040)
+
+Este bloque valida el incremento. Los bloques 1 a 4 ya se recorrieron (T022) y no cambian. Como
+entonces, conviene levantarlo en un proyecto de Compose aparte, sin llave de Brevo.
+
+1. Con el correo de la cuenta de Ana, Club A, Ana elegida: agregar un hermano con el **documento
+   del presidente B**. **Esperado**: no se crea; "ese documento ya está registrado con otra
+   cuenta" (historia 1.12).
+2. Agregar un hermano con el **documento de Caro**. **Esperado**: queda pendiente y, junto a la
+   confirmación, el aviso de que al aprobarse dejará de estar en el otro club (1.11).
+3. Agregar otro con el **documento de Dani**. **Esperado**: lo mismo.
+4. Entrar como presidente B y abrir la categoría 2013 y la ficha de Caro. **Esperado**: Caro y
+   Dani siguen en su categoría y en su equipo; nada cambió (RF-035).
+5. Entrar con el **documento de Caro** y la contraseña de **su** cuenta. **Esperado**: entra a su
+   club como siempre. Con ese documento y la contraseña de la cuenta de Ana. **Esperado**: no
+   entra; el mensaje de datos incorrectos (2.13).
+6. Entrar como presidente A y abrir la sala de espera. **Esperado**: en los dos ingresos, el aviso
+   de que el documento está activo en otro club y de que aprobarlo lo retirará de allí. No aparece
+   el nombre del Club B ni el correo, el celular o el responsable de la otra familia (3.9).
+7. **Rechazar** al del documento de Dani. **Esperado**: desaparece de la sala de espera. Como
+   presidente B, Dani sigue activo, en su categoría (3.11).
+8. Como presidente A, abrir "Aprobar" en el del documento de Caro. **Esperado**: el diálogo repite
+   el aviso. Aprobar. **Esperado**: queda en el Club A, en la categoría de su año o sin categoría.
+9. Entrar como presidente B. **Esperado**: Caro ya no está en la categoría 2013 ni en el equipo;
+   figura en "Retirados" con la fecha y sin nadie en "Lo retiró". Su ficha conserva lo escrito
+   (3.10, RF-037).
+10. Entrar con el **correo** de la cuenta de Caro. **Esperado**: entra y solo ve el aviso de que
+    ya no está en ese club (3.12).
+11. Entrar con el **documento de Caro** y la contraseña de **su** cuenta. **Esperado**: no entra;
+    datos incorrectos. Con ese documento y la contraseña de la cuenta de Ana. **Esperado**: entra
+    al Club A con el hermano recién aprobado, sin lista ni "Cambiar de jugador" (2.12).
+12. Repetir los pasos 2 y 6 a 360 px de ancho y en tema claro y oscuro. **Esperado**: los dos
+    avisos se leen sin desplazamiento horizontal.
+
 ## Comprobaciones directas contra la API
 
 Para lo que la pantalla no deja intentar. `$t` es el token de la cuenta de Ana obtenido con el
@@ -135,3 +176,13 @@ correo; `$ana` y `$luis`, sus identificadores (vienen en `GET /api/sesion`).
 | `GET …/jugadores/$luis/ficha` con ese token y la cabecera de Luis | `404` |
 | `POST …/hermanos` como presidente A | `403 rol_no_autorizado` |
 | `POST …/hermanos` dos veces con el mismo cuerpo | `201` y después `200`, con el mismo jugador |
+
+Del incremento (bloque 5):
+
+| Petición | Esperado |
+| --- | --- |
+| `POST …/hermanos` con el documento de Caro, activa en el Club B | `201` con `retiraDeOtroClub: true` |
+| La misma, después de que el presidente B retire a Caro | `201` con `retiraDeOtroClub: false` |
+| `POST …/hermanos` con el documento del presidente B | `409 documento_en_otra_cuenta` |
+| `GET …/ingresos/en-espera` como presidente A | `retiraDeOtroClub` en cada ingreso; el cuerpo no contiene el nombre ni el identificador del Club B, ni el correo de la otra cuenta |
+| `POST /api/sesion` con el documento de Caro y la contraseña de la cuenta que no lo tiene activo | `401 credenciales_invalidas`, con el mismo cuerpo que una contraseña equivocada |

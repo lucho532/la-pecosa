@@ -133,10 +133,9 @@ un detalle que la spec no fija; están reunidas al final para que el propietario
   cuenta ya lo tiene, el campo se ignora: cambiar el responsable es cosa de la ficha (005).
 - **Documento** (RF-005): `409` si ya lo tiene otro integrante del club, activo, retirado o en
   espera; lo garantiza el índice único `ClubId, NumeroDocumento`, que no distingue estados.
-  **(supuesto)** `409` también si lo usa **otra cuenta** en otro club, igual que en el registro
-  (004) y en el cambio de documento (005): el inicio de sesión con documento busca la cuenta por
-  el número, y dos cuentas con el mismo número lo harían ambiguo. Si es de la misma cuenta en
-  otro club se admite: es el mismo niño en dos clubes (§10).
+  Si lo usa **otra cuenta** en otro club, lo decide la sección 12 (RF-034 y RF-039), que
+  sustituye al supuesto con el que se construyó: `409` en todos los casos. Si es de la misma
+  cuenta en otro club se admite: es el mismo niño en dos clubes (§10).
 - **Confirmar dos veces** (RF-009): **(supuesto)** si el número ya es de un jugador **en espera
   de la misma cuenta** en ese club, la respuesta es `200` con ese jugador, sin crear ni cambiar
   nada. El bloqueo del club hace que la segunda petición vea siempre a la primera.
@@ -202,11 +201,135 @@ Revisado todo lo que usa `IRepositorioPertenencias` o compara por `UsuarioId`:
   integrante, así que deben seguir en verde sin tocarlas, salvo las dos que nombra el plan.
 - **Contrato**: `AccesoClubPruebas` pasa de 60 a 61 endpoints.
 
+## Incremento del 2026-10-09: el documento que ya usa otra cuenta (RF-034 a RF-040)
+
+Las secciones 12 a 17 son solo de este incremento. Las secciones 1 a 11 describen lo ya
+construido y siguen vigentes, salvo el supuesto 1.
+
+## 12. Cuándo se admite el documento de otra cuenta
+
+- **Decisión**: una regla de dominio nueva, `ReglaDocumentoCompartido`, recibe los integrantes que
+  tienen ese número, en cualquier club, y la cuenta que agrega. Mira solo los de **otra cuenta**:
+
+  | Integrantes de otra cuenta con ese número | Resultado | Respuesta al agregar |
+  | --- | --- | --- |
+  | Ninguno | `SinBaja` | `201`, `retiraDeOtroClub: false` |
+  | Alguno que no es JUGADOR | `NoAdmitido` | `409 documento_en_otra_cuenta` (RF-039) |
+  | Solo jugadores, y alguno aprobado y activo | `ConBaja` | `201`, `retiraDeOtroClub: true` (RF-034) |
+  | Solo jugadores, todos retirados o en espera | `SinBaja` | `201`, `retiraDeOtroClub: false` |
+
+  La comprobación del propio club va antes y no cambia: `409 documento_repetido_en_club`.
+- **Motivo**: las tres preguntas del incremento (¿se admite?, ¿aprobarlo retira a alguien?, ¿qué
+  cuenta abre el documento?) dependen de los mismos pocos integrantes. Una regla sin HTTP ni EF se
+  prueba fila por fila y deja los repositorios sin reglas (§5).
+- **El aviso a la familia** (RF-034): el endpoint devuelve `HermanoAgregadoDto`, que son los cinco
+  campos de `JugadorDeSesionDto` más `retiraDeOtroClub`. No se añade el campo a
+  `JugadorDeSesionDto`, que también viaja en la sesión, donde no tiene sentido. **(supuesto 10)**
+  El aviso llega después de crear, como dice la historia 1.11.
+- **Confirmar dos veces**: el `200` que devuelve al hermano que ya esperaba calcula el aviso en
+  ese momento.
+- **Alternativas**: una consulta previa "¿este documento retira a alguien?" antes de confirmar
+  (un endpoint más y un oráculo sin coste para quien pregunta); un código `2xx` distinto (la
+  pantalla tendría que tratar tres respuestas de éxito).
+
+## 13. La baja al aprobar
+
+- **Decisión**: `ServicioAprobacionIngreso`, dentro de su transacción:
+  1. Lee el ingreso y los integrantes con su número.
+  2. Si la regla da `NoAdmitido`, responde `409 documento_en_otra_cuenta` **(supuesto 7)**.
+  3. Bloquea los clubes: solo el suyo si no hay nadie que retirar, como hoy; el suyo y los de los
+     jugadores que va a retirar, si los hay.
+  4. Aprueba con la sentencia condicionada de siempre y ubica al jugador.
+  5. Retira, con una sentencia condicionada, a todo jugador aprobado y activo de otra cuenta con
+     ese número, en cualquier club: lo saca de sus equipos, `Activo = false`, sin categoría,
+     `RetiradoEn` con la hora de la aprobación.
+- **Una sola transacción** (RF-036): si la baja falla, la aprobación se deshace con ella.
+- **El paso 5 se ejecuta siempre**, haya visto o no a alguien en el paso 1: la spec pide decidir
+  con lo que haya "en el momento de aprobar". Sin documento compartido no cambia ninguna fila.
+- **Por qué se bloquea el otro club**: el retiro de la 003 lo hace con su club bloqueado para que
+  una asignación a un equipo que ocurra a la vez no deje a un retirado dentro de él. La baja
+  automática necesita la misma garantía.
+- **Por qué en orden**: es la única operación que bloquea más de un club. Si el club A aprueba a
+  alguien activo en B mientras B aprueba a alguien activo en A, cada uno esperaría al otro. Los
+  clubes se bloquean en una sola sentencia, ordenados por identificador, y así no hay abrazo
+  mortal. Por eso la lectura va antes del bloqueo y no después, como hoy.
+- **Quién lo retiró** **(supuesto 6)**: `RetiradoPorUsuarioId` y `RetiradoPorNombre` quedan
+  vacíos. El nombre de quien aprueba es un dato de este club y no debe aparecer en la lista de
+  retirados del otro (§7.1); RF-037 tampoco quiere avisos.
+- **Lo que no toca** (RF-037): la ficha, los documentos, el historial, la cuenta anterior, su
+  contraseña, sus demás jugadores, ni a quien espera con ese número en otro club. Tampoco al
+  jugador de la **misma** cuenta en otro club: es el mismo niño inscrito en los dos.
+- **Dónde vive lo que cruza clubes**: `IRepositorioRetiroEntreClubes`, con dos operaciones
+  (bloquear clubes en orden y retirar por número y cuenta). Es el único que escribe fuera del club
+  de la petición, y queda separado de `IRepositorioPertenencias` para que esa excepción a §7.1 se
+  vea y se pruebe sola.
+- **Alternativas**: reutilizar `ServicioRetiroJugador` (trabaja con el filtro del club de la
+  petición y con quien retira; habría que cambiar de club a mitad de la transacción); no bloquear
+  el otro club (deja la carrera con los equipos); bloquear primero el propio y luego los demás
+  (abrazo mortal entre dos aprobaciones cruzadas).
+
+## 14. El aviso al PRESIDENTE
+
+- **Decisión**: `IngresoEnEsperaDto` gana `retiraDeOtroClub`. `ServicioConsultaIngresos` lee, en
+  una consulta, los integrantes que tienen los números de quienes esperan y aplica la regla a cada
+  uno: `true` solo con `ConBaja`.
+- **Se calcula al abrir** la sala de espera, no al agregar: si el otro club lo retiró o lo
+  reincorporó entre tanto, el aviso lo refleja (caso límite de la spec). No se guarda.
+- **Qué no lleva** (RF-038): ni el nombre ni el identificador del otro club, ni el correo, el
+  nombre o el identificador de la otra cuenta, ni cuántos clubes son. Es un booleano.
+- **Pantalla**: el aviso se pinta en el ingreso y se repite en el diálogo de aprobar, que es donde
+  se decide.
+
+## 15. Qué cuenta abre un documento
+
+- **Decisión**: `ServicioSesion` deja de pedir "la cuenta de ese número" y pide los integrantes
+  que lo tienen; `ReglaDocumentoCompartido` elige uno y se abre su cuenta (RF-040):
+  1. El aprobado y activo.
+  2. Si no hay ninguno, el que está en espera.
+  3. Si tampoco, el retirado.
+
+  **(supuesto 8)** Entre dos del mismo nivel, el más reciente.
+- **Con la contraseña de otra cuenta**: se compara con la de la cuenta elegida y no coincide. La
+  respuesta es el `401 credenciales_invalidas` de siempre, con el mismo texto y el mismo cálculo
+  de hash; no se prueba contra las demás cuentas.
+- **La limitación del token** no cambia: los integrantes de la cuenta elegida con ese número.
+- **Con el documento en una sola cuenta** el resultado es el de hoy.
+- **Consecuencia**: los fallos se cuentan en la cuenta elegida. La familia anterior, entrando con
+  el documento y su contraseña, puede bloquear la cuenta nueva al quinto intento.
+
+## 16. Lo que sigue sin aceptar un documento de otra cuenta
+
+| Sitio | Hoy | Con el documento en dos cuentas |
+| --- | --- | --- |
+| Registro con invitación (004) | `409` si el número tiene dueño | Igual: basta con que exista uno. Sin cambios de código |
+| Cambio de documento desde la ficha (005) | `409` si el dueño es otra cuenta | "El dueño" deja de ser uno solo. Pasa a preguntar si lo tiene **alguna** otra cuenta: mismo `409` en los mismos casos, y deja de depender de qué fila devuelva la consulta |
+| Reincorporar a un retirado (003) | No mira el documento | **(supuesto 9)** No cambia. Si el otro club reincorpora al que salió por esta vía, el número queda activo en dos cuentas y decide el desempate de la sección 15 |
+
+## 17. Pruebas del incremento
+
+- **Unitarias**: `ReglaDocumentoCompartido`: la tabla de la sección 12 fila por fila, a quién
+  retira y el orden de la sección 15 con sus desempates.
+- **Integración**, en `Integracion/Hermanos/`:
+  - `DocumentoDeOtraCuentaPruebas`: historias 1.11 y 1.12; retirado o en espera en el otro club;
+    la misma cuenta en otro club; mientras espera, el otro club no cambia (RF-035).
+  - `BajaEnOtroClubPruebas`: historias 3.9 a 3.12; el aviso no trae nada del otro club; varios
+    clubes; ya retirado allí; cambios en el otro club entre agregar y aprobar; dos familias de
+    clubes distintos con el mismo número en espera; dos aprobaciones cruzadas a la vez; el otro
+    PRESIDENTE lo ve en sus retirados sin autor; ningún correo.
+  - `SesionConDocumentoCompartidoPruebas`: historias 2.12 y 2.13; la contraseña de la otra cuenta
+    recibe la misma respuesta que una incorrecta; el token queda limitado al jugador de la cuenta
+    elegida; la familia anterior entra con el correo y ve el aviso de retiro.
+- **Cambian**: en `AgregarHermanoRechazosPruebas`, la que esperaba `409` para el documento de otra
+  cuenta. Se añade un caso a `CambioDeDocumentoPruebas` y otro a `RegistroConInvitacionPruebas`.
+- **Contrato**: `AccesoClubPruebas` sigue en 61 endpoints.
+
 ## Supuestos por confirmar
 
 1. No se admite el documento de un hermano que ya usa **otra cuenta** en otro club (sección 6).
    La spec dice que un integrante de otro club "se puede agregar aquí"; este plan lo cumple solo
    cuando es de la misma cuenta.
+   **Cambiado por el propietario el 2026-10-09**: se admite y, al aprobarse, el jugador queda
+   retirado del otro club (spec, RF-034 a RF-040). Lo resuelven las secciones 12 a 17.
 2. Confirmar dos veces el mismo hermano devuelve el que ya está en espera, sin error (sección 6).
 3. La elección sobrevive a recargar la página y se pierde al cerrar la pestaña, al cerrar sesión
    y al volver a entrar (sección 5).
@@ -214,3 +337,13 @@ Revisado todo lo que usa `IRepositorioPertenencias` o compara por `UsuarioId`:
    (sección 6).
 5. Si el jugador de origen deja de existir, la sala de espera no dice de quién es hermano
    (sección 7).
+6. La baja automática no guarda quién retiró; el otro club lo ve en sus retirados sin autor
+   (sección 13).
+7. Al aprobar se vuelve a aplicar RF-039: si el documento es ya de alguien que no es JUGADOR con
+   otra cuenta, `409` y no se aprueba (sección 13).
+8. Entre dos cuentas del mismo nivel, el documento abre la del integrante más reciente
+   (sección 15).
+9. La reincorporación en el otro club no cambia ni mira el documento (sección 16). **Pide
+   decisión del propietario**: dejarlo así o negarla mientras el documento esté activo con otra
+   cuenta.
+10. El aviso a la familia llega en la respuesta de agregar, después de crear (sección 12).

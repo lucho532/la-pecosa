@@ -20,6 +20,19 @@ rechazo por el PRESIDENTE), spec 003 (categorías del club) y spec 005 (ficha de
 de espera ya existe y hoy no recibe a nadie; esta funcionalidad le da su único ingreso, el hermano
 agregado desde la ficha, y hace que una cuenta pueda tener varios jugadores.
 
+## Aclaraciones
+
+### Sesión del 2026-10-09
+
+- P: ¿Se admite el documento de un hermano que ya usa otra cuenta en otro club? → R: Sí. El
+  hermano se agrega al club de su hermano y se le da de baja automáticamente del otro club.
+- P: ¿En qué momento se le da de baja del otro club? → R: Cuando el PRESIDENTE lo aprueba aquí.
+  Mientras está en espera sigue como estaba en el otro club, y si lo rechazan no pierde nada.
+- P: ¿Qué significa darlo de baja? → R: Queda retirado en el otro club, con el retiro que ya
+  existe: conserva allí su ficha y su historial.
+- P: El documento queda en dos cuentas. ¿Cuál abre quien entra con ese documento? → R: La cuenta
+  nueva, donde el jugador está activo.
+
 ## Escenarios de usuario y pruebas *(obligatorio)*
 
 ### Historia de usuario 1 - La familia agrega un hermano desde la ficha (Prioridad: P1)
@@ -65,6 +78,13 @@ en la sala de espera del PRESIDENTE.
    incluso llamando directamente a la operación, **entonces** el sistema se lo niega.
 10. **Dado** la familia que confirma dos veces seguidas el mismo hermano, **cuando** el sistema
     procesa las dos solicitudes, **entonces** queda un solo jugador nuevo.
+11. **Dado** un número de documento que tiene un jugador de otra cuenta en otro club, **cuando**
+    la familia agrega un hermano con ese número, **entonces** el sistema lo crea en espera, le
+    avisa de que al aprobarse dejará de estar en el otro club, y ese jugador sigue en el otro club
+    como estaba.
+12. **Dado** un número de documento que tiene, en otro club y con otra cuenta, un integrante que
+    no es JUGADOR, **cuando** la familia intenta agregar un hermano con ese número, **entonces**
+    el sistema no lo crea y explica que ese documento ya está registrado con otra cuenta.
 
 ---
 
@@ -113,6 +133,12 @@ se ofrece cambiar.
     el aviso de que ya no está en el club y la opción de cambiar de jugador.
 11. **Dado** la familia que cierra sesión y vuelve a entrar con el correo, **cuando** entra,
     **entonces** vuelve a ver la lista y elige de nuevo.
+12. **Dado** un documento que está en dos cuentas, retirado en una y activo en la otra, **cuando**
+    alguien inicia sesión con ese documento, **entonces** solo entra con la contraseña de la
+    cuenta donde el jugador está activo.
+13. **Dado** un documento que está activo en una cuenta y en espera en otra, **cuando** alguien
+    inicia sesión con ese documento, **entonces** solo entra con la contraseña de la cuenta donde
+    está activo; la otra familia llega al hermano en espera entrando con el correo.
 
 ---
 
@@ -154,6 +180,17 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
 8. **Dado** la familia con el hermano elegido y en la pantalla de pendiente, **cuando** el
    PRESIDENTE lo aprueba y la familia vuelve a cargar, **entonces** ya ve la aplicación con ese
    jugador.
+9. **Dado** un hermano en espera cuyo documento tiene un jugador activo de otra cuenta en otro
+   club, **cuando** el PRESIDENTE abre la sala de espera, **entonces** ve el aviso de que ese
+   documento está activo en otro club y de que aprobarlo lo retirará de allí, sin el nombre del
+   otro club ni datos de la otra cuenta.
+10. **Dado** ese mismo hermano, **cuando** el PRESIDENTE lo aprueba, **entonces** queda aprobado
+    aquí y, en la misma operación, el jugador de la otra cuenta queda retirado en el otro club,
+    con su ficha y su historial intactos.
+11. **Dado** ese mismo hermano, **cuando** el PRESIDENTE lo rechaza, **entonces** se borra de este
+    club y el jugador de la otra cuenta sigue activo en el otro club, sin ningún cambio.
+12. **Dado** un jugador retirado del otro club por esta vía, **cuando** su familia anterior entra
+    con el correo y lo elige, **entonces** ve el aviso de que ya no está en ese club.
 
 ---
 
@@ -164,8 +201,21 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
 - Una cuenta pertenece a dos clubes: el hermano se agrega solo en el club de la ficha desde la que
   se agregó. La lista de jugadores muestra los del club que la familia tiene elegido; al cambiar
   de club en el desplegable, la elección de jugador se repite con los de ese club si son varios.
-- El hermano ya es integrante de otro club con el mismo documento: se puede agregar aquí, porque
-  el documento solo es único dentro de cada club.
+- El hermano ya es jugador de otro club con el mismo documento y la misma cuenta: se puede agregar
+  aquí y sigue en los dos clubes, porque es el mismo niño inscrito por su familia en ambos.
+- El hermano ya es jugador de otro club con el mismo documento y otra cuenta: se puede agregar
+  aquí; al aprobarse queda retirado del otro club (RF-034 a RF-039).
+- El documento tiene jugadores activos de otras cuentas en varios clubes: al aprobarse aquí queda
+  retirado de todos ellos.
+- El jugador de la otra cuenta ya estaba retirado en el otro club: se agrega y se aprueba aquí sin
+  cambiar nada allí, y no hay aviso para el PRESIDENTE.
+- El jugador de la otra cuenta se retira o vuelve a estar activo en el otro club mientras el
+  hermano espera aquí: el aviso y la baja se deciden con lo que haya en el momento de abrir la
+  sala de espera y en el de aprobar, no con lo que había al agregarlo.
+- Dos familias de clubes distintos agregan en espera el mismo documento: cada club decide por
+  separado; aprobar en uno no borra ni rechaza al que espera en el otro.
+- El jugador retirado por esta vía era el único de su cuenta en el otro club: la cuenta anterior
+  no se borra; sigue entrando con el correo y ve el aviso de retiro.
 - La familia entra con el documento de un hermano que sigue en espera: ve solo la pantalla de
   pendiente.
 - La familia entra con el documento de un hijo, agrega un hermano desde su ficha y sigue viendo
@@ -265,6 +315,30 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
 - **RF-031**: Todas estas restricciones DEBEN aplicarse en el servidor y no solo ocultando
   elementos en pantalla.
 
+**El documento que ya usa otra cuenta en otro club**
+
+- **RF-034**: El sistema DEBE aceptar como hermano un número de documento que tenga un JUGADOR de
+  otra cuenta en otro club, y DEBE avisar a la familia, al confirmar, de que al aprobarse ese
+  jugador dejará de estar en el otro club.
+- **RF-035**: Agregar a ese hermano NO DEBE cambiar nada en el otro club mientras esté en espera,
+  ni si el PRESIDENTE lo rechaza.
+- **RF-036**: Al aprobar a ese hermano, el sistema DEBE dejar retirado, en la misma operación, a
+  todo jugador activo de otra cuenta con ese documento en cualquier otro club. Si la baja no puede
+  hacerse, la aprobación tampoco DEBE hacerse.
+- **RF-037**: Esa baja DEBE ser el retiro que ya existe: el jugador conserva en el otro club su
+  ficha y su historial, y su cuenta anterior, su contraseña y sus demás jugadores NO DEBEN
+  cambiar. No se envía ningún aviso al otro club ni a la otra familia.
+- **RF-038**: La sala de espera DEBE avisar al PRESIDENTE, antes de que decida, cuando el
+  documento del hermano tiene un jugador activo de otra cuenta en otro club y de que aprobarlo lo
+  retirará de allí. El aviso NO DEBE mostrar el nombre del otro club ni ningún dato de la otra
+  cuenta.
+- **RF-039**: El sistema NO DEBE aceptar como hermano un documento que, con otra cuenta, tenga en
+  cualquier club un integrante que no sea JUGADOR, y DEBE explicar el motivo.
+- **RF-040**: Cuando un documento está en más de una cuenta, el inicio de sesión con ese documento
+  DEBE abrir una sola: aquella donde el jugador está activo; si no está activo en ninguna, aquella
+  donde está en espera. Con la contraseña de cualquier otra cuenta, el ingreso DEBE negarse como
+  cualquier ingreso con datos incorrectos.
+
 **Acceso desde la aplicación**
 
 - **RF-032**: La opción de agregar un hermano DEBE estar en la ficha del jugador, visible solo
@@ -279,6 +353,12 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
 - **Spec 005, supuesto sobre el jugador en espera**: queda resuelto por RF-013 y RF-017: no hay
   ficha accesible mientras está en espera y nace vacía al aprobarse.
 - **Spec 004, RF-015**: la sala de espera vuelve a recibir personas, solo por RF-011.
+- **Spec 001, inicio de sesión con documento**: un documento podía estar en una sola cuenta; ahora
+  puede estar en varias y RF-040 decide cuál abre.
+- **Retiro de un jugador**: hasta ahora solo lo hacía su propio club; RF-036 añade un retiro que
+  provoca la aprobación en otro club.
+- El registro con invitación (spec 004) y el cambio de documento desde la ficha (spec 005) NO
+  cambian: siguen sin aceptar un documento que usa otra cuenta.
 
 ### Entidades clave
 
@@ -290,6 +370,9 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
   borra y no deja estado.
 - **Jugador de origen**: el jugador desde cuya ficha se agregó al hermano. Sirve para que el
   PRESIDENTE sepa de quién es hermano mientras decide.
+- **Documento compartido entre cuentas**: un mismo número de documento en jugadores de cuentas
+  distintas y clubes distintos. Solo nace al agregar un hermano (RF-034) y, tras la aprobación,
+  queda activo en una sola cuenta.
 - **Jugador elegido**: el jugador con el que la familia continúa en una sesión. Vale solo para esa
   sesión.
 
@@ -318,6 +401,11 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
   pertenece al jugador elegido.
 - **CE-010**: Agregar un hermano, la lista de jugadores y el cambio de jugador se usan sin
   desplazamiento horizontal en un teléfono y el texto se lee bien en ambos temas.
+- **CE-011**: En el 100 % de las aprobaciones probadas de un hermano cuyo documento estaba activo
+  con otra cuenta en otro club, el jugador queda aprobado aquí y retirado allí; en el 100 % de los
+  rechazos y de las esperas probadas, sigue activo allí sin ningún cambio.
+- **CE-012**: En el 100 % de los ingresos probados con un documento que está en dos cuentas, se
+  abre únicamente la cuenta donde el jugador está activo.
 
 ## Supuestos
 
@@ -338,11 +426,24 @@ rechaza y se comprueba que desaparece de la lista de la familia y que el primer 
   opción, no una comprobación de parentesco.
 - Todavía no existen cargos ni mensualidades; cuando existan, el hermano empezará a generarlos al
   aprobarse y no antes (constitución §12.1.2).
+- La baja automática del otro club solo alcanza a jugadores. Si el documento es de un PRESIDENTE,
+  un DIRECTIVO o un ENTRENADOR de otra cuenta, el hermano no se admite (RF-039): retirar a quien
+  dirige o entrena en otro club no puede depender de una familia ajena.
+- Nadie del otro club ni de la otra familia confirma la baja. El único control es la aprobación
+  del PRESIDENTE de este club, que decide con el aviso de RF-038 a la vista.
+- La ficha del otro club no viaja: el jugador nace aquí con su ficha vacía, como cualquier hermano
+  (RF-017).
+- Si el otro club quiere recuperarlo, lo trata como a cualquier jugador retirado; esta
+  funcionalidad no añade un camino de vuelta.
+- Cuando el documento es de la misma cuenta en otro club no hay baja: la familia lo tiene inscrito
+  en los dos clubes a propósito.
 
 ## Fuera de alcance
 
 - Que un PRESIDENTE, un DIRECTIVO o un ENTRENADOR inscriba a un hijo desde su propia cuenta.
-- Pasar un jugador de una cuenta a otra, o separar hermanos en cuentas distintas.
+- Pasar un jugador de una cuenta a otra, o separar hermanos en cuentas distintas. La baja de
+  RF-036 no traslada nada: el jugador de la otra cuenta queda retirado allí y aquí nace uno nuevo.
+- Que el otro club o la otra familia autoricen, reciban aviso o deshagan la baja automática.
 - Que la familia cancele, corrija o elimine a un hermano en espera.
 - Avisos o correos al club o a la familia sobre el ingreso pendiente, la aprobación o el rechazo.
 - Cambiar el correo de la cuenta.

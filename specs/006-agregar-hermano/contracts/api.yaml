@@ -24,6 +24,10 @@ info:
       `rol_no_autorizado`.
     - NUEVO: una cuenta de jugador solo llega a la ficha y a los archivos del jugador que hace la
       petición. Los de un hermano responden 404 `no_encontrado` (cambia la 005).
+    - INCREMENTO (RF-034 a RF-040): un mismo número de documento puede estar en jugadores de
+      cuentas distintas, en clubes distintos. `retiraDeOtroClub` es el único dato que la API
+      entrega sobre el otro club: un booleano, sin nombre de club ni datos de la otra cuenta. No
+      hay rutas nuevas.
 
 servers:
   - url: http://localhost:8080
@@ -55,6 +59,10 @@ paths:
 
         El hermano comparte el correo, el celular, el responsable y la contraseña de la cuenta.
         Queda `EN_ESPERA`, sin categoría ni equipos. No se envía ningún correo.
+
+        INCREMENTO: si el documento es de un JUGADOR de otra cuenta en otro club, se admite
+        (RF-034). `retiraDeOtroClub` avisa de que, al aprobarse, ese jugador quedará retirado
+        allí. Agregarlo no cambia nada en el otro club (RF-035).
       requestBody:
         required: true
         content:
@@ -65,14 +73,15 @@ paths:
           description: El hermano, en espera
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/JugadorDeSesionDto' }
+              schema: { $ref: '#/components/schemas/HermanoAgregadoDto' }
         '200':
           description: |
             Ese documento ya es de un jugador en espera de esta misma cuenta en este club: se
-            devuelve ese jugador, sin crear ni cambiar nada.
+            devuelve ese jugador, sin crear ni cambiar nada. `retiraDeOtroClub` se calcula en ese
+            momento.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/JugadorDeSesionDto' }
+              schema: { $ref: '#/components/schemas/HermanoAgregadoDto' }
         '400':
           description: |
             `datos_invalidos`: falta un dato, el documento o la fecha no son válidos, la fecha es
@@ -93,7 +102,8 @@ paths:
         '409':
           description: |
             `documento_repetido_en_club`: ya lo tiene otro integrante del club, activo, retirado o en
-            espera. `documento_en_otra_cuenta`: lo usa otra cuenta en otro club.
+            espera. `documento_en_otra_cuenta`: CAMBIA; solo cuando, con otra cuenta, lo tiene en
+            cualquier club un integrante que no es JUGADOR (RF-039).
             `jugador_sin_elegir`: la cuenta tiene varios jugadores y no se envió la cabecera.
           content:
             application/problem+json:
@@ -109,10 +119,20 @@ paths:
         La petición y la respuesta no cambian. Cambia el token: si `identificador` es un
         documento, queda limitado a los integrantes de la cuenta que tienen ese número. Si es un
         correo, no tiene limitación.
+
+        INCREMENTO (RF-040): si el documento está en más de una cuenta, abre una sola: aquella
+        donde el jugador está aprobado y activo; si no lo está en ninguna, aquella donde está en
+        espera; si tampoco, aquella donde está retirado. Con la contraseña de cualquier otra
+        cuenta responde el mismo 401 que con un dato incorrecto.
       security: []
       responses:
         '200':
           description: El token, como en la 001
+        '401':
+          description: '`credenciales_invalidas`, como en la 001; también con la contraseña de otra cuenta que tiene ese documento'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
     get:
       tags: [Sesion]
       summary: CAMBIA. La cuenta y sus clubes
@@ -143,7 +163,11 @@ paths:
     get:
       tags: [Ingresos]
       summary: CAMBIA. La sala de espera
-      description: Solo PRESIDENTE. Cada ingreso gana `hermanoDe`.
+      description: |
+        Solo PRESIDENTE. Cada ingreso gana `hermanoDe`.
+
+        INCREMENTO (RF-038): cada ingreso gana `retiraDeOtroClub`, calculado al abrir la sala de
+        espera y no al agregar al hermano.
       responses:
         '200':
           description: Los ingresos en espera, del más antiguo al más reciente
@@ -159,13 +183,27 @@ paths:
       - $ref: '#/components/parameters/usuarioRolId'
     post:
       tags: [Ingresos]
-      summary: SIN CAMBIOS. Aprobar un ingreso
+      summary: CAMBIA. Aprobar un ingreso
       description: |
-        Se lista para dejar constancia: un hermano se aprueba con la misma operación de la 004.
-        Queda APROBADO, con rol JUGADOR, en la categoría activa de su año o sin categoría.
+        Un hermano se aprueba con la misma operación de la 004. Queda APROBADO, con rol JUGADOR,
+        en la categoría activa de su año o sin categoría. La petición y la respuesta no cambian.
+
+        INCREMENTO (RF-036, RF-037): en la misma transacción queda retirado, en su club, todo
+        jugador aprobado y activo de otra cuenta con el mismo documento. Conserva su ficha y su
+        historial; su cuenta y sus demás jugadores no cambian; no se envía ningún aviso. Si la
+        baja no puede hacerse, la aprobación tampoco se hace. Se decide con lo que haya en el
+        momento de aprobar.
       responses:
         '200':
           description: El ingreso aprobado, como en la 004
+        '409':
+          description: |
+            `ingreso_ya_aprobado`, como en la 004. NUEVO: `documento_en_otra_cuenta` si, desde
+            que se agregó, ese documento pasó a ser de un integrante de otra cuenta que no es
+            JUGADOR; no se aprueba ni se cambia nada.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
 
   /api/clubes/{clubId}/ingresos/{usuarioRolId}/rechazo:
     parameters:
@@ -178,7 +216,8 @@ paths:
         La petición y la respuesta no cambian. Cambia el efecto: se borra a ese jugador y nada
         más. La cuenta, sus demás jugadores y las invitaciones con las que entraron se conservan.
         Las invitaciones del club a ese correo solo se borran si a la cuenta no le queda ningún
-        integrante en el club.
+        integrante en el club. Si su documento es de un jugador de otra cuenta en otro club, ese
+        jugador no cambia (RF-035).
       responses:
         '204':
           description: Rechazado
@@ -262,6 +301,24 @@ components:
         estadoIngreso: { $ref: '#/components/schemas/EstadoIngreso' }
         retirado: { type: boolean }
 
+    HermanoAgregadoDto:
+      type: object
+      description: |
+        INCREMENTO. Los cinco campos de `JugadorDeSesionDto` más el aviso de RF-034. Solo lo
+        devuelve `POST …/hermanos`; el aviso no viaja en la sesión.
+      required: [usuarioRolId, nombres, apellidos, estadoIngreso, retirado, retiraDeOtroClub]
+      properties:
+        usuarioRolId: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        estadoIngreso: { $ref: '#/components/schemas/EstadoIngreso' }
+        retirado: { type: boolean }
+        retiraDeOtroClub:
+          type: boolean
+          description: |
+            `true` si ese documento es ahora de un jugador aprobado y activo de otra cuenta en
+            otro club: al aprobarse el hermano, ese jugador dejará de estar allí.
+
     SesionDto:
       type: object
       description: Como en la 001; solo cambia cada elemento de `clubes`.
@@ -300,8 +357,8 @@ components:
 
     IngresoEnEsperaDto:
       type: object
-      description: Como en la 002, más `hermanoDe`.
-      required: [usuarioRolId, nombres, apellidos, tipoDocumento, numeroDocumento, fechaNacimiento, correo, celular, registradoEn]
+      description: Como en la 002, más `hermanoDe` y, desde el incremento, `retiraDeOtroClub`.
+      required: [usuarioRolId, nombres, apellidos, tipoDocumento, numeroDocumento, fechaNacimiento, correo, celular, registradoEn, retiraDeOtroClub]
       properties:
         usuarioRolId: { type: string, format: uuid }
         nombres: { type: string }
@@ -318,6 +375,12 @@ components:
           description: |
             NUEVO. Nombres y apellidos del jugador desde cuya ficha se agregó. `null` si ese
             jugador ya no existe.
+        retiraDeOtroClub:
+          type: boolean
+          description: |
+            INCREMENTO (RF-038). `true` si ese documento es ahora de un jugador aprobado y activo
+            de otra cuenta en otro club: aprobar este ingreso lo retirará de allí. No se entrega
+            el nombre del otro club ni ningún dato de la otra cuenta.
 
     TipoDocumento:
       type: string

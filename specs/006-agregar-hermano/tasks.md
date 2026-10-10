@@ -67,7 +67,7 @@ si el propietario cambia alguno, cambia solo la tarea indicada.
 
 | # | Supuesto | Tarea | Estado |
 | --- | --- | --- | --- |
-| 1 | No se admite el documento de un hermano que ya usa otra cuenta en otro club (`409 documento_en_otra_cuenta`) | T012 | Por confirmar |
+| 1 | No se admite el documento de un hermano que ya usa otra cuenta en otro club (`409 documento_en_otra_cuenta`) | T012 | **Cambiado por el propietario el 2026-10-09**: se admite y, al aprobarse, queda retirado del otro club (spec, RF-034 a RF-040). Pendiente de planificar; no basta con cambiar T012 |
 | 2 | Confirmar dos veces el mismo hermano devuelve el que ya está en espera (`200`), sin error | T012 | Por confirmar |
 | 3 | La elección de jugador sobrevive a recargar la página y se pierde al cerrar la pestaña, al cerrar sesión y al volver a entrar | T010 | Por confirmar |
 | 4 | Si la cuenta ya tiene responsable, el que se escriba al agregar un hermano se ignora | T012 | Por confirmar |
