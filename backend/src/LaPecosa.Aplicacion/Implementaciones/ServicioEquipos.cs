@@ -124,7 +124,7 @@ public class ServicioEquipos : IServicioEquipos
             async () =>
             {
                 await cambio(await _club.BloquearAsync(cancelacion));
-                return await _lector.DetalleAsync(categoriaId, cancelacion);
+                return await _lector.DetalleAsync(categoriaId, conDocumentacion: true, cancelacion);
             },
             cancelacion);
 

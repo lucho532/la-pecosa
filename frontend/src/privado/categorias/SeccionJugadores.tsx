@@ -8,6 +8,7 @@ import { Tabla, type Columna } from '../../compartido/componentes/Tabla';
 import { Tarjeta } from '../../compartido/componentes/Tarjeta';
 import { BotonRetirarJugador } from './BotonRetirarJugador';
 import { DialogoCambiarCategoria } from './DialogoCambiarCategoria';
+import { EstadoDeDocumentacion } from './EstadoDeDocumentacion';
 import { nombreCompleto, rutaDeFicha } from './textos';
 import { useAccion } from './useAccion';
 import { useUbicarJugador } from './useUbicarJugador';
@@ -92,6 +93,14 @@ export function SeccionJugadores({ clubId, categoria, esPresidente, alCambiar, a
         ),
     },
   ];
+
+  // La API solo entrega el estado de la documentación al presidente y a los directivos (RF-032).
+  if (categoria.jugadores.some((jugador) => jugador.documentosPendientes !== undefined)) {
+    columnas.push({
+      titulo: 'Documentación',
+      celda: (jugador) => <EstadoDeDocumentacion pendientes={jugador.documentosPendientes} />,
+    });
+  }
 
   if (esPresidente) {
     columnas.push({

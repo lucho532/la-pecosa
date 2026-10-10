@@ -7,6 +7,7 @@ import { Boton } from '../../compartido/componentes/Boton';
 import { Tabla, type Columna } from '../../compartido/componentes/Tabla';
 import { Tarjeta } from '../../compartido/componentes/Tarjeta';
 import { fecha } from '../../compartido/formato';
+import { EstadoDeDocumentacion } from './EstadoDeDocumentacion';
 import { nombreCompleto, rutaDeFicha } from './textos';
 import { useAccion } from './useAccion';
 
@@ -53,6 +54,10 @@ export function SeccionRetirados({ clubId, esPresidente, retirados, alCambiar }:
     { titulo: 'Año de nacimiento', celda: (jugador) => jugador.anioNacimiento },
     { titulo: 'Lo retiró', celda: (jugador) => jugador.retiradoPor },
     { titulo: 'Retirado el', celda: (jugador) => fecha(jugador.retiradoEn) },
+    {
+      titulo: 'Documentación',
+      celda: (jugador) => <EstadoDeDocumentacion pendientes={jugador.documentosPendientes} />,
+    },
   ];
 
   if (esPresidente) {

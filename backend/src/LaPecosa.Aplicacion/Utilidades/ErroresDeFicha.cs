@@ -10,4 +10,13 @@ namespace LaPecosa.Aplicacion.Utilidades;
 /// </summary>
 public static class ErroresDeFicha
 {
+    /// <summary>400: el archivo supera el tamaño máximo (RF-030).</summary>
+    public static ExcepcionDeAplicacion ArchivoDemasiadoGrande() => new(
+        "archivo_demasiado_grande", 400, "El archivo pesa más de 10 MB.");
+
+    /// <summary>
+    /// 400: el archivo no es de un formato admitido, o no se envió ninguno (RF-030).
+    /// </summary>
+    public static ExcepcionDeAplicacion ArchivoNoAdmitido() => new(
+        "archivo_no_admitido", 400, "El archivo debe ser un PDF o una imagen JPEG, PNG o WebP.");
 }

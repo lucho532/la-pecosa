@@ -182,7 +182,11 @@ public class UbicacionAutomaticaPruebas
     /// <summary>Ninguna lista de jugadores devuelve documento, correo ni celular (RF-032).</summary>
     private async Task ComprobarQueNoLlevaDatosDeContactoAsync(HttpResponseMessage respuesta, Dominio.Entidades.UsuarioRol jugador)
     {
-        var json = await respuesta.Content.ReadAsStringAsync();
+        // Desde la 005 las listas llevan cuántos documentos de la ficha faltan (RF-032 de la 005). Ese
+        // contador no es un dato de contacto: se aparta su nombre para que "documento" siga vigilando el
+        // documento de identidad.
+        var json = (await respuesta.Content.ReadAsStringAsync())
+            .Replace("documentosPendientes", string.Empty, StringComparison.Ordinal);
         var correo = await _fabrica.ConContextoAsync(contexto => Task.FromResult(
             contexto.Usuarios.Single(usuario => usuario.Id == jugador.UsuarioId).Correo));
 

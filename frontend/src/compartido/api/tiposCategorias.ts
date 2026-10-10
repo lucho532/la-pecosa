@@ -58,6 +58,11 @@ export interface JugadorDeCategoriaDto {
   /** Verdadero si su categoría no es la de su año de nacimiento; falso en "Sin categoría". */
   fueraDeSuAnio: boolean;
   equipos: EquipoDeReferenciaDto[];
+  /**
+   * Cuántos documentos de su ficha le faltan por entregar; 0 es documentación completa. Solo la
+   * reciben el presidente y los directivos: para un entrenador la propiedad no viene.
+   */
+  documentosPendientes?: number;
 }
 
 export interface CategoriaDto {
@@ -90,6 +95,8 @@ export interface JugadorRetiradoDto {
   /** Nombre de quien lo retiró, tal como era en ese momento. */
   retiradoPor: string;
   retiradoEn: string;
+  /** Cuántos documentos de su ficha le faltan por entregar; 0 es documentación completa. */
+  documentosPendientes: number;
 }
 
 export interface ReincorporacionDto {

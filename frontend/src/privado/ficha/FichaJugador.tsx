@@ -8,6 +8,7 @@ import { nombreCompleto, puedeVerCategorias } from '../categorias/textos';
 import { useClub } from '../contextoClub';
 import { FichaDeSoloLectura } from './FichaDeSoloLectura';
 import { FormularioFicha } from './FormularioFicha';
+import { SeccionDocumentos } from './SeccionDocumentos';
 import { SeccionIdentidad } from './SeccionIdentidad';
 import { UltimoCambio } from './UltimoCambio';
 
@@ -58,6 +59,14 @@ export function FichaJugador() {
             <FormularioFicha key={ficha.usuarioRolId} ficha={ficha} alGuardar={guardar} />
           ) : (
             <FichaDeSoloLectura ficha={ficha} />
+          )}
+          {ficha.documentos && (
+            <SeccionDocumentos
+              rutaDeLaFicha={ruta}
+              documentos={ficha.documentos}
+              puedeCambiar={ficha.permisos.puedeCambiar}
+              alCambiar={carga.fijar}
+            />
           )}
         </>
       )}

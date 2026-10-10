@@ -32,7 +32,12 @@ public static class ValidadorImagen
         return tipo is null ? (null, MotivoRechazoImagen.NoEsImagen) : (tipo, null);
     }
 
-    private static string? DetectarTipo(ReadOnlySpan<byte> contenido)
+    /// <summary>
+    /// El tipo de contenido que delata la firma binaria del archivo: <c>image/png</c>,
+    /// <c>image/jpeg</c> o <c>image/webp</c>; nulo si no es ninguna de esas imágenes. No mira el
+    /// tamaño: lo usa también la validación de los archivos de la ficha, que tiene otro límite.
+    /// </summary>
+    public static string? DetectarTipo(ReadOnlySpan<byte> contenido)
     {
         if (contenido.StartsWith(FirmaPng))
         {

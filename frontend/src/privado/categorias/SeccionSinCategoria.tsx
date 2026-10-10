@@ -7,6 +7,7 @@ import { Tabla, type Columna } from '../../compartido/componentes/Tabla';
 import { Tarjeta } from '../../compartido/componentes/Tarjeta';
 import { BotonRetirarJugador } from './BotonRetirarJugador';
 import { DialogoCambiarCategoria } from './DialogoCambiarCategoria';
+import { EstadoDeDocumentacion } from './EstadoDeDocumentacion';
 import { nombreCompleto, rutaDeFicha } from './textos';
 import { useAccion } from './useAccion';
 import { useUbicarJugador } from './useUbicarJugador';
@@ -42,6 +43,10 @@ export function SeccionSinCategoria({ clubId, esPresidente, sinCategoria, alCamb
       ),
     },
     { titulo: 'Año de nacimiento', celda: (jugador) => jugador.anioNacimiento },
+    {
+      titulo: 'Documentación',
+      celda: (jugador) => <EstadoDeDocumentacion pendientes={jugador.documentosPendientes} />,
+    },
   ];
 
   if (esPresidente) {

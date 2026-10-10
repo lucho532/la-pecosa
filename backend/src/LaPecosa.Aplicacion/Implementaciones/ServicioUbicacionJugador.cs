@@ -77,7 +77,7 @@ public class ServicioUbicacionJugador : IServicioUbicacionJugador
                     await _categorias.MarcarUsadaAsync(categoriaId, cancelacion);
                 }
 
-                return await _lector.DetalleAsync(categoriaId, cancelacion);
+                return await _lector.DetalleAsync(categoriaId, conDocumentacion: true, cancelacion);
             },
             cancelacion);
     }

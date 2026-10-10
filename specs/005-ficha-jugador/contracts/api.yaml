@@ -148,77 +148,76 @@ paths:
 #        '403': { $ref: '#/components/responses/NoAutorizado' }
 #        '404': { $ref: '#/components/responses/NoEncontrado' }
 
-  # PENDIENTE: se descomenta en T011
-#  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/documentos/{documento}:
-#    parameters:
-#      - $ref: '#/components/parameters/clubId'
-#      - $ref: '#/components/parameters/usuarioRolId'
-#      - $ref: '#/components/parameters/documento'
-#    get:
-#      tags: [Ficha]
-#      summary: Abre el archivo entregado para un documento pedido
-#      description: |
-#        Solo PRESIDENTE, DIRECTIVO y la cuenta del jugador; a un ENTRENADOR, 403
-#        `rol_no_autorizado`. Si el documento está pendiente, 404.
-#      responses:
-#        '200':
-#          description: El archivo, con el tipo de contenido detectado al subirlo
-#          headers:
-#            Cache-Control:
-#              schema: { type: string, example: 'private, no-store' }
-#            X-Content-Type-Options:
-#              schema: { type: string, example: nosniff }
-#            Content-Disposition:
-#              schema: { type: string, example: 'inline; filename="certificado-salud.pdf"' }
-#          content:
-#            application/pdf:
-#              schema: { type: string, format: binary }
-#            image/jpeg:
-#              schema: { type: string, format: binary }
-#            image/png:
-#              schema: { type: string, format: binary }
-#            image/webp:
-#              schema: { type: string, format: binary }
-#        '401': { $ref: '#/components/responses/SinSesion' }
-#        '403': { $ref: '#/components/responses/NoAutorizado' }
-#        '404': { $ref: '#/components/responses/NoEncontrado' }
-#    put:
-#      tags: [Ficha]
-#      summary: Sube el archivo de un documento pedido, o reemplaza el que había
-#      description: |
-#        Solo PRESIDENTE y la cuenta del jugador. PDF, JPEG, PNG o WebP de hasta 10 MB, reconocido
-#        por su contenido y no por su extensión. El archivo nuevo reemplaza al anterior, que deja
-#        de existir. Si se rechaza, el anterior se conserva.
-#      requestBody:
-#        required: true
-#        content:
-#          multipart/form-data:
-#            schema:
-#              type: object
-#              required: [archivo]
-#              properties:
-#                archivo: { type: string, format: binary }
-#      responses:
-#        '200':
-#          description: La ficha con el documento entregado
-#          content:
-#            application/json:
-#              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
-#        '400':
-#          description: |
-#            `archivo_no_admitido`: no es un PDF ni una imagen JPEG, PNG o WebP, o no se envió
-#            ninguno. `archivo_demasiado_grande`: pesa más de 10 MB
-#          content:
-#            application/problem+json:
-#              schema: { $ref: '#/components/schemas/Problema' }
-#        '401': { $ref: '#/components/responses/SinSesion' }
-#        '403': { $ref: '#/components/responses/NoAutorizado' }
-#        '404': { $ref: '#/components/responses/NoEncontrado' }
-#        '413':
-#          description: '`peticion_demasiado_grande`: la petición supera el límite del servidor'
-#          content:
-#            application/problem+json:
-#              schema: { $ref: '#/components/schemas/Problema' }
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/documentos/{documento}:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+      - $ref: '#/components/parameters/documento'
+    get:
+      tags: [Ficha]
+      summary: Abre el archivo entregado para un documento pedido
+      description: |
+        Solo PRESIDENTE, DIRECTIVO y la cuenta del jugador; a un ENTRENADOR, 403
+        `rol_no_autorizado`. Si el documento está pendiente, 404.
+      responses:
+        '200':
+          description: El archivo, con el tipo de contenido detectado al subirlo
+          headers:
+            Cache-Control:
+              schema: { type: string, example: 'private, no-store' }
+            X-Content-Type-Options:
+              schema: { type: string, example: nosniff }
+            Content-Disposition:
+              schema: { type: string, example: 'inline; filename="certificado-salud.pdf"' }
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+            image/jpeg:
+              schema: { type: string, format: binary }
+            image/png:
+              schema: { type: string, format: binary }
+            image/webp:
+              schema: { type: string, format: binary }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    put:
+      tags: [Ficha]
+      summary: Sube el archivo de un documento pedido, o reemplaza el que había
+      description: |
+        Solo PRESIDENTE y la cuenta del jugador. PDF, JPEG, PNG o WebP de hasta 10 MB, reconocido
+        por su contenido y no por su extensión. El archivo nuevo reemplaza al anterior, que deja
+        de existir. Si se rechaza, el anterior se conserva.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [archivo]
+              properties:
+                archivo: { type: string, format: binary }
+      responses:
+        '200':
+          description: La ficha con el documento entregado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
+        '400':
+          description: |
+            `archivo_no_admitido`: no es un PDF ni una imagen JPEG, PNG o WebP, o no se envió
+            ninguno. `archivo_demasiado_grande`: pesa más de 10 MB
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '413':
+          description: '`peticion_demasiado_grande`: la petición supera el límite del servidor'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
 
   # ------------------------------------------- Endpoints existentes que cambian
 

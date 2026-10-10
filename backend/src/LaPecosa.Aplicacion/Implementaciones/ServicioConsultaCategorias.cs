@@ -12,7 +12,9 @@ namespace LaPecosa.Aplicacion.Implementaciones;
 /// Representa el servicio de consultas del apartado "Categorías".
 /// Su responsabilidad es leer las categorías del club de la petición y dejar pasar solo las que
 /// <see cref="ReglaAlcanceDeCategorias"/> permite a quien pregunta: para un ENTRENADOR, las activas
-/// en las que tiene una asignación activa, que se consulta en cada petición.
+/// en las que tiene una asignación activa, que se consulta en cada petición. A las listas de
+/// jugadores les añade el estado de su documentación, que solo reciben el PRESIDENTE y los
+/// DIRECTIVOS (RF-032 de la 005).
 /// No modifica datos, no accede al contexto de Entity Framework y no recibe un identificador de
 /// club: solo existe el que fijó la autorización.
 /// </summary>
@@ -73,17 +75,34 @@ public class ServicioConsultaCategorias : IServicioConsultaCategorias
             }
         }
 
-        return await _lector.DetalleAsync(categoriaId, cancelacion);
+        // El estado de la documentación de cada jugador es solo para quien ve las listas del club:
+        // un ENTRENADOR recibe el detalle de su categoría sin él (RF-007 de la 005).
+        return await _lector.DetalleAsync(
+            categoriaId, ReglaAlcanceDeCategorias.VeListasDelClub(quienPregunta.Rol), cancelacion);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<JugadorDeCategoriaDto>> ListarSinCategoriaAsync(CancellationToken cancelacion = default) =>
-        (await _jugadores.ListarSinCategoriaAsync(cancelacion))
+    public async Task<IReadOnlyList<JugadorDeCategoriaDto>> ListarSinCategoriaAsync(CancellationToken cancelacion = default)
+    {
+        var jugadores = await _jugadores.ListarSinCategoriaAsync(cancelacion);
+        var entregados = await _lector.EntregadosAsync(jugadores.Select(jugador => jugador.Id), cancelacion);
+
+        return jugadores
             .PorApellidos()
-            .Select(jugador => MapperCategorias.AJugador(jugador, null))
+            .Select(jugador => MapperCategorias.AJugador(
+                jugador, null, MapperCategorias.DocumentosPendientes(entregados, jugador.Id)))
             .ToList();
+    }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<JugadorRetiradoDto>> ListarRetiradosAsync(CancellationToken cancelacion = default) =>
-        (await _jugadores.ListarRetiradosAsync(cancelacion)).Select(MapperCategorias.ARetirado).ToList();
+    public async Task<IReadOnlyList<JugadorRetiradoDto>> ListarRetiradosAsync(CancellationToken cancelacion = default)
+    {
+        var jugadores = await _jugadores.ListarRetiradosAsync(cancelacion);
+        var entregados = await _lector.EntregadosAsync(jugadores.Select(jugador => jugador.Id), cancelacion);
+
+        return jugadores
+            .Select(jugador => MapperCategorias.ARetirado(
+                jugador, MapperCategorias.DocumentosPendientes(entregados, jugador.Id)))
+            .ToList();
+    }
 }
