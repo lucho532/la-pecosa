@@ -23,9 +23,9 @@ const yaNoEstaPendiente = (fallo: unknown): fallo is ErrorApi =>
 /**
  * Sala de espera del club, que solo ve su presidente: las personas pendientes de aprobación, de
  * la más antigua a la más reciente, cada una como una ficha con sus datos. Quien se registra con
- * una invitación no pasa por aquí; queda para el jugador agregado desde la ficha de un hermano.
- * Desde aquí se aprueba o se rechaza un ingreso. Al aprobar no se elige rol: la persona entra
- * siempre como jugador.
+ * una invitación no pasa por aquí: llega el jugador que una familia agregó desde la ficha de un
+ * hermano, y de cada uno se dice de quién es hermano. Desde aquí se aprueba o se rechaza un
+ * ingreso. Al aprobar no se elige rol: la persona entra siempre como jugador.
  */
 export function SeccionSalaDeEspera({ clubId, enEspera, alCambiar }: Props) {
   const base = `/api/clubes/${clubId}/ingresos`;
@@ -89,6 +89,7 @@ export function SeccionSalaDeEspera({ clubId, enEspera, alCambiar }: Props) {
           <h3>
             {persona.nombres} {persona.apellidos}
           </h3>
+          {persona.hermanoDe && <p className="texto-suave">Hermano de {persona.hermanoDe}</p>}
           <dl className="ficha-datos">
             <Dato nombre={nombreDeTipoDocumento(persona.tipoDocumento)} valor={persona.numeroDocumento} />
             <Dato nombre="Fecha de nacimiento" valor={dia(persona.fechaNacimiento)} />
@@ -143,8 +144,10 @@ export function SeccionSalaDeEspera({ clubId, enEspera, alCambiar }: Props) {
         alCancelar={() => setPorRechazar(null)}
       >
         <p>
-          Su registro se borrará del club y no quedará ningún dato suyo en él. Esta persona solo podrá volver si
-          le envías una invitación nueva y se registra otra vez.
+          Su registro se borrará del club y no quedará ningún dato suyo en él.{' '}
+          {porRechazar?.hermanoDe
+            ? `La cuenta de la familia y ${porRechazar.hermanoDe} siguen como están; la familia puede volver a agregarlo desde la ficha.`
+            : 'Esta persona solo podrá volver si le envías una invitación nueva y se registra otra vez.'}
         </p>
         <p className="texto-suave">No se le envía ningún aviso.</p>
       </DialogoConfirmacion>

@@ -218,6 +218,8 @@ export interface IngresoEnEsperaDto {
   celular: string;
   nombreResponsable: string | null;
   registradoEn: string;
+  /** Jugador desde cuya ficha se agregó; `null` si ya no existe o no viene de un hermano. */
+  hermanoDe: string | null;
 }
 
 /** Cuerpo opcional de la aprobación: al aprobar no se elige rol y la API solo admite JUGADOR. */

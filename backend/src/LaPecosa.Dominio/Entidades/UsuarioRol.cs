@@ -45,8 +45,8 @@ public class UsuarioRol : IPerteneceAClub
 
     /// <summary>
     /// Estado de ingreso. Quien entra con una invitación, del club o de presidente, nace
-    /// <c>APROBADO</c> (RF-008). <c>EN_ESPERA</c> queda para el jugador agregado desde la ficha de
-    /// un hermano, que espera a que el PRESIDENTE lo apruebe (constitución §12.1.1).
+    /// <c>APROBADO</c> (RF-008). Nace <c>EN_ESPERA</c> el jugador que la familia agrega desde la
+    /// ficha de un hermano, hasta que el PRESIDENTE lo aprueba (constitución §12.1.1).
     /// </summary>
     public EstadoIngreso EstadoIngreso { get; set; }
 
