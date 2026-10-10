@@ -189,6 +189,15 @@ de la spec 006 (2026-10-09 y 2026-10-10):
 - §20: pruebas ajustadas y nuevas
 - Principios modificados: ninguno renombrado. Secciones añadidas o eliminadas: ninguna
 - Pendientes: siguen abiertas las siete decisiones de la §28. La spec 006 implementa esta versión
+
+Enmienda 4.2.0 → 4.3.0 (2026-10-10), decidida por el propietario del proyecto:
+- §7.2: el escudo y los colores de un club los configuran tanto el DESARROLLADOR, desde su panel,
+  como el PRESIDENTE de ese club, desde "Datos del club"
+- §8 (Presidente): nueva función de configurar el escudo y los colores de su club
+- §20: la prueba del panel ya no reserva al DESARROLLADOR el cambio de escudo y colores; prueba
+  nueva de que solo el PRESIDENTE de ese club, además del DESARROLLADOR, puede cambiarlos
+- Principios modificados: ninguno renombrado. Secciones añadidas o eliminadas: ninguna
+- Pendientes: siguen abiertas las siete decisiones de la §28. La spec 007 implementa esta versión
 -->
 
 # Constitución del Proyecto — La Pecosa, plataforma multiclub de escuelas de fútbol
@@ -555,8 +564,9 @@ Los datos propios de cada club (nombre, escudo, colores, sede, dirección, datos
 de la mensualidad) son configuración de ese club almacenada en base de datos. No deben quedar
 escritos de forma fija en el código, y el código no debe asumir que el club es Valfor F.C.
 
-El escudo y los colores de un club los configura el DESARROLLADOR desde su panel de
-administración. La interfaz de cada club se muestra con su propia identidad.
+El escudo y los colores de un club los pueden configurar tanto el DESARROLLADOR, desde su panel de
+administración, como el PRESIDENTE de ese club, desde "Datos del club". La interfaz de cada club
+se muestra con su propia identidad.
 
 El resto de la configuración del club (nombre, sede, dirección, datos de contacto) la pueden
 editar tanto el DESARROLLADOR como el PRESIDENTE de ese club.
@@ -674,6 +684,7 @@ Es el presidente del club, que a su vez es su dueño. Administra el club complet
 Puede:
 
 - Gestionar la configuración del club y el contenido del sitio público.
+- Configurar el escudo y los colores de su club desde "Datos del club" (ver §7.2).
 - Gestionar categorías, entrenadores y jugadores.
 - Asignar entrenadores a categorías.
 - Crear equipos dentro de una categoría y decidir en qué equipos juega cada jugador (ver §11.3).
@@ -1483,8 +1494,10 @@ Las pruebas deben validar principalmente:
 - Que las llaves de la pasarela de un club nunca se devuelven por la API.
 - Aislamiento entre clubes: que un usuario de un club no puede ver, contar ni consultar por
   identificador ningún dato de otro club.
-- Que solamente el DESARROLLADOR accede al panel de administración, crea clubes y cambia su
-  escudo y colores, y que solo existe una cuenta DESARROLLADOR.
+- Que solamente el DESARROLLADOR accede al panel de administración y crea clubes, y que solo
+  existe una cuenta DESARROLLADOR.
+- Que el escudo y los colores de un club solo los cambian el DESARROLLADOR y el PRESIDENTE de ese
+  club; ningún otro rol ni el PRESIDENTE de otro club.
 - Que el DESARROLLADOR no accede a fichas, datos médicos, finanzas ni pagos de ningún club.
 - Que la ficha de Jugador se elimina cuando la cuenta pasa a ENTRENADOR o DIRECTIVO.
 - Recuperación de contraseña.
@@ -1705,4 +1718,4 @@ Escalabilidad
 La solución más sencilla que cumpla correctamente las reglas de negocio será preferible a una
 solución más compleja.
 
-**Versión**: 4.2.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-10
+**Versión**: 4.3.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-10
