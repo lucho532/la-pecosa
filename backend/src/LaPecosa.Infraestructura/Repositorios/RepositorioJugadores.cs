@@ -43,6 +43,18 @@ public class RepositorioJugadores : IRepositorioJugadores
             .FirstOrDefaultAsync(integrante => integrante.Id == usuarioRolId, cancelacion);
 
     /// <inheritdoc />
+    public Task<UsuarioRol?> ObtenerParaFichaAsync(Guid usuarioRolId, CancellationToken cancelacion = default) =>
+        _contexto.UsuariosRol.AsNoTracking()
+            .Include(integrante => integrante.Usuario)
+            .Include(integrante => integrante.Categoria)
+            .Include(integrante => integrante.Equipos).ThenInclude(fila => fila.Equipo)
+            .FirstOrDefaultAsync(
+                integrante => integrante.Id == usuarioRolId
+                    && integrante.Rol == Rol.JUGADOR
+                    && integrante.EstadoIngreso == EstadoIngreso.APROBADO,
+                cancelacion);
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<UsuarioRol>> ListarSinCategoriaAsync(CancellationToken cancelacion = default) =>
         await Jugadores.AsNoTracking().Where(jugador => jugador.CategoriaId == null).ToListAsync(cancelacion);
 

@@ -1,5 +1,5 @@
 using LaPecosa.Aplicacion.DTOs;
-using LaPecosa.Dominio.Enumeraciones;
+using LaPecosa.Dominio.Entidades;
 
 namespace LaPecosa.Aplicacion.Servicios;
 
@@ -11,6 +11,6 @@ namespace LaPecosa.Aplicacion.Servicios;
 /// </summary>
 public interface IServicioConsultaClub
 {
-    /// <summary>El club de la petición, con el rol de quien lo consulta.</summary>
-    Task<ClubDto> ObtenerAsync(Rol miRol, CancellationToken cancelacion = default);
+    /// <summary>El club de la petición, con el rol y el identificador de integrante de quien lo consulta.</summary>
+    Task<ClubDto> ObtenerAsync(UsuarioRol quienPregunta, CancellationToken cancelacion = default);
 }

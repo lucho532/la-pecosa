@@ -1,0 +1,564 @@
+openapi: 3.1.0
+info:
+  title: La Pecosa - API de la funcionalidad 005 (ficha del jugador)
+  version: 0.5.0
+  description: |
+    Contrato de lo que esta funcionalidad añade o cambia respecto de los contratos de la 001 a la
+    004. Lo que no aparece aquí sigue igual.
+
+    Convenciones (las de las specs anteriores, más las marcadas como NUEVO):
+    - Todos los errores usan `application/problem+json` con un campo `codigo` estable.
+    - `/api/clubes/{clubId}/**` exige un integrante del usuario en ese club. Sin él responde 404,
+      también al DESARROLLADOR y también cuando el identificador es de otro club.
+    - Club suspendido y rol distinto de PRESIDENTE: 403 `club_suspendido`. Club dado de baja:
+      403 `club_dado_de_baja`. Ingreso en espera: 403 `ingreso_en_espera`. Jugador retirado:
+      403 `integrante_retirado`.
+    - NUEVO: `{usuarioRolId}` debe ser un integrante de este club con rol JUGADOR e ingreso
+      aprobado, activo o retirado. Cualquier otro identificador responde 404.
+    - NUEVO: quien no puede ver una ficha recibe 404 `no_encontrado`, igual que si no existiera:
+      una cuenta de jugador ante un jugador que no es suyo; un ENTRENADOR ante un jugador de una
+      categoría que no tiene asignada, sin categoría o retirado.
+    - NUEVO: quien por su rol nunca puede hacer una operación recibe 403 `rol_no_autorizado`,
+      antes de mirar el identificador.
+    - NUEVO: los datos que quien pregunta no puede ver **no aparecen** en la respuesta: la
+      propiedad se omite, no viaja en `null`.
+    - NUEVO: las respuestas de la ficha y de sus archivos llevan `Cache-Control: private, no-store`.
+    - Ningún endpoint público devuelve datos de la ficha.
+
+servers:
+  - url: http://localhost:8080
+
+security:
+  - sesion: []
+
+tags:
+  - name: Ficha
+    description: Ficha del jugador y sus documentos
+  - name: Jugadores
+  - name: Categorias
+  - name: Club
+
+paths:
+  # --------------------------------------------------------------------- Ficha
+
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+    get:
+      tags: [Ficha]
+      summary: La ficha de un jugador, con lo que el rol de quien pregunta permite ver
+      description: |
+        PRESIDENTE: completa, de cualquier jugador del club. DIRECTIVO: cualquier jugador, sin
+        `datosClinicos`, también si está asignado como entrenador. ENTRENADOR: jugadores activos
+        de sus categorías, sin `documentos`. JUGADOR: completa, solo los jugadores de su cuenta.
+      responses:
+        '200':
+          description: La ficha
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    put:
+      tags: [Ficha]
+      summary: Guarda el contacto, el contacto de emergencia, la seguridad social y los datos clínicos
+      description: |
+        Solo PRESIDENTE y la cuenta del jugador. Reemplaza todos esos datos: un campo vacío o
+        ausente queda vacío. El celular y el nombre del responsable son de la cuenta: el cambio se
+        ve en todos sus jugadores y clubes. No cambia nombres, apellidos, fecha de nacimiento,
+        documento ni correo: si llegan en el cuerpo se ignoran.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActualizarFichaDto' }
+      responses:
+        '200':
+          description: La ficha ya guardada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  # PENDIENTE: se descomenta en T013
+#  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/documento-identidad:
+#    parameters:
+#      - $ref: '#/components/parameters/clubId'
+#      - $ref: '#/components/parameters/usuarioRolId'
+#    put:
+#      tags: [Ficha]
+#      summary: Cambia el tipo y el número del documento de identidad del jugador
+#      description: |
+#        Solo PRESIDENTE y la cuenta del jugador. Actualiza al mismo jugador: conserva su
+#        categoría, sus equipos y su ficha. Desde ese momento inicia sesión con el número nuevo.
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema: { $ref: '#/components/schemas/CambiarDocumentoIdentidadDto' }
+#      responses:
+#        '200':
+#          description: La ficha con el documento nuevo
+#          content:
+#            application/json:
+#              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
+#        '400': { $ref: '#/components/responses/DatosInvalidos' }
+#        '401': { $ref: '#/components/responses/SinSesion' }
+#        '403': { $ref: '#/components/responses/NoAutorizado' }
+#        '404': { $ref: '#/components/responses/NoEncontrado' }
+#        '409':
+#          description: |
+#            `documento_repetido_en_club`: ese número ya lo tiene otro integrante del club, activo
+#            o retirado. `documento_en_otra_cuenta`: ese número ya lo usa otra cuenta en otro club.
+#            No se guarda nada
+#          content:
+#            application/problem+json:
+#              schema: { $ref: '#/components/schemas/Problema' }
+
+  # PENDIENTE: se descomenta en T014
+#  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/identidad:
+#    parameters:
+#      - $ref: '#/components/parameters/clubId'
+#      - $ref: '#/components/parameters/usuarioRolId'
+#    put:
+#      tags: [Ficha]
+#      summary: Corrige los nombres, los apellidos y la fecha de nacimiento del jugador
+#      description: |
+#        Solo PRESIDENTE; a la cuenta del jugador, 403 `rol_no_autorizado`. Un jugador con
+#        categoría la conserva aunque cambie el año. Un jugador activo sin categoría entra en la
+#        categoría activa del año nuevo, si existe.
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema: { $ref: '#/components/schemas/CorregirIdentidadDto' }
+#      responses:
+#        '200':
+#          description: La ficha con la identidad corregida y, si se ubicó, su categoría
+#          content:
+#            application/json:
+#              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
+#        '400': { $ref: '#/components/responses/DatosInvalidos' }
+#        '401': { $ref: '#/components/responses/SinSesion' }
+#        '403': { $ref: '#/components/responses/NoAutorizado' }
+#        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  # PENDIENTE: se descomenta en T011
+#  /api/clubes/{clubId}/jugadores/{usuarioRolId}/ficha/documentos/{documento}:
+#    parameters:
+#      - $ref: '#/components/parameters/clubId'
+#      - $ref: '#/components/parameters/usuarioRolId'
+#      - $ref: '#/components/parameters/documento'
+#    get:
+#      tags: [Ficha]
+#      summary: Abre el archivo entregado para un documento pedido
+#      description: |
+#        Solo PRESIDENTE, DIRECTIVO y la cuenta del jugador; a un ENTRENADOR, 403
+#        `rol_no_autorizado`. Si el documento está pendiente, 404.
+#      responses:
+#        '200':
+#          description: El archivo, con el tipo de contenido detectado al subirlo
+#          headers:
+#            Cache-Control:
+#              schema: { type: string, example: 'private, no-store' }
+#            X-Content-Type-Options:
+#              schema: { type: string, example: nosniff }
+#            Content-Disposition:
+#              schema: { type: string, example: 'inline; filename="certificado-salud.pdf"' }
+#          content:
+#            application/pdf:
+#              schema: { type: string, format: binary }
+#            image/jpeg:
+#              schema: { type: string, format: binary }
+#            image/png:
+#              schema: { type: string, format: binary }
+#            image/webp:
+#              schema: { type: string, format: binary }
+#        '401': { $ref: '#/components/responses/SinSesion' }
+#        '403': { $ref: '#/components/responses/NoAutorizado' }
+#        '404': { $ref: '#/components/responses/NoEncontrado' }
+#    put:
+#      tags: [Ficha]
+#      summary: Sube el archivo de un documento pedido, o reemplaza el que había
+#      description: |
+#        Solo PRESIDENTE y la cuenta del jugador. PDF, JPEG, PNG o WebP de hasta 10 MB, reconocido
+#        por su contenido y no por su extensión. El archivo nuevo reemplaza al anterior, que deja
+#        de existir. Si se rechaza, el anterior se conserva.
+#      requestBody:
+#        required: true
+#        content:
+#          multipart/form-data:
+#            schema:
+#              type: object
+#              required: [archivo]
+#              properties:
+#                archivo: { type: string, format: binary }
+#      responses:
+#        '200':
+#          description: La ficha con el documento entregado
+#          content:
+#            application/json:
+#              schema: { $ref: '#/components/schemas/FichaJugadorDto' }
+#        '400':
+#          description: |
+#            `archivo_no_admitido`: no es un PDF ni una imagen JPEG, PNG o WebP, o no se envió
+#            ninguno. `archivo_demasiado_grande`: pesa más de 10 MB
+#          content:
+#            application/problem+json:
+#              schema: { $ref: '#/components/schemas/Problema' }
+#        '401': { $ref: '#/components/responses/SinSesion' }
+#        '403': { $ref: '#/components/responses/NoAutorizado' }
+#        '404': { $ref: '#/components/responses/NoEncontrado' }
+#        '413':
+#          description: '`peticion_demasiado_grande`: la petición supera el límite del servidor'
+#          content:
+#            application/problem+json:
+#              schema: { $ref: '#/components/schemas/Problema' }
+
+  # ------------------------------------------- Endpoints existentes que cambian
+
+  /api/clubes/{clubId}:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Club]
+      summary: El club elegido (001). CAMBIA - la respuesta gana `miUsuarioRolId`
+      description: |
+        Sin otros cambios. `miUsuarioRolId` es el integrante de quien pregunta en este club; la
+        pantalla lo usa para abrir "Mi ficha" cuando el rol es JUGADOR.
+      responses:
+        '200':
+          description: El club, como en la 001, con el identificador del propio integrante
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClubDtoCambio' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/categorias/{categoriaId}:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/categoriaId'
+    get:
+      tags: [Categorias]
+      summary: Detalle de una categoría (003). CAMBIA - cada jugador gana `documentosPendientes`
+      description: |
+        Sin otros cambios. PRESIDENTE y DIRECTIVO reciben `documentosPendientes` en cada jugador.
+        Un ENTRENADOR no recibe esa propiedad. Lo mismo vale para toda operación de la 003 que
+        devuelve el detalle de una categoría; todas son de PRESIDENTE.
+      responses:
+        '200':
+          description: La categoría, como en la 003, con el estado de documentación de cada jugador
+          content:
+            application/json:
+              schema:
+                type: object
+                description: '`CategoriaDetalleDto` de la 003; solo cambia el tipo de `jugadores`'
+                properties:
+                  jugadores:
+                    type: array
+                    items: { $ref: '#/components/schemas/JugadorDeCategoriaDtoCambio' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/jugadores/sin-categoria:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Jugadores]
+      summary: Jugadores sin categoría (003). CAMBIA - cada jugador gana `documentosPendientes`
+      description: Sin otros cambios. Solo PRESIDENTE y DIRECTIVO, como en la 003.
+      responses:
+        '200':
+          description: Jugadores sin categoría, con su estado de documentación
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/JugadorDeCategoriaDtoCambio' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /api/clubes/{clubId}/jugadores/retirados:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+    get:
+      tags: [Jugadores]
+      summary: Jugadores retirados (003). CAMBIA - cada jugador gana `documentosPendientes`
+      description: Sin otros cambios. Solo PRESIDENTE y DIRECTIVO, como en la 003.
+      responses:
+        '200':
+          description: Jugadores retirados, con su estado de documentación
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/JugadorRetiradoDtoCambio' }
+        '401': { $ref: '#/components/responses/SinSesion' }
+        '403': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+components:
+  securitySchemes:
+    sesion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    clubId:
+      name: clubId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    categoriaId:
+      name: categoriaId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    usuarioRolId:
+      name: usuarioRolId
+      in: path
+      required: true
+      description: Identificador del jugador (su integrante) en este club
+      schema: { type: string, format: uuid }
+    documento:
+      name: documento
+      in: path
+      required: true
+      description: Documento pedido. Un valor que no es de la lista responde 404
+      schema: { $ref: '#/components/schemas/DocumentoPedido' }
+
+  responses:
+    SinSesion:
+      description: '`sin_sesion`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    NoAutorizado:
+      description: '`rol_no_autorizado`, `integrante_retirado`, `ingreso_en_espera`, `club_suspendido` o `club_dado_de_baja`. No devuelve ningún dato'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    NoEncontrado:
+      description: '`no_encontrado`. También cuando el club o el jugador son de otro club, cuando el identificador no es de un jugador aprobado o cuando quien pregunta no puede ver esa ficha'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    DatosInvalidos:
+      description: '`datos_invalidos`, con el detalle por campo en `errores`'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+
+  schemas:
+    Problema:
+      type: object
+      required: [title, status, codigo]
+      properties:
+        title: { type: string, description: Mensaje en español para mostrar a la persona }
+        status: { type: integer }
+        codigo: { type: string }
+        errores:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    TipoDocumento:
+      type: string
+      description: Tipo del documento de identidad (constitución §10)
+      enum: [REGISTRO_CIVIL, TARJETA_IDENTIDAD, CEDULA_CIUDADANIA, CEDULA_EXTRANJERIA]
+    DocumentoPedido:
+      type: string
+      description: Lista fija de documentos que pide la ficha, igual para todos los clubes
+      enum: [COPIA_DOCUMENTO_IDENTIDAD, CERTIFICADO_SALUD]
+    GrupoSanguineo:
+      type: string
+      enum: [A_POSITIVO, A_NEGATIVO, B_POSITIVO, B_NEGATIVO, AB_POSITIVO, AB_NEGATIVO, O_POSITIVO, O_NEGATIVO]
+
+    FichaJugadorDto:
+      type: object
+      description: |
+        La ficha de un jugador en un club. `datosClinicos` no aparece para un DIRECTIVO y
+        `documentos` no aparece para un ENTRENADOR. `ultimoCambio` no aparece si nadie ha cambiado
+        la ficha desde el registro.
+      required:
+        - usuarioRolId
+        - nombres
+        - apellidos
+        - tipoDocumento
+        - numeroDocumento
+        - fechaNacimiento
+        - esMenorDeEdad
+        - retirado
+        - equipos
+        - contacto
+        - contactoEmergencia
+        - seguridadSocial
+        - permisos
+      properties:
+        usuarioRolId: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        tipoDocumento: { $ref: '#/components/schemas/TipoDocumento' }
+        numeroDocumento: { type: string }
+        fechaNacimiento: { type: string, format: date }
+        esMenorDeEdad:
+          type: boolean
+          description: Verdadero si hoy tiene menos de 18 años; entonces el responsable es obligatorio
+        retirado: { type: boolean }
+        categoriaId: { type: [string, 'null'], format: uuid }
+        categoriaAnio: { type: [integer, 'null'], description: Año de su categoría; nulo si no tiene }
+        equipos:
+          type: array
+          description: Nombres de los equipos de su categoría en los que juega
+          items: { type: string }
+        contacto: { $ref: '#/components/schemas/ContactoDeFichaDto' }
+        contactoEmergencia: { $ref: '#/components/schemas/ContactoEmergenciaDto' }
+        seguridadSocial: { $ref: '#/components/schemas/SeguridadSocialDto' }
+        datosClinicos: { $ref: '#/components/schemas/DatosClinicosDto' }
+        documentos:
+          type: array
+          description: Siempre los dos documentos pedidos, entregados o pendientes
+          minItems: 2
+          maxItems: 2
+          items: { $ref: '#/components/schemas/DocumentoDeFichaDto' }
+        ultimoCambio: { $ref: '#/components/schemas/UltimoCambioDto' }
+        permisos: { $ref: '#/components/schemas/PermisosDeFichaDto' }
+
+    ContactoDeFichaDto:
+      type: object
+      description: Datos de la cuenta, los mismos en todos sus jugadores y clubes
+      required: [correo]
+      properties:
+        correo: { type: string, format: email, description: No se cambia desde la ficha }
+        celular: { type: [string, 'null'] }
+        nombreResponsable: { type: [string, 'null'] }
+
+    ContactoEmergenciaDto:
+      type: object
+      properties:
+        nombre: { type: [string, 'null'] }
+        parentesco: { type: [string, 'null'] }
+        celular: { type: [string, 'null'] }
+
+    SeguridadSocialDto:
+      type: object
+      properties:
+        entidadSalud: { type: [string, 'null'] }
+        lugarAtencion: { type: [string, 'null'] }
+
+    DatosClinicosDto:
+      type: object
+      description: Los datos más restringidos de la ficha. Nunca se entregan a un DIRECTIVO
+      properties:
+        grupoSanguineo: { oneOf: [{ $ref: '#/components/schemas/GrupoSanguineo' }, { type: 'null' }] }
+        alergias: { type: [string, 'null'] }
+        enfermedades: { type: [string, 'null'] }
+        medicamentos: { type: [string, 'null'] }
+        observaciones: { type: [string, 'null'] }
+
+    DocumentoDeFichaDto:
+      type: object
+      required: [documento, entregado]
+      properties:
+        documento: { $ref: '#/components/schemas/DocumentoPedido' }
+        entregado: { type: boolean }
+        subidoEn: { type: [string, 'null'], format: date-time, description: Fecha del archivo vigente, en UTC }
+        tipoContenido: { type: [string, 'null'] }
+        tamanoBytes: { type: [integer, 'null'] }
+
+    UltimoCambioDto:
+      type: object
+      description: Solo el último cambio; no hay historial
+      required: [fecha, autor, porLaCuentaDelJugador]
+      properties:
+        fecha: { type: string, format: date-time, description: En UTC }
+        autor: { type: string, description: Nombre de quien cambió, tal como era en ese momento }
+        porLaCuentaDelJugador:
+          type: boolean
+          description: Verdadero si lo hizo la cuenta del jugador (su familia) y no el PRESIDENTE
+
+    PermisosDeFichaDto:
+      type: object
+      description: Lo que quien pregunta puede hacer en esta ficha; la API lo comprueba igualmente
+      required: [puedeCambiar, puedeCorregirIdentidad]
+      properties:
+        puedeCambiar:
+          type: boolean
+          description: Contacto, salud, documento de identidad y archivos. PRESIDENTE y cuenta del jugador
+        puedeCorregirIdentidad:
+          type: boolean
+          description: Nombres, apellidos y fecha de nacimiento. Solo PRESIDENTE
+
+    ActualizarFichaDto:
+      type: object
+      description: Todo es opcional salvo el celular y, si el jugador es menor de 18 años, el responsable
+      required: [celular]
+      properties:
+        celular: { type: string, maxLength: 20 }
+        nombreResponsable: { type: [string, 'null'], maxLength: 160 }
+        emergenciaNombre: { type: [string, 'null'], maxLength: 160 }
+        emergenciaParentesco: { type: [string, 'null'], maxLength: 40 }
+        emergenciaCelular: { type: [string, 'null'], maxLength: 20 }
+        entidadSalud: { type: [string, 'null'], maxLength: 120 }
+        lugarAtencion: { type: [string, 'null'], maxLength: 200 }
+        grupoSanguineo: { oneOf: [{ $ref: '#/components/schemas/GrupoSanguineo' }, { type: 'null' }] }
+        alergias: { type: [string, 'null'], maxLength: 1000 }
+        enfermedades: { type: [string, 'null'], maxLength: 1000 }
+        medicamentos: { type: [string, 'null'], maxLength: 1000 }
+        observaciones: { type: [string, 'null'], maxLength: 1000 }
+
+    CambiarDocumentoIdentidadDto:
+      type: object
+      required: [tipoDocumento, numeroDocumento]
+      properties:
+        tipoDocumento: { $ref: '#/components/schemas/TipoDocumento' }
+        numeroDocumento:
+          type: string
+          maxLength: 20
+          description: Se guarda sin espacios ni puntos, como en el registro
+
+    CorregirIdentidadDto:
+      type: object
+      required: [nombres, apellidos, fechaNacimiento]
+      properties:
+        nombres: { type: string, maxLength: 80 }
+        apellidos: { type: string, maxLength: 80 }
+        fechaNacimiento: { type: string, format: date, description: No puede ser futura }
+
+    ClubDtoCambio:
+      type: object
+      description: '`ClubDto` de la 001 con una propiedad más. Solo se describe lo que cambia'
+      required: [miUsuarioRolId]
+      properties:
+        miUsuarioRolId:
+          type: string
+          format: uuid
+          description: Integrante de quien pregunta en este club
+
+    JugadorDeCategoriaDtoCambio:
+      type: object
+      description: '`JugadorDeCategoriaDto` de la 003 con una propiedad más. Solo se describe lo que cambia'
+      properties:
+        documentosPendientes:
+          type: integer
+          minimum: 0
+          maximum: 2
+          description: Cuántos documentos pedidos le faltan; 0 es documentación completa. No aparece para un ENTRENADOR
+
+    JugadorRetiradoDtoCambio:
+      type: object
+      description: '`JugadorRetiradoDto` de la 003 con una propiedad más. Solo se describe lo que cambia'
+      required: [documentosPendientes]
+      properties:
+        documentosPendientes: { type: integer, minimum: 0, maximum: 2 }

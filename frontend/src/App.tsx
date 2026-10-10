@@ -15,6 +15,7 @@ import { Categorias } from './privado/categorias/Categorias';
 import { DetalleCategoria } from './privado/categorias/DetalleCategoria';
 import { ConfiguracionClub } from './privado/ConfiguracionClub';
 import { DisposicionClub } from './privado/DisposicionClub';
+import { FichaJugador } from './privado/ficha/FichaJugador';
 import { Ingresos } from './privado/ingresos/Ingresos';
 import { InicioClub } from './privado/InicioClub';
 
@@ -49,6 +50,7 @@ export function App() {
                 <Route path="ingresos" element={<Ingresos />} />
                 <Route path="categorias" element={<Categorias />} />
                 <Route path="categorias/:categoriaId" element={<DetalleCategoria />} />
+                <Route path="jugadores/:usuarioRolId/ficha" element={<FichaJugador />} />
               </Route>
             </Route>
 

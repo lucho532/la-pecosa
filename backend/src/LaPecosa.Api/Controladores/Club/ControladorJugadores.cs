@@ -14,7 +14,9 @@ namespace LaPecosa.Api.Controladores.Club;
 /// Su responsabilidad es recibir la petición y delegar en los servicios.
 /// No contiene reglas de negocio: las listas las ven el PRESIDENTE y los DIRECTIVOS, y solo el
 /// PRESIDENTE cambia algo, lo que comprueba <see cref="IntegranteDelClubAttribute"/> en cada
-/// acción. No devuelve de un jugador su documento, su correo ni su celular.
+/// acción. No devuelve de un jugador su documento, su correo ni su celular: esos datos están en su
+/// ficha, que tiene su propio controlador (<see cref="ControladorFichaJugador"/>) y su propia regla
+/// de acceso.
 /// </summary>
 [Route("api/clubes/{clubId:guid}/jugadores")]
 [Tags("Jugadores")]

@@ -133,3 +133,26 @@
   height: 20px;
   margin: 2px 0 0;
 }
+
+/* Área de texto de un campo: los datos largos de la ficha del jugador. */
+.campo textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 8px;
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+  resize: vertical;
+}
+
+.campo textarea[aria-invalid='true'] {
+  border: 2px solid var(--peligro);
+}
+
+/* Dato largo de solo lectura: conserva los saltos de línea que escribió la familia. */
+.dato-largo {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -34,7 +34,7 @@ public class ControladorClub : ControladorBase
     [HttpGet]
     [IntegranteDelClub]
     [ProducesResponseType<ClubDto>(StatusCodes.Status200OK)]
-    public Task<ClubDto> Obtener(CancellationToken cancelacion) => _consulta.ObtenerAsync(Integrante.Rol, cancelacion);
+    public Task<ClubDto> Obtener(CancellationToken cancelacion) => _consulta.ObtenerAsync(Integrante, cancelacion);
 
     /// <summary>El PRESIDENTE edita nombre, sede, dirección y contacto de su club.</summary>
     [HttpPut("configuracion")]
@@ -43,5 +43,5 @@ public class ControladorClub : ControladorBase
     [ProducesResponseType<Problema>(StatusCodes.Status400BadRequest, Problema.TipoContenido)]
     [ProducesResponseType<Problema>(StatusCodes.Status409Conflict, Problema.TipoContenido)]
     public Task<ClubDto> ActualizarConfiguracion(ActualizarConfiguracionClubDto datos, CancellationToken cancelacion) =>
-        _configuracion.ActualizarElPropioAsync(datos, Integrante.Rol, cancelacion);
+        _configuracion.ActualizarElPropioAsync(datos, Integrante, cancelacion);
 }

@@ -5,7 +5,6 @@ using LaPecosa.Aplicacion.Servicios;
 using LaPecosa.Aplicacion.Utilidades;
 using LaPecosa.Aplicacion.Validadores;
 using LaPecosa.Dominio.Entidades;
-using LaPecosa.Dominio.Enumeraciones;
 
 namespace LaPecosa.Aplicacion.Implementaciones;
 
@@ -38,11 +37,11 @@ public class ServicioConfiguracionClub : IServicioConfiguracionClub
 
     /// <inheritdoc />
     public async Task<ClubDto> ActualizarElPropioAsync(
-        ActualizarConfiguracionClubDto datos, Rol miRol, CancellationToken cancelacion = default)
+        ActualizarConfiguracionClubDto datos, UsuarioRol quienEdita, CancellationToken cancelacion = default)
     {
         var club = await _clubPropio.ObtenerAsync(cancelacion) ?? throw ExcepcionDeAplicacion.NoEncontrado();
         await AplicarAsync(club, datos, cancelacion);
-        return MapperClub.AClub(club, miRol);
+        return MapperClub.AClub(club, quienEdita);
     }
 
     /// <inheritdoc />

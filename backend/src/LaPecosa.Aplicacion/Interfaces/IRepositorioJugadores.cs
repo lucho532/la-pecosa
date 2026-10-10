@@ -19,6 +19,13 @@ public interface IRepositorioJugadores
     /// <summary>Un integrante del club con los equipos en los que juega; no lo sigue.</summary>
     Task<UsuarioRol?> ObtenerConEquiposAsync(Guid usuarioRolId, CancellationToken cancelacion = default);
 
+    /// <summary>
+    /// El jugador de una ficha (RF-004): el integrante con rol JUGADOR e ingreso aprobado, activo o
+    /// retirado, con su cuenta, su categoría y los equipos en los que juega; no lo sigue. Nulo para
+    /// cualquier otro rol y para quien está en espera.
+    /// </summary>
+    Task<UsuarioRol?> ObtenerParaFichaAsync(Guid usuarioRolId, CancellationToken cancelacion = default);
+
     /// <summary>Jugadores del club sin categoría, cada uno sin equipos.</summary>
     Task<IReadOnlyList<UsuarioRol>> ListarSinCategoriaAsync(CancellationToken cancelacion = default);
 

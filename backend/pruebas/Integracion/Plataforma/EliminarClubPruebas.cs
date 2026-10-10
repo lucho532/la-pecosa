@@ -115,7 +115,10 @@ public class EliminarClubPruebas
 
     private static string Ruta(Guid clubId) => $"/api/plataforma/clubes/{clubId}/eliminacion";
 
-    /// <summary>Una categoría con un equipo, un jugador en él y un entrenador que lo dirige.</summary>
+    /// <summary>
+    /// Una categoría con un equipo, un jugador en él, con su ficha y un documento entregado, y un
+    /// entrenador que lo dirige.
+    /// </summary>
     private async Task SembrarCategoriaConEquipoAsync(Club club)
     {
         var categoria = await _fabrica.Categorias.CrearCategoriaAsync(club, 2014);
@@ -125,6 +128,9 @@ public class EliminarClubPruebas
         var asignacion = await _fabrica.Categorias.AsignarEntrenadorAsync(categoria, entrenador);
         await _fabrica.Categorias.PonerEnEquipoAsync(jugador, equipo);
         await _fabrica.Categorias.DirigirEquipoAsync(asignacion, equipo);
+        await _fabrica.Fichas.CrearFichaAsync(jugador);
+        await _fabrica.Fichas.CrearDocumentoAsync(
+            jugador, DocumentoPedido.CERTIFICADO_SALUD, SembradorFichas.Pdf(), "application/pdf");
     }
 
     private Task<bool> ExisteClubAsync(Guid clubId) =>

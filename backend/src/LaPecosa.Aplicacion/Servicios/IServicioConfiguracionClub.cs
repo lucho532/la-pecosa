@@ -1,5 +1,5 @@
 using LaPecosa.Aplicacion.DTOs;
-using LaPecosa.Dominio.Enumeraciones;
+using LaPecosa.Dominio.Entidades;
 
 namespace LaPecosa.Aplicacion.Servicios;
 
@@ -17,7 +17,7 @@ public interface IServicioConfiguracionClub
     /// <c>nombre_de_club_repetido</c>.
     /// </summary>
     Task<ClubDto> ActualizarElPropioAsync(
-        ActualizarConfiguracionClubDto datos, Rol miRol, CancellationToken cancelacion = default);
+        ActualizarConfiguracionClubDto datos, UsuarioRol quienEdita, CancellationToken cancelacion = default);
 
     /// <summary>Edita cualquier club, para el DESARROLLADOR. Club inexistente: 404.</summary>
     Task<ClubDetalleDto> ActualizarDesdeElPanelAsync(
