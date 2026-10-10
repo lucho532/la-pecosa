@@ -198,6 +198,17 @@ Enmienda 4.2.0 → 4.3.0 (2026-10-10), decidida por el propietario del proyecto:
   nueva de que solo el PRESIDENTE de ese club, además del DESARROLLADOR, puede cambiarlos
 - Principios modificados: ninguno renombrado. Secciones añadidas o eliminadas: ninguna
 - Pendientes: siguen abiertas las siete decisiones de la §28. La spec 007 implementa esta versión
+
+Enmienda 4.3.0 → 4.4.0 (2026-10-10), decidida por el propietario del proyecto en la spec 007:
+- §14.2 (nueva): cada jugador tiene una foto propia en su ficha, distinta de la foto de perfil de
+  la cuenta, que sigue siendo privada. La cargan la familia y el PRESIDENTE; la ven quienes pueden
+  ver a ese jugador. Se elimina definitivamente cuando el jugador deja de pertenecer al club
+- §8 (Presidente y Jugador): cargar, cambiar y quitar la foto del jugador
+- §12.2 y §14.1: la foto se elimina con la ficha al cambiar de rol y al retirar al jugador; es una
+  excepción expresa a la conservación de los datos del retirado
+- §20: pruebas nuevas de quién cambia y quién ve la foto, y de su eliminación
+- Principios modificados: ninguno renombrado. Secciones añadidas: §14.2. Eliminadas: ninguna
+- Pendientes: siguen abiertas las siete decisiones de la §28. La spec 007 implementa esta versión
 -->
 
 # Constitución del Proyecto — La Pecosa, plataforma multiclub de escuelas de fútbol
@@ -689,6 +700,7 @@ Puede:
 - Asignar entrenadores a categorías.
 - Crear equipos dentro de una categoría y decidir en qué equipos juega cada jugador (ver §11.3).
 - Retirar del club a un jugador que se fue y reincorporarlo (ver §14.1).
+- Cargar, cambiar y quitar la foto de cualquier jugador de su club (ver §14.2).
 - Definir el valor de la mensualidad del club y modificar el de jugadores concretos (ver §16.7).
 - Consultar las finanzas completas del club.
 - Registrar, anular y corregir pagos.
@@ -788,6 +800,7 @@ Puede, únicamente sobre su propio jugador:
 - Pagar mensualidades y arbitrajes.
 - Confirmar asistencia a entrenamientos y partidos.
 - Actualizar datos de contacto, médicos y documentos.
+- Cargar, cambiar y quitar la foto de su jugador (ver §14.2).
 - Retirar del club a su propio jugador (ver §14.1). No puede reincorporarlo.
 
 No accede a la ficha, los pagos ni los datos de contacto de otros jugadores.
@@ -1041,7 +1054,8 @@ El rol asignado reemplaza al que tenía y pasa a ser su único rol.
 
 Cuando una cuenta nueva pasa de JUGADOR a ENTRENADOR o DIRECTIVO, la ficha de Jugador que se creó
 con su registro desaparece: se elimina. Es una eliminación física justificada (ver §14), porque
-esa ficha nunca correspondió a un jugador real.
+esa ficha nunca correspondió a un jugador real. Con ella se elimina su foto de jugador (ver
+§14.2).
 
 Un DIRECTIVO no invita ni asigna, cambia o retira roles.
 
@@ -1229,7 +1243,8 @@ El jugador retirado:
 - Sale de su categoría y de sus equipos y deja de aparecer en las listas de jugadores.
 - No accede a ninguna información de ese club: al entrar solo ve un aviso de que ya no está en él.
   En sus otros clubes sigue con normalidad.
-- Conserva todos sus datos y su historial. Su correo y su documento siguen ocupados en ese club.
+- Conserva todos sus datos y su historial, salvo su foto, que se elimina (ver §14.2). Su correo y
+  su documento siguen ocupados en ese club.
 - No genera mensualidad (ver §16.7).
 
 El PRESIDENTE puede reincorporarlo: vuelve a entrar con su misma cuenta y se le ubica como a un
@@ -1244,6 +1259,25 @@ está activo con la misma cuenta, la reincorporación sigue igual.
 El PRESIDENTE y los DIRECTIVOS ven la lista de jugadores retirados de su club.
 
 El retiro no es un estado de ingreso (ver §12.1.1): se expresa con Activo.
+
+### 14.2. Foto del jugador
+
+Cada jugador tiene una foto propia, guardada en su ficha. Es distinta de la foto de perfil de la
+cuenta, que sigue siendo privada y solo la ve su dueño: los hermanos de una misma cuenta tienen
+cada uno la suya.
+
+- La cargan, cambian y quitan la propia cuenta, sobre su jugador, y el PRESIDENTE, sobre cualquier
+  jugador de su club. Nadie más.
+- Debe ser una imagen PNG, JPEG o WebP de hasta 1 MB.
+- La ven únicamente quienes pueden ver a ese jugador: su propia cuenta, el PRESIDENTE y los
+  DIRECTIVOS de su club y los entrenadores de su categoría (ver §7.5). El DESARROLLADOR no la ve.
+  Nunca aparece en el sitio público.
+
+Cuando el jugador deja de pertenecer al club, su foto se elimina definitivamente: al retirarlo,
+de cualquiera de las tres formas de §14.1, y al eliminarse su ficha por el cambio de rol de la
+cuenta (ver §12.2). Es una eliminación física justificada y una excepción expresa a la
+conservación de los datos del jugador retirado: la foto de un menor no se guarda cuando ya no está
+en el club. Si se le reincorpora, vuelve sin foto.
 
 ## 15. Reglas de negocio en backend
 
@@ -1536,7 +1570,13 @@ Las pruebas deben validar principalmente:
   las suyas.
 - Que una cuenta de jugador solo ve su categoría, sus equipos y el nombre de sus entrenadores.
 - Que solo se borra una categoría o un equipo que nunca tuvo jugadores ni entrenadores.
-- Que un jugador retirado no accede a ninguna información del club y conserva todos sus datos.
+- Que un jugador retirado no accede a ninguna información del club y conserva todos sus datos,
+  salvo su foto.
+- Que solamente la propia cuenta y el PRESIDENTE cargan, cambian y quitan la foto de un jugador,
+  que solo la ven quienes pueden ver a ese jugador, y que es distinta de la foto de perfil de la
+  cuenta.
+- Que la foto de un jugador se elimina al retirarlo, de cualquiera de las tres formas, y al
+  eliminarse su ficha por cambio de rol, y que al reincorporarlo vuelve sin foto.
 - Que una cuenta no convocada no puede ver ni consultar un partido próximo, y que sí ve todos los
   entrenamientos de su categoría.
 - Que los endpoints públicos no exponen documento, contacto, datos médicos ni pagos.
@@ -1718,4 +1758,4 @@ Escalabilidad
 La solución más sencilla que cumpla correctamente las reglas de negocio será preferible a una
 solución más compleja.
 
-**Versión**: 4.3.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-10
+**Versión**: 4.4.0 | **Ratificada**: 2026-10-06 | **Última enmienda**: 2026-10-10

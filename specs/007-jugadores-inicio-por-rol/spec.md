@@ -20,8 +20,8 @@ la spec 001."
 
 **Plataforma**: La Pecosa
 
-**Constitución aplicable**: versión 4.3.0, en especial §7.1, §7.2, §7.5, §8, §11.2, §11.3, §12.3,
-§14.1, §15, §20 y §24.
+**Constitución aplicable**: versión 4.4.0, en especial §7.1, §7.2, §7.5, §8, §11.2, §11.3, §12.2,
+§12.3, §14.1, §14.2, §15, §20 y §24.
 
 **Depende de**: spec 001 (base multiclub: identidad del club, aviso de contraste, foto de
 perfil), spec 003 (categorías y equipos), spec 005 (ficha del jugador) y spec 006 (varios
