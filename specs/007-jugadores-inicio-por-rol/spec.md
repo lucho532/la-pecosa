@@ -235,8 +235,10 @@ muestra y que otro club no cambia.
 - El PRESIDENTE y el DESARROLLADOR cambian los colores casi a la vez: queda el último guardado.
 - La familia y el PRESIDENTE cambian la foto del mismo jugador casi a la vez: queda la última
   guardada.
-- Se retira un jugador con foto: la foto se conserva con su ficha y vuelve a verse si lo
-  reincorporan.
+- Un jugador con foto deja de pertenecer al club (lo retiran, su familia lo retira, queda retirado
+  al aprobarse en otro club como hermano o su cuenta pasa a otro rol): su foto se elimina
+  definitivamente. Si después lo reincorporan, vuelve sin foto y se muestran sus iniciales hasta
+  que la familia o el PRESIDENTE carguen una nueva.
 
 ## Requisitos *(obligatorio)*
 
@@ -278,7 +280,8 @@ muestra y que otro club no cambia.
   quitarla. La foto DEBE ser una imagen PNG, JPEG o WebP de hasta 1 MB; si no lo es, el sistema
   DEBE rechazarla, explicar el motivo y conservar la anterior. Ningún otro rol puede cambiarla.
   Cargar, cambiar o quitar la foto cuenta como un cambio de la ficha (fecha y autor del último
-  cambio, spec 005).
+  cambio, spec 005). Cuando el jugador deja de pertenecer al club, el sistema DEBE eliminar su
+  foto definitivamente; no se conserva para una posible reincorporación.
 - **RF-010**: La foto de un jugador DEBE poder verla únicamente quien puede ver a ese jugador: su
   propia cuenta, el PRESIDENTE y los DIRECTIVOS de su club y los ENTRENADORES de su categoría.
 
