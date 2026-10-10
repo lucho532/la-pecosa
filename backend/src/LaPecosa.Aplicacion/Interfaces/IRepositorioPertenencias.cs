@@ -39,6 +39,14 @@ public interface IRepositorioPertenencias
     Task<IReadOnlyList<Guid>> IdsDeLaCuentaConDocumentoAsync(
         Guid usuarioId, string numeroDocumento, CancellationToken cancelacion = default);
 
+    /// <summary>
+    /// Integrante de ese club que tiene ese número de documento ya normalizado, en cualquier
+    /// estado; nulo si nadie lo tiene. Sirve para saber, al agregar un hermano, si el documento
+    /// ya es de otro integrante o del mismo hermano que la familia ya agregó.
+    /// </summary>
+    Task<UsuarioRol?> ObtenerPorDocumentoEnClubAsync(
+        Guid clubId, string numeroDocumento, CancellationToken cancelacion = default);
+
     /// <summary>Indica si ese número de documento ya normalizado existe en el club.</summary>
     Task<bool> ExisteDocumentoEnClubAsync(Guid clubId, string numeroDocumento, CancellationToken cancelacion = default);
 

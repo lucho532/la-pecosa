@@ -1,7 +1,7 @@
 // Tipos de los esquemas de specs/006-agregar-hermano/contracts/api.yaml, con los mismos nombres:
 // la sesión con los jugadores de la cuenta en cada club.
 
-import type { EstadoClub, EstadoIngreso, IdentidadClubDto, Rol } from './tipos';
+import type { EstadoClub, EstadoIngreso, IdentidadClubDto, Rol, TipoDocumento } from './tipos';
 
 /** Uno de los jugadores de la cuenta en un club, para la lista en la que la familia elige. */
 export interface JugadorDeSesionDto {
@@ -38,4 +38,19 @@ export interface ClubDeSesionDto {
    * elegir ni cambiar.
    */
   jugadores: JugadorDeSesionDto[];
+}
+
+/**
+ * Lo que la familia escribe para agregar un hermano. No lleva correo, celular ni contraseña: son
+ * los de la cuenta.
+ */
+export interface AgregarHermanoDto {
+  nombres: string;
+  apellidos: string;
+  tipoDocumento: TipoDocumento;
+  numeroDocumento: string;
+  /** `AAAA-MM-DD`; `null` si todavía no se escribió, para que la API diga que es obligatoria. */
+  fechaNacimiento: string | null;
+  /** Solo si el hermano es menor de 18 años y la cuenta no tiene responsable; si lo tiene, se ignora. */
+  nombreResponsable: string | null;
 }

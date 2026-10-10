@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../../compartido/api/cliente';
 import { ErrorApi } from '../../compartido/api/errores';
 import type { ActualizarFichaDto, FichaJugadorDto } from '../../compartido/api/tiposFicha';
 import { useCarga } from '../../compartido/api/useCarga';
 import { Aviso } from '../../compartido/componentes/Aviso';
+import { Boton } from '../../compartido/componentes/Boton';
 import { nombreCompleto, puedeVerCategorias } from '../categorias/textos';
 import { useClub } from '../contextoClub';
+import { DialogoAgregarHermano } from './DialogoAgregarHermano';
 import { FichaDeSoloLectura } from './FichaDeSoloLectura';
 import { FormularioFicha } from './FormularioFicha';
 import { SeccionDocumentos } from './SeccionDocumentos';
@@ -17,6 +20,8 @@ import { UltimoCambio } from './UltimoCambio';
  * secciones. Muestra y permite solo lo que trae la respuesta: los grupos que la API no entrega no
  * se pintan, y los botones dependen de `permisos`, no del rol. Quien no puede ver la ficha recibe
  * de la API el mismo "no encontrado" que si no existiera, y aquí se le dice lo mismo.
+ * "Agregar un hermano" solo aparece en la ficha propia de la cuenta de un jugador (RF-032 de la
+ * 006): un presidente, un directivo y un entrenador no lo ven, y la API se lo negaría.
  */
 export function FichaJugador() {
   const { club } = useClub();
@@ -25,6 +30,9 @@ export function FichaJugador() {
   const carga = useCarga(`${club.clubId}/ficha/${usuarioRolId}`, () => api.get<FichaJugadorDto>(ruta));
   const ficha = carga.datos;
   const noLaVe = carga.fallo instanceof ErrorApi && carga.fallo.status === 404;
+  const [agregando, setAgregando] = useState(false);
+  const [agregado, setAgregado] = useState<string | null>(null);
+  const esLaPropia = club.miRol === 'JUGADOR' && ficha?.usuarioRolId === club.miUsuarioRolId;
 
   // Quien ve las listas del club vuelve a la categoría del jugador; la familia, al inicio.
   const volver = !puedeVerCategorias(club.miRol)
@@ -53,7 +61,26 @@ export function FichaJugador() {
           <div className="columna">
             <h1>{ficha.usuarioRolId === club.miUsuarioRolId ? 'Mi ficha' : `Ficha de ${nombreCompleto(ficha)}`}</h1>
             <UltimoCambio cambio={ficha.ultimoCambio} />
+            {esLaPropia && (
+              <div className="fila">
+                <Boton variante="secundario" onClick={() => setAgregando(true)}>
+                  Agregar un hermano
+                </Boton>
+              </div>
+            )}
+            {agregado && <Aviso tono="exito">El ingreso de {agregado} está pendiente de aprobación del club.</Aviso>}
           </div>
+          {agregando && (
+            <DialogoAgregarHermano
+              clubId={club.clubId}
+              ficha={ficha}
+              alAgregar={(hermano) => {
+                setAgregado(hermano.nombres);
+                setAgregando(false);
+              }}
+              alCancelar={() => setAgregando(false)}
+            />
+          )}
           <SeccionIdentidad ficha={ficha} rutaDeLaFicha={ruta} alCambiar={carga.fijar} />
           {ficha.permisos.puedeCambiar && ficha.datosClinicos ? (
             <FormularioFicha key={ficha.usuarioRolId} ficha={ficha} alGuardar={guardar} />

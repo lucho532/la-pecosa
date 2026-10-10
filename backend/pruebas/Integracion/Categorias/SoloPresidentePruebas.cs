@@ -23,11 +23,13 @@ public class SoloPresidentePruebas
     /// <summary>
     /// Endpoints de categorías y jugadores que cambian algo. La ficha del jugador (005) comparte el
     /// prefijo de ruta pero no es de esta funcionalidad: la cambia también la familia, y quién puede
-    /// hacerlo se prueba en <c>Ficha/SoloLecturaPruebas</c>.
+    /// hacerlo se prueba en <c>Ficha/SoloLecturaPruebas</c>. Lo mismo agregar un hermano (006), que
+    /// es de la familia y se prueba en <c>Hermanos/QuienAgregaPruebas</c>.
     /// </summary>
     private List<Endpoint> DeEscritura => EndpointsDeLaApi.DeLaApi(_fabrica)
         .Where(endpoint => endpoint.Metodo != "GET"
             && !endpoint.Ruta.Contains("/ficha", StringComparison.Ordinal)
+            && !endpoint.Ruta.EndsWith("/hermanos", StringComparison.Ordinal)
             && (endpoint.Ruta.StartsWith("/api/clubes/{clubId}/categorias", StringComparison.Ordinal)
                 || endpoint.Ruta.StartsWith("/api/clubes/{clubId}/jugadores", StringComparison.Ordinal)))
         .ToList();

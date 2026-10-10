@@ -23,12 +23,14 @@ public class CategoriasPorEstadoDelClubPruebas
 
     /// <summary>
     /// Los 22 endpoints de la funcionalidad, tal como los expone la API. Los de la ficha del jugador
-    /// (005) comparten el prefijo de ruta y se prueban en <c>Ficha/FichaPorEstadoDelClubPruebas</c>.
+    /// (005) comparten el prefijo de ruta y se prueban en <c>Ficha/FichaPorEstadoDelClubPruebas</c>; el
+    /// de agregar un hermano (006), en <c>Hermanos/HermanosEntreClubesPruebas</c>.
     /// </summary>
     private List<Endpoint> DeCategorias => EndpointsDeLaApi.DeLaApi(_fabrica)
         .Where(endpoint => new[] { "/categorias", "/jugadores", "/mi-categoria" }
             .Any(parte => endpoint.Ruta.StartsWith("/api/clubes/{clubId}" + parte, StringComparison.Ordinal))
-            && !endpoint.Ruta.Contains("/ficha", StringComparison.Ordinal))
+            && !endpoint.Ruta.Contains("/ficha", StringComparison.Ordinal)
+            && !endpoint.Ruta.EndsWith("/hermanos", StringComparison.Ordinal))
         .ToList();
 
     [Fact]

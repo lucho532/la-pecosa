@@ -56,6 +56,8 @@ public static class RegistroDeCasosDeUso
         servicios.AddScoped<IServicioDocumentosJugador, ServicioDocumentosJugador>();
         servicios.AddScoped<IServicioIdentidadJugador, ServicioIdentidadJugador>();
 
+        servicios.AddScoped<IServicioAgregarHermano, ServicioAgregarHermano>();
+
         return servicios;
     }
 }

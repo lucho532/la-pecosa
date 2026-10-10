@@ -40,65 +40,64 @@ tags:
 paths:
   # ------------------------------------------------------------------ Hermanos
 
-# PENDIENTE: se descomenta en T012
-#   /api/clubes/{clubId}/jugadores/{usuarioRolId}/hermanos:
-#     parameters:
-#       - $ref: '#/components/parameters/clubId'
-#       - $ref: '#/components/parameters/usuarioRolId'
-#       - $ref: '#/components/parameters/jugadorElegido'
-#     post:
-#       tags: [Hermanos]
-#       summary: NUEVO. Agrega un jugador a la cuenta, en este club, y lo deja en la sala de espera
-#       description: |
-#         Solo el rol JUGADOR. `{usuarioRolId}` debe ser el jugador que hace la petición; cualquier
-#         otro, también un hermano, responde 404. Como quien hace la petición debe estar aprobado y
-#         activo, no se agrega un hermano desde un jugador en espera ni retirado.
-#
-#         El hermano comparte el correo, el celular, el responsable y la contraseña de la cuenta.
-#         Queda `EN_ESPERA`, sin categoría ni equipos. No se envía ningún correo.
-#       requestBody:
-#         required: true
-#         content:
-#           application/json:
-#             schema: { $ref: '#/components/schemas/AgregarHermanoDto' }
-#       responses:
-#         '201':
-#           description: El hermano, en espera
-#           content:
-#             application/json:
-#               schema: { $ref: '#/components/schemas/JugadorDeSesionDto' }
-#         '200':
-#           description: |
-#             Ese documento ya es de un jugador en espera de esta misma cuenta en este club: se
-#             devuelve ese jugador, sin crear ni cambiar nada.
-#           content:
-#             application/json:
-#               schema: { $ref: '#/components/schemas/JugadorDeSesionDto' }
-#         '400':
-#           description: |
-#             `datos_invalidos`: falta un dato, el documento o la fecha no son válidos, la fecha es
-#             futura, o el hermano es menor, la cuenta no tiene responsable y no se envió.
-#           content:
-#             application/problem+json:
-#               schema: { $ref: '#/components/schemas/Problema' }
-#         '403':
-#           description: '`rol_no_autorizado` (PRESIDENTE, DIRECTIVO, ENTRENADOR), `ingreso_en_espera`, `integrante_retirado` o estado del club'
-#           content:
-#             application/problem+json:
-#               schema: { $ref: '#/components/schemas/Problema' }
-#         '404':
-#           description: '`{usuarioRolId}` no es el jugador que hace la petición'
-#           content:
-#             application/problem+json:
-#               schema: { $ref: '#/components/schemas/Problema' }
-#         '409':
-#           description: |
-#             `documento_repetido_en_club`: ya lo tiene otro integrante del club, activo, retirado o en
-#             espera. `documento_en_otra_cuenta`: lo usa otra cuenta en otro club.
-#             `jugador_sin_elegir`: la cuenta tiene varios jugadores y no se envió la cabecera.
-#           content:
-#             application/problem+json:
-#               schema: { $ref: '#/components/schemas/Problema' }
+  /api/clubes/{clubId}/jugadores/{usuarioRolId}/hermanos:
+    parameters:
+      - $ref: '#/components/parameters/clubId'
+      - $ref: '#/components/parameters/usuarioRolId'
+      - $ref: '#/components/parameters/jugadorElegido'
+    post:
+      tags: [Hermanos]
+      summary: NUEVO. Agrega un jugador a la cuenta, en este club, y lo deja en la sala de espera
+      description: |
+        Solo el rol JUGADOR. `{usuarioRolId}` debe ser el jugador que hace la petición; cualquier
+        otro, también un hermano, responde 404. Como quien hace la petición debe estar aprobado y
+        activo, no se agrega un hermano desde un jugador en espera ni retirado.
+
+        El hermano comparte el correo, el celular, el responsable y la contraseña de la cuenta.
+        Queda `EN_ESPERA`, sin categoría ni equipos. No se envía ningún correo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AgregarHermanoDto' }
+      responses:
+        '201':
+          description: El hermano, en espera
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JugadorDeSesionDto' }
+        '200':
+          description: |
+            Ese documento ya es de un jugador en espera de esta misma cuenta en este club: se
+            devuelve ese jugador, sin crear ni cambiar nada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JugadorDeSesionDto' }
+        '400':
+          description: |
+            `datos_invalidos`: falta un dato, el documento o la fecha no son válidos, la fecha es
+            futura, o el hermano es menor, la cuenta no tiene responsable y no se envió.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '403':
+          description: '`rol_no_autorizado` (PRESIDENTE, DIRECTIVO, ENTRENADOR), `ingreso_en_espera`, `integrante_retirado` o estado del club'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '404':
+          description: '`{usuarioRolId}` no es el jugador que hace la petición'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409':
+          description: |
+            `documento_repetido_en_club`: ya lo tiene otro integrante del club, activo, retirado o en
+            espera. `documento_en_otra_cuenta`: lo usa otra cuenta en otro club.
+            `jugador_sin_elegir`: la cuenta tiene varios jugadores y no se envió la cabecera.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
 
   # -------------------------------------------------------------------- Sesion
 
